@@ -53,7 +53,7 @@ export const WriteOffViewLive: React.FC = () => {
     <div className="flex flex-col gap-6 pb-20">
       <PageHeader
         breadcrumb={[{ label: 'Write-offs', to: `${co}/write-offs` }, { label: w.number ?? 'Draft' }]}
-        title={w.number ?? 'Draft write-off'}
+        title={w.number ?? (w.status === 'draft' ? 'Draft write-off' : 'Write-off')}
         subtitle={customer?.name}
         meta={<StatusPill status={w.status} />}
       />
@@ -160,7 +160,7 @@ export const RecoveryViewLive: React.FC = () => {
     <div className="flex flex-col gap-6 pb-20">
       <PageHeader
         breadcrumb={[{ label: 'Write-offs', to: `${co}/write-offs` }, { label: w.data?.number ?? 'Write-off', to: `${co}/write-offs/${r.write_off_id}` }, { label: r.number ?? 'Draft recovery' }]}
-        title={r.number ?? 'Draft recovery'}
+        title={r.number ?? (r.status === 'draft' ? 'Draft recovery' : 'Recovery')}
         subtitle={customer?.name}
         meta={<StatusPill status={r.status} />}
       />

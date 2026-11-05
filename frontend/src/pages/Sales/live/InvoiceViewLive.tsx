@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { CheckCircle, Clock, Copy, Eraser, FilePlus, Link2, Pencil, Receipt, RotateCcw, Send, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/domain/PageHeader';
 import { SignDialog } from '@/components/domain/SignDialog';
+import { StatusPill } from '@/components/domain/StatusPill';
 import { AttachmentsPanel } from '@/components/live/AttachmentsPanel';
 import { EmailButton, PdfButton, SendLog } from '@/components/live/DocumentActions';
 import { InvoiceLinks } from '@/components/live/InvoiceLinks';
@@ -268,7 +269,7 @@ export const InvoiceViewLive: React.FC<{ side?: Side }> = ({ side = 'sales' }) =
         breadcrumb={[{ label: isCredit ? S.Credits : S.Mains, to: `/${coSlug}/${S.docsPath}` }, { label: numberLabel }]}
         title={doc.number || (doc.status === 'draft' ? `Draft ${words.one}` : words.Title)}
         subtitle={customer?.name}
-        meta={<DocStatusPill doc={doc} />}
+        meta={doc.status === 'posted' && doc.paymentStatus === 'paid' && doc.written_off_fc > 0 ? <StatusPill status="reversed" label={doc.settled_fc - doc.written_off_fc > 0 ? 'Settled and written off' : 'Written off'} /> : <DocStatusPill doc={doc} />}
         actions={
           <>
             <PdfButton family={side === 'sales' ? 'invoices' : 'bills'} id={doc.id} />

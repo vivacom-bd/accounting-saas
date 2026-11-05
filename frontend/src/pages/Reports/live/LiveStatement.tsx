@@ -11,7 +11,7 @@ import { useReportSelection } from './useSelection';
 const GRID = 'grid grid-cols-[6.5rem_7rem_8rem_1fr_7.5rem_7.5rem_8rem] gap-3';
 const TYPE_LABEL: Record<string, string> = {
   invoice: 'Invoice', credit_note: 'Credit note', bill: 'Bill', debit_note: 'Debit note', credit_application: 'Credit applied', reversal: 'Reversal',
-  receipt: 'Receipt', payment: 'Payment', refund: 'Refund', supplier_refund: 'Supplier refund', manual: 'Journal',
+  write_off: 'Write-off', write_off_recovery: 'Recovery after write-off', receipt: 'Receipt', payment: 'Payment', refund: 'Refund', supplier_refund: 'Supplier refund', manual: 'Journal',
 };
 
 export const LiveStatement: React.FC<{ side: 'customer' | 'supplier' }> = ({ side }) => {

@@ -279,6 +279,7 @@ export const LivePeriods: React.FC = () => {
                   else if (chk.check_code === 'APPROVALS') navigate(`/${slug}/approvals`);
                   else if (chk.check_code === 'FX_REVAL') navigate(`/${slug}/fx-rates`);
                   else if (chk.check_code === 'DEPR_RUN') navigate(`/${slug}/assets?tab=depreciation`);
+                  else if (chk.check_code === 'TRANSFERS_IN_TRANSIT') navigate(`/${slug}/banking/transfers`);
                   else navigate(`/${slug}/journals`);
                 }}
               />

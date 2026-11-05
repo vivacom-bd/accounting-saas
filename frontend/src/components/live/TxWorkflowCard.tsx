@@ -56,7 +56,7 @@ export interface TxWorkflowCardProps {
   /** Called with the server's answer after any transition. */
   onChanged?: (d: TxDocLike) => void;
   /** Called with the error of a transition that was refused, before it is shown. */
-  onRefused?: (e: unknown) => void;
+  onRefused?: (e: unknown) => boolean | void;
   /** Called after a draft is discarded. */
   onDiscarded?: () => void;
   /** Extra buttons while posted, before Reverse. */
@@ -99,7 +99,7 @@ export const TxWorkflowCard: React.FC<TxWorkflowCardProps> = ({
       setConflict({ noun, serverVersion: e.serverVersion, localVersion: doc.version, onClose: () => setConflict(null), onReload: () => { setConflict(null); onReload(); } });
       return;
     }
-    onRefused?.(e);
+    if (onRefused?.(e) === true) return;
     const msg = txErrorText(e, 'That did not go through. Try again.');
     if (dialog) setProblem(msg);
     else toast.error(msg);

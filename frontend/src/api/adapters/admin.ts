@@ -204,6 +204,10 @@ export const DOCUMENT_TYPES: { value: string; label: string }[] = [
   { value: 'purchase_order', label: 'Purchase orders' },
   { value: 'depreciation_run', label: 'Depreciation runs' },
   { value: 'asset_transaction', label: 'Asset sales, write-downs and revaluations' },
+  { value: 'fund_transfer', label: 'Fund transfers' },
+  { value: 'write_off', label: 'Write-offs' },
+  { value: 'write_off_recovery', label: 'Recoveries after write-off' },
+  { value: 'provision_run', label: 'Bad-debt provisions' },
 ];
 /**
  * A revision of an order follows the order's workflow on its new total, so there is no workflow of its own to set up;

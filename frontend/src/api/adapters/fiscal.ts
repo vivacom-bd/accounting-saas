@@ -53,6 +53,10 @@ export interface LiveCloseCheck {
   title: string;
   detail: string;
   status: 'pass' | 'fail';
+  /** A check that passes but wants a look (money still in transit at period end). It never blocks a close. */
+  warning?: boolean;
+  /** Base-currency figures behind an in-transit warning: what was sent and not received, and what the funds-in-transit account holds. */
+  transit?: { count: number; total: number; balance: number | null };
 }
 
 export function toReopenRequest(r: ApiReopenRequest): LiveReopenRequest {
@@ -110,6 +114,7 @@ const CHECK_TITLES: Record<string, string> = {
   BANK_REC: 'Bank accounts reconciled',
   FX_REVAL: 'Foreign-currency balances adjusted',
   DEPR_RUN: 'Depreciation run done or nothing to depreciate',
+  TRANSFERS_IN_TRANSIT: 'Transfers received before the period ends',
 };
 
 export function checkTitle(code: string): string {
@@ -117,7 +122,13 @@ export function checkTitle(code: string): string {
 }
 
 export function toCloseCheck(c: ApiCloseCheck): LiveCloseCheck {
-  return { id: c.code, check_code: c.code, title: checkTitle(c.code), detail: c.message, status: c.passed ? 'pass' : 'fail' };
+  const d = (c.detail ?? {}) as Record<string, unknown>;
+  const num = (v: unknown): number | null => (typeof v === 'number' && Number.isSafeInteger(v) ? v : null);
+  const warning = c.code === 'TRANSFERS_IN_TRANSIT' && d.warning === true;
+  return {
+    id: c.code, check_code: c.code, title: checkTitle(c.code), detail: c.message, status: c.passed ? 'pass' : 'fail',
+    ...(warning ? { warning: true, transit: { count: num(d.open_transfers) ?? 0, total: num(d.open_total) ?? 0, balance: num(d.in_transit_balance) } } : {}),
+  };
 }
 
 /**

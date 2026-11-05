@@ -106,8 +106,8 @@ export const TransferViewLive: React.FC = () => {
   return (
     <div className="flex flex-col gap-6 pb-20">
       <PageHeader
-        breadcrumb={[{ label: 'Bank accounts', to: `${co}/banking` }, { label: 'Transfers', to: `${co}/banking/transfers` }, { label: t.number ?? 'Draft' }]}
-        title={t.number ?? 'Draft transfer'}
+        breadcrumb={[{ label: 'Bank accounts', to: `${co}/banking` }, { label: 'Transfers', to: `${co}/banking/transfers` }, { label: t.number ?? 'Transfer' }]}
+        title={t.number ?? (t.status === 'draft' ? 'Draft transfer' : 'Transfer')}
         subtitle={`${bankName(t.from_bank_account_id)} to ${bankName(t.to_bank_account_id)}`}
         meta={<StatusPill status={t.status} />}
       />

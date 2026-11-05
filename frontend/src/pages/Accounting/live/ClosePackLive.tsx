@@ -6,7 +6,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Download, Printer, XCircle } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, Download, Printer, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/domain/PageHeader';
 import { ApiError } from '@/api/errors';
@@ -172,10 +172,21 @@ export const ClosePackLive: React.FC = () => {
                 return (
                   <li key={chk.id} className="flex items-center justify-between gap-4 px-4 py-3 text-[13px]">
                     <span className="flex items-center gap-2.5 font-medium text-text-primary">
-                      {ok ? <CheckCircle2 className="size-4 shrink-0 text-success" /> : <XCircle className="size-4 shrink-0 text-danger" />}
+                      {chk.warning ? <AlertTriangle className="size-4 shrink-0 text-warning" /> : ok ? <CheckCircle2 className="size-4 shrink-0 text-success" /> : <XCircle className="size-4 shrink-0 text-danger" />}
                       {chk.title}
                     </span>
-                    <span className="text-right text-xs text-text-muted">{chk.detail}</span>
+                    <span className="text-right text-xs text-text-muted" data-testid={chk.warning ? 'transit-warning' : undefined}>
+                      {chk.warning && chk.transit ? (
+                        <>
+                          <span className="text-warning">A warning, not a block.</span>{' '}
+                          {chk.transit.count} {chk.transit.count === 1 ? 'transfer was' : 'transfers were'} sent and not received: {formatMoney(chk.transit.total, company.base_currency)}.
+                          {chk.transit.balance !== null && <> Funds in transit in the ledger: {formatMoney(chk.transit.balance, company.base_currency)}.</>}{' '}
+                          <Link to={`/${company.slug}/banking/transfers`} className="text-accent hover:underline">See the transfers</Link>
+                        </>
+                      ) : (
+                        chk.detail
+                      )}
+                    </span>
                   </li>
                 );
               })}

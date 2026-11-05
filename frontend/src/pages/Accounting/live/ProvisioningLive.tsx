@@ -244,7 +244,7 @@ export const ProvisionRunViewLive: React.FC = () => {
   const company = useRouteCompany();
   const co = `/${company.slug}`;
   const q = useTx<ApiProvisionRun>('provision-runs', id);
-  const [stale, setStale] = useState('');
+  const [stale, setStale] = useState(false);
 
   if (q.isLoading) return <LoadingLine what="run" />;
   const r = q.data;
@@ -259,15 +259,15 @@ export const ProvisionRunViewLive: React.FC = () => {
   return (
     <div className="flex flex-col gap-6 pb-20">
       <PageHeader
-        breadcrumb={[{ label: 'Provisioning', to: `${co}/accounting/provisioning` }, { label: r.number ?? 'Draft run' }]}
-        title={r.number ?? 'Draft provision run'}
+        breadcrumb={[{ label: 'Provisioning', to: `${co}/accounting/provisioning` }, { label: r.number ?? 'Run' }]}
+        title={r.number ?? (r.status === 'draft' ? 'Draft provision run' : 'Provision run')}
         subtitle={`As of ${formatDate(r.as_of)}`}
         meta={<StatusPill status={r.status} />}
       />
       {stale && (
         <div role="status" className="rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-[13px] text-warning" data-testid="stale-note">
           <p className="font-medium">This run is out of date.</p>
-          <p className="mt-0.5 text-xs">{stale} Nothing was posted. Discard this run, then prepare a new one so it reads today’s receivables.</p>
+          <p className="mt-0.5 text-xs">The receivables or the allowance changed after this run was prepared, so its figures no longer match your books. Nothing was posted. Discard this run, then prepare a new one so it reads today’s figures.</p>
         </div>
       )}
       {r.status === 'reversed' && (
@@ -300,8 +300,12 @@ export const ProvisionRunViewLive: React.FC = () => {
             reverseText="Reversing adds an equal and opposite entry, so the allowance goes back to what it was before this run."
             postText="The allowance is set to what the rates require."
             onReload={() => void q.refetch()}
-            onRefused={(e) => setStale(e instanceof ApiError && e.code === 'provision_run_stale' ? txErrorText(e, '') : '')}
-            onChanged={() => setStale('')}
+            onRefused={(e) => {
+              const isStale = e instanceof ApiError && e.code === 'provision_run_stale';
+              setStale(isStale);
+              return isStale;
+            }}
+            onChanged={() => setStale(false)}
             onDiscarded={() => navigate(`${co}/accounting/provisioning`)}
           />
         </aside>

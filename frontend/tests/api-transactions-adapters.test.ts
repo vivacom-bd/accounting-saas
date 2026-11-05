@@ -9,6 +9,7 @@ import { parseTaxReturn } from '../src/api/adapters/report';
 import { toApprovalItem } from '../src/api/adapters/journal';
 import { toDocCan } from '../src/api/adapters/invoice';
 import { isLiveRoute } from '../src/data/liveRoutes';
+import { toCloseCheck, checkTitle } from '../src/api/adapters/fiscal';
 
 const err = (code: string, extra: Record<string, unknown> = {}) => new ApiError({ status: 422, code, detail: `server says ${code}`, requestId: null, ...extra });
 
@@ -168,5 +169,17 @@ describe('approvals and routes', () => {
       expect(isLiveRoute(p), p).toBe(true);
     }
     expect(isLiveRoute('/acme/write-offs/not-an-id')).toBe(false);
+  });
+});
+
+describe('close checklist: money in transit', () => {
+  it('passes with a warning and the figures behind it, and never fails', () => {
+    const c = toCloseCheck({ code: 'TRANSFERS_IN_TRANSIT', passed: true, message: 'm', detail: { warning: true, open_transfers: 2, open_total: 50000, in_transit_balance: 50000 } });
+    expect(c).toMatchObject({ status: 'pass', warning: true, title: 'Transfers received before the period ends', transit: { count: 2, total: 50000, balance: 50000 } });
+  });
+  it('shows nothing extra when no transfer is in transit', () => {
+    const c = toCloseCheck({ code: 'TRANSFERS_IN_TRANSIT', passed: true, message: 'm', detail: { warning: false, open_transfers: 0, open_total: 0, in_transit_balance: 0 } });
+    expect(c.warning).toBeUndefined();
+    expect(checkTitle('TRANSFERS_IN_TRANSIT')).toBe('Transfers received before the period ends');
   });
 });
