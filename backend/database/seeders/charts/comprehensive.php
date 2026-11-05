@@ -138,7 +138,7 @@ $groups = [
         ['1807', 'Term deposits (over 3 months)', 'cur' => 'any'],
         ['1808', 'Long-term loans receivable', 's' => 'Non-current Assets', 'e' => 'NoncurrentLoansAndReceivables'],
         ['1809', 'Long-term deposits and prepayments', 's' => 'Non-current Assets', 'e' => 'NoncurrentPrepayments'],
-        ['1811', 'Allowance for impairment of investments', 's' => 'Contra Asset', 'n' => 'credit'],
+        ['1811', 'Allowance for impairment of investments', 's' => 'Non-current Assets', 'n' => 'credit', 'd' => 'Carries a credit balance against the investments above, so it is presented with the non-current assets.'],
     ]],
     ['19', 'Other assets', 'asset', 'Current Assets', ['cur' => 'any', 'h' => 1], [
         ['1901', 'Assets held for sale', 'e' => 'NoncurrentAssetsOrDisposalGroupsClassifiedAsHeldForSaleOrAsHeldForDistributionToOwners', 'cur' => 'base_only', 'd' => 'Carried here while a sale is committed (IFRS 5). Not depreciated.'],

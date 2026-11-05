@@ -37,6 +37,8 @@ export function toAccount(a: ApiAccount, scope: { tenantId: string; companyId: s
     parent_id: a.parent_id,
     is_hidden: a.is_hidden,
     ifrs_element: a.ifrs_element ?? null,
+    balance_sheet_class: (a.balance_sheet_class as 'current' | 'non_current' | null | undefined) ?? null,
+    balance_sheet_default: (a.balance_sheet_default as 'current' | 'non_current' | null | undefined) ?? null,
     dimension_rules: rules,
     can: { update: can.update, deactivate: can.deactivate },
   };
@@ -87,6 +89,11 @@ export function toNewAccountRequest(d: AccountDraft): ApiAccountRequest {
  */
 export function pickableAccounts(accounts: Account[], keep: readonly (string | null | undefined)[] = []): Account[] {
   return accounts.filter((a) => !a.is_hidden || keep.includes(a.id));
+}
+
+/** PUT /accounts/{id}/balance-sheet-class body: null returns the account to the default rules. */
+export function toBalanceSheetClassRequest(a: Pick<Account, 'version'>, cls: 'current' | 'non_current' | null): { class: 'current' | 'non_current' | null; version: number } {
+  return { class: cls, version: a.version ?? 0 };
 }
 
 /** PUT /accounts/{id}/visibility body. */

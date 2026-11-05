@@ -113,6 +113,10 @@ export interface Account {
   is_hidden?: boolean;
   /** IFRS Accounting Taxonomy element name, for reference. Live mode only. */
   ifrs_element?: string | null;
+  /** The company's own current / non-current answer for an asset or liability (live only); null follows the rules. */
+  balance_sheet_class?: 'current' | 'non_current' | null;
+  /** What the rules say without that answer; null when they cannot decide (shown as current). */
+  balance_sheet_default?: 'current' | 'non_current' | null;
   can?: { update?: boolean; deactivate?: boolean };
 }
 

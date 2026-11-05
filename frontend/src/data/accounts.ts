@@ -8,7 +8,7 @@ import { selectByMode } from './select';
 import { http } from '@/api/http';
 import { fetchAllPages } from '@/api/cursor';
 import { fromApiMoney } from '@/api/adapters/money';
-import { toAccount, toAccountRequest, toNewAccountRequest, toDimensionRulesRequest, toVisibilityRequest, type AccountDraft, type DimensionRuleValue } from '@/api/adapters/account';
+import { toAccount, toAccountRequest, toNewAccountRequest, toDimensionRulesRequest, toBalanceSheetClassRequest, toVisibilityRequest, type AccountDraft, type DimensionRuleValue } from '@/api/adapters/account';
 import { createIntent, type Intent } from '@/api/idempotency';
 import { Handled, handleVersionConflict } from '@/api/live/writeProblems';
 import { useLedgerStore } from '@/mock/store';
@@ -66,6 +66,8 @@ export interface AccountActions {
   /** Hide or show in default lists and pickers. Posting and reports are not affected. Live mode only; the mock has no hidden accounts. */
   setHidden: (account: Account, hidden: boolean, intent?: Intent) => Promise<void>;
   setDimensionRules: (account: Account, rules: Record<string, DimensionRuleValue | 'none'>, intent?: Intent) => Promise<void>;
+  /** Balance sheet class of an asset or liability (current or non-current); null returns it to the default rules. Presentation only. Live mode only. */
+  setBalanceSheetClass: (account: Account, cls: 'current' | 'non_current' | null, intent?: Intent) => Promise<void>;
 }
 
 export function useMockAccountActions(): AccountActions {
@@ -104,6 +106,7 @@ export function useMockAccountActions(): AccountActions {
       useLedgerStore.setState({ accounts: accounts.map((a) => (a.id === account.id ? { ...a, allow_manual_journals: allow } : a)) });
     },
     setHidden: async () => {},
+    setBalanceSheetClass: async () => {},
     setDimensionRules: async () => {},
   };
 }
@@ -150,6 +153,10 @@ export function useLiveAccountActions(): AccountActions {
           body: toVisibilityRequest(account, hidden),
           intent,
         }),
+      ),
+    setBalanceSheetClass: (account, cls, intent = createIntent()) =>
+      guard(account, `balance sheet class: ${cls ?? 'default'}`, () =>
+        http.put('/v1/companies/{company}/accounts/{account}/balance-sheet-class', { path: { ...path, account: account.id }, body: toBalanceSheetClassRequest(account, cls), intent }),
       ),
     setDimensionRules: async (account, rules, intent = createIntent()) => {
       await http.put('/v1/companies/{company}/accounts/{account}/dimension-rules', { path: { ...path, account: account.id }, body: toDimensionRulesRequest(rules), intent });

@@ -155,6 +155,11 @@ export const LiveJournalList: React.FC = () => {
               <span className="text-right tabular-nums">{money(totalDebit)}</span>
               <span className="text-right tabular-nums">{money(totalCredit)}</span>
             </div>
+            <p className="px-2 pt-2 text-xs text-text-muted" data-testid="journal-list-totals-note">
+              {f.status === ''
+                ? 'These totals include drafts, journals waiting for approval and voided ones, as well as posted and reversed ones. Choose a status to narrow them; only posted journals are in the ledger.'
+                : `Totals of ${words(f.status).toLowerCase()} journals only.`}
+            </p>
           </div>
           {list.hasNextPage && (
             <div className="px-2 pt-3 print:hidden">

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Ledger;
 
 use App\Actions\Ledger\ManageAccount;
+use App\Actions\Ledger\SetAccountBalanceSheetClass;
 use App\Actions\Ledger\SetAccountDimensionRules;
 use App\Actions\Ledger\SetAccountHidden;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Ledger\AccountBalanceSheetClassRequest;
 use App\Http\Requests\Ledger\AccountDimensionRulesRequest;
 use App\Http\Requests\Ledger\AccountRequest;
 use App\Http\Requests\Ledger\AccountVisibilityRequest;
@@ -70,6 +72,15 @@ final class AccountController extends Controller
     public function setVisibility(AccountVisibilityRequest $request, Company $company, Account $account, SetAccountHidden $action, ShowAccount $show): AccountResource
     {
         $action->handle(RequestActor::from($request, $company->id), $account->id, $request->version(), $request->hidden());
+
+        return new AccountResource($show($account->id));
+    }
+
+    /** Sets or clears the balance sheet class (current or non-current) of an asset or liability account; presentation only. */
+    #[Authorize('update', 'account')]
+    public function setBalanceSheetClass(AccountBalanceSheetClassRequest $request, Company $company, Account $account, SetAccountBalanceSheetClass $action, ShowAccount $show): AccountResource
+    {
+        $action->handle(RequestActor::user($request, $company->id), $account->id, $request->version(), $request->class());
 
         return new AccountResource($show($account->id));
     }

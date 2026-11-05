@@ -244,6 +244,35 @@ export const ChartOfAccounts: React.FC = () => {
                       className="h-4 w-4 rounded text-accent focus:ring-accent cursor-pointer"
                     />
                   </div>
+                  {(selectedAccount.account_type === 'asset' || selectedAccount.account_type === 'liability') && selectedAccount.ifrs_element !== 'DeferredTaxAssets' && selectedAccount.ifrs_element !== 'DeferredTaxLiabilities' && (
+                    <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-2">
+                      <div className="flex flex-col">
+                        <label htmlFor="bs-class" className="text-[11px] font-semibold text-text-primary">Balance sheet class</label>
+                        <span className="text-[10px] text-text-muted">Where it appears on the balance sheet. Balances and postings do not change.</span>
+                      </div>
+                      <select
+                        id="bs-class"
+                        aria-label="Balance sheet class"
+                        value={selectedAccount.balance_sheet_class ?? ''}
+                        disabled={selectedAccount.can?.update !== true}
+                        onChange={(e) => {
+                          const v = e.target.value as '' | 'current' | 'non_current';
+                          setProblem(null);
+                          actions
+                            .setBalanceSheetClass(selectedAccount, v === '' ? null : v)
+                            .then(() => toast.success(v === '' ? `${selectedAccount.code} follows the default again.` : `${selectedAccount.code} is shown as ${v === 'current' ? 'current' : 'non-current'} on the balance sheet.`))
+                            .catch((err) => {
+                              if (!(err instanceof Handled)) setProblem(describeProblem(err));
+                            });
+                        }}
+                        className="h-7 rounded-md border border-border bg-surface px-2 text-[11px]"
+                      >
+                        <option value="">Default ({selectedAccount.balance_sheet_default === 'non_current' ? 'non-current' : 'current'})</option>
+                        <option value="current">Current</option>
+                        <option value="non_current">Non-current</option>
+                      </select>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-2">
                     <span className="text-[10px] text-text-muted">IFRS Taxonomy element</span>
                     <span className="font-code text-[11px] text-text-secondary break-all text-right">{selectedAccount.ifrs_element ?? 'Not linked'}</span>

@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property bool $is_active
  * @property bool $is_hidden
  * @property string|null $ifrs_element
+ * @property list<string> $reporting_tags
  * @property bool $allow_manual_journals
  * @property ControlType $control_type
  * @property CurrencyPolicy $currency_policy

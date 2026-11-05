@@ -212,6 +212,7 @@ Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent', 'c
         Route::put('accounts/{account}', [AccountController::class, 'update'])->whereUuid('account')->name('accounts.update');
         Route::post('accounts/{account}/deactivate', [AccountController::class, 'deactivate'])->whereUuid('account')->name('accounts.deactivate');
         Route::put('accounts/{account}/visibility', [AccountController::class, 'setVisibility'])->whereUuid('account')->name('accounts.visibility');
+        Route::put('accounts/{account}/balance-sheet-class', [AccountController::class, 'setBalanceSheetClass'])->whereUuid('account')->name('accounts.balance-sheet-class');
         Route::put('accounts/{account}/dimension-rules', [AccountController::class, 'setDimensionRules'])->whereUuid('account')->name('accounts.dimension-rules');
 
         // Dimensions

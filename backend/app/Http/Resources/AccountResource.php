@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Domain\Reports\BalanceSheetClassifier;
 use App\Http\Support\Json;
 use App\Models\Ledger\Account;
 use Illuminate\Http\Request;
@@ -12,6 +13,17 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /** @mixin Account */
 final class AccountResource extends JsonResource
 {
+    private function balanceSheetTag(): ?string
+    {
+        foreach (['current', 'non_current'] as $class) {
+            if (in_array('bs:'.$class, $this->resource->reporting_tags, true)) {
+                return $class;
+            }
+        }
+
+        return null;
+    }
+
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
@@ -33,6 +45,10 @@ final class AccountResource extends JsonResource
             /** IFRS Accounting Taxonomy element name (ifrs-full), shown for reference only. */
             'ifrs_element' => $this->ifrs_element,
             'description' => $this->description,
+            /** The company's own balance sheet class for an asset or liability (the `bs:*` tag); null when the account follows the rules. */
+            'balance_sheet_class' => $this->balanceSheetTag(),
+            /** What the rules say without a tag: current, non_current, or null (unknown, shown as current). Assets and liabilities only. */
+            'balance_sheet_default' => BalanceSheetClassifier::classify($this->account_type, $this->account_subtype, $this->control_type->value, [], $this->ifrs_element)?->value,
             'version' => $this->lock_version,
             /** @var array<string, string> dimension id → required|optional|forbidden */
             'dimension_rules' => $this->whenLoaded('dimensionRules', fn () => $this->dimensionRules
