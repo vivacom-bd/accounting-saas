@@ -6,6 +6,7 @@ namespace App\Queries\Reports;
 
 use App\Models\Organisation\Company;
 use App\Queries\Budgets\BudgetVsActual;
+use App\Queries\Tax\PackReturn;
 use App\Support\Reports\ReportRunner;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -45,6 +46,7 @@ final class RunReport
         private readonly BudgetVsActual $budgetVsActual,
         private readonly PeriodCalendar $calendar,
         private readonly AssetSchedule $assetSchedule,
+        private readonly PackReturn $packReturn,
     ) {}
 
     /**
@@ -90,6 +92,11 @@ final class RunReport
     {
         $p = $this->params->range($company, $input);
         $base = $this->runner->cached($company->id, 'tax_return', $p->cacheKey(), fn (): array => ['generated_at' => gmdate('Y-m-d\TH:i:s\Z')] + ($this->taxReturn)($p));
+
+        $pack = ($this->packReturn)($company->id, $base, $manual);
+        if ($pack !== null) {
+            $base['pack'] = $pack;
+        }
 
         return $base;
     }

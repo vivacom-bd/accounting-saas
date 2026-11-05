@@ -155,6 +155,7 @@ final class ManageTaxCode
         $rate->forceFill([
             'id' => $this->ids->next(), 'tenant_id' => $actor->tenantId, 'company_id' => $code->company_id, 'tax_code_id' => $code->id,
             'rate' => $in->rate, 'effective_from' => $in->effectiveFrom->format('Y-m-d'), 'effective_to' => $in->effectiveTo?->format('Y-m-d'),
+            'source' => $in->source, 'source_as_of' => $in->sourceAsOf?->format('Y-m-d'),
         ])->save();
 
         return $closedOn;

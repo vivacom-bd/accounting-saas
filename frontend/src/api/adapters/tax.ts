@@ -70,6 +70,9 @@ export interface LiveTaxRate {
   rate: string;
   effective_from: string;
   effective_to: string | null;
+  /** Where the rate came from and when it was checked; null when nobody said. */
+  source: string | null;
+  source_as_of: string | null;
 }
 
 export interface LiveTaxCode {
@@ -100,7 +103,7 @@ export function toLiveTaxCode(a: ApiTaxCodeResource): LiveTaxCode {
     name: a.name,
     kind: a.kind,
     rate: a.rate ?? null,
-    rates: (a.rates ?? []).map((r) => ({ id: r.id, rate: r.rate, effective_from: r.effective_from ?? '', effective_to: r.effective_to ?? null })),
+    rates: (a.rates ?? []).map((r) => ({ id: r.id, rate: r.rate, effective_from: r.effective_from ?? '', effective_to: r.effective_to ?? null, source: r.source ?? null, source_as_of: r.source_as_of ?? null })),
     collect_account_id: a.collect_account_id,
     pay_account_id: a.pay_account_id,
     is_recoverable: a.is_recoverable,
@@ -153,10 +156,10 @@ export function toTaxCodeReplace(e: TaxCodeEdit, version: number): Record<string
 }
 
 /** A new rate from a date. `percent` is text such as "7.5"; null when it is not a rate between 0 and 100. */
-export function toRateRequest(percent: string, effectiveFrom: string, version: number): Record<string, unknown> | null {
+export function toRateRequest(percent: string, effectiveFrom: string, version: number, source = '', sourceAsOf = ''): Record<string, unknown> | null {
   const rate = percentToFraction(percent);
   if (rate === null || !effectiveFrom) return null;
-  return { rate, effective_from: effectiveFrom, version };
+  return { rate, effective_from: effectiveFrom, version, ...(source.trim() ? { source: source.trim() } : {}), ...(sourceAsOf ? { source_as_of: sourceAsOf } : {}) };
 }
 
 export function toGroupRequest(code: string, name: string, items: Array<{ tax_code_id: string; compound: boolean }>, version?: number): Record<string, unknown> {

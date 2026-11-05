@@ -10,6 +10,7 @@ use App\Http\Requests\Tax\TaxPeriodRequest;
 use App\Http\Resources\TaxPeriodResource;
 use App\Http\Support\RequestActor;
 use App\Models\Organisation\Company;
+use App\Models\Tax\CompanyTaxPack;
 use App\Models\Tax\TaxPeriod;
 use App\Queries\Tax\TaxPeriodReturn;
 use Illuminate\Http\JsonResponse;
@@ -49,7 +50,8 @@ final class TaxPeriodController extends Controller
     #[Authorize('create', TaxPeriod::class)]
     public function store(TaxPeriodRequest $request, Company $company, ManageTaxPeriods $action): JsonResponse
     {
-        $created = $action->generate(RequestActor::user($request, $company->id), $company->id, $request->authority() ?? self::DEFAULT_AUTHORITY, $request->from(), $request->months());
+        $pack = CompanyTaxPack::query()->where('company_id', $company->id)->first();
+        $created = $action->generate(RequestActor::user($request, $company->id), $company->id, $request->authority() ?? $pack->authority ?? self::DEFAULT_AUTHORITY, $request->from(), $request->months(), $pack?->due_days_after_period);
 
         return response()->json(['data' => array_map(fn (TaxPeriod $p): array => (new TaxPeriodResource($p))->resolve($request), $created), 'meta' => ['created' => count($created)]], 201);
     }

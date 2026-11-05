@@ -37,14 +37,14 @@ final class ManageTaxPeriods
 
     /**
      * Creates the calendar months from the month of `$from`, `$months` of them; months that already exist exactly are skipped, so
-     * running it twice changes nothing. A month overlapping a period of other dates is refused. `$dueDay` (1..28) puts a due date
-     * on that day of the month after the period (a country pack's filing day); null leaves it empty.
+     * running it twice changes nothing. A month overlapping a period of other dates is refused. `$dueDaysAfter` puts the due date that
+     * many days after the period ends (a country pack's filing rule); null leaves it empty.
      *
      * @return list<TaxPeriod> the periods created
      */
-    public function generate(Actor $actor, string $companyId, string $authority, DateTimeImmutable $from, int $months, ?int $dueDay = null): array
+    public function generate(Actor $actor, string $companyId, string $authority, DateTimeImmutable $from, int $months, ?int $dueDaysAfter = null): array
     {
-        return $this->uow->run($actor, function (LockSet $locks, AuditBuffer $audit, Outbox $outbox) use ($actor, $companyId, $authority, $from, $months, $dueDay) {
+        return $this->uow->run($actor, function (LockSet $locks, AuditBuffer $audit, Outbox $outbox) use ($actor, $companyId, $authority, $from, $months, $dueDaysAfter) {
             $this->guard->require($actor, 'tax_periods.manage', $companyId);
             if ($months < 1 || $months > self::MAX_MONTHS) {
                 throw DomainRuleViolation::single('tax_period_months_invalid', 'Generate between 1 and '.self::MAX_MONTHS.' months at a time.');
@@ -65,12 +65,11 @@ final class ManageTaxPeriods
                 if ($existing->isNotEmpty()) {
                     throw DomainRuleViolation::single('tax_period_overlap', 'A tax period of other dates already covers '.$first->format('F Y').'.');
                 }
-                $next = $last->modify('+1 day');
                 $period = new TaxPeriod;
                 $period->forceFill([
                     'id' => $this->ids->next(), 'tenant_id' => $actor->tenantId, 'company_id' => $companyId, 'authority' => $authority,
                     'starts_on' => $first->format('Y-m-d'), 'ends_on' => $last->format('Y-m-d'),
-                    'due_on' => $dueDay === null ? null : $next->setDate((int) $next->format('Y'), (int) $next->format('n'), $dueDay)->format('Y-m-d'),
+                    'due_on' => $dueDaysAfter === null ? null : $last->modify("+{$dueDaysAfter} days")->format('Y-m-d'),
                     'status' => TaxPeriod::OPEN, 'manual_amounts' => [],
                 ])->save();
                 $audit->add('tax_period.created', $period, after: $period);

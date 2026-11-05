@@ -780,6 +780,8 @@ export interface TaxReturnView extends Head {
   /** Null when the server sent no section (an older answer). */
   reverseCharge: ReverseChargeSection | null;
   netPayable: number;
+  /** The country pack's sections as the server laid them out (3c.22); null when the company applied no pack. */
+  pack: unknown | null;
 }
 
 function taxSide(v: unknown, what: string): TaxSide {
@@ -835,6 +837,7 @@ export function parseTaxReturn(data: unknown): TaxReturnView {
     purchases: taxSide(o.purchases, 'purchases'),
     reverseCharge: reverseChargeSection(o.reverse_charge),
     netPayable: mon(o.net_tax_payable, 'net_tax_payable'),
+    pack: isRec(o.pack) ? o.pack : null,
   };
 }
 

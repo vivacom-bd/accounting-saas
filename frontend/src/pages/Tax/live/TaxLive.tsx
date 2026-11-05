@@ -17,6 +17,7 @@ import { IntentSlot } from '@/api/intentSlot';
 import { TAX_KIND_LABEL, fractionToPercent, percentToFraction, toGroupRequest, toRateRequest, toTaxCodeReplace, type LiveTaxCode, type LiveTaxGroup } from '@/api/adapters/tax';
 import { localDateISO } from '@/api/adapters/onboarding';
 import { TaxPeriods } from './TaxPeriods';
+import { TaxPackTab } from './TaxPackTab';
 import { BTN_ACCENT, BTN_GHOST, ErrorLine, LoadingLine, TableCard, inputClass } from '@/pages/Sales/live/parts';
 
 const KINDS = ['vat', 'gst', 'sales', 'wht', 'compound', 'exempt', 'zero', 'reverse_charge'] as const;
@@ -174,6 +175,8 @@ const RateDialog: React.FC<{ code: LiveTaxCode; onClose: () => void; onConflict:
   const actions = useTaxActions();
   const [percent, setPercent] = useState('');
   const [from, setFrom] = useState(localDateISO());
+  const [source, setSource] = useState('');
+  const [asOf, setAsOf] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [banner, setBanner] = useState('');
   const [busy, setBusy] = useState(false);
@@ -182,7 +185,7 @@ const RateDialog: React.FC<{ code: LiveTaxCode; onClose: () => void; onConflict:
   async function save(version?: number) {
     setErrors({});
     setBanner('');
-    const body = toRateRequest(percent, from, version ?? code.version);
+    const body = toRateRequest(percent, from, version ?? code.version, source, asOf);
     if (!body) return setErrors({ percent: percentToFraction(percent) === null ? 'Enter a rate between 0 and 100, for example 5 or 7.5.' : '', effective_from: from ? '' : 'Choose a date.' });
     const intent = slot.for(JSON.stringify([code.id, body]));
     setBusy(true);
@@ -224,7 +227,7 @@ const RateDialog: React.FC<{ code: LiveTaxCode; onClose: () => void; onConflict:
             {code.rates.map((r) => (
               <li key={r.id} className="flex justify-between">
                 <span className="tabular-nums text-text-primary">{fractionToPercent(r.rate)}</span>
-                <span className="text-text-muted">{r.effective_from ? formatDate(r.effective_from) : '—'}{r.effective_to ? ` to ${formatDate(r.effective_to)}` : ' onwards'}</span>
+                <span className="text-text-muted">{r.effective_from ? formatDate(r.effective_from) : '—'}{r.effective_to ? ` to ${formatDate(r.effective_to)}` : ' onwards'}{r.source ? ` · ${r.source}${r.source_as_of ? `, checked ${formatDate(r.source_as_of)}` : ''}` : ''}</span>
               </li>
             ))}
           </ul>
@@ -235,6 +238,12 @@ const RateDialog: React.FC<{ code: LiveTaxCode; onClose: () => void; onConflict:
           </Field>
           <Field id="rt-from" label="Starts on" error={errors.effective_from}>
             <input id="rt-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={inputClass} />
+          </Field>
+          <Field id="rt-source" label="Source (optional)" hint="Where the rate comes from, for example the Finance Act." error={errors.source}>
+            <input id="rt-source" value={source} onChange={(e) => setSource(e.target.value)} className={inputClass} />
+          </Field>
+          <Field id="rt-asof" label="Checked on (optional)" error={errors.source_as_of}>
+            <input id="rt-asof" type="date" value={asOf} onChange={(e) => setAsOf(e.target.value)} className={inputClass} />
           </Field>
           {banner && <p role="alert" className="col-span-2 text-xs font-medium text-danger">{banner}</p>}
           <DialogFooter className="col-span-2 mt-1 flex justify-end gap-2">
@@ -348,7 +357,7 @@ const GroupDialog: React.FC<{ group?: LiveTaxGroup; codes: LiveTaxCode[]; onClos
 
 /* ------------------------------------------------------------------------ page */
 
-type Tab = 'codes' | 'groups' | 'periods';
+type Tab = 'codes' | 'groups' | 'periods' | 'pack';
 
 /** Tax codes with their dated rates, and tax groups. The tax return itself is under Reports. */
 export const TaxLive: React.FC = () => {
@@ -399,7 +408,7 @@ export const TaxLive: React.FC = () => {
         actions={
           <div className="flex items-center gap-2">
             <Link to={`/${coSlug}/reports/tax-return`} className={BTN_GHOST}>Open the tax return</Link>
-            {tab !== 'periods' && (
+            {(tab === 'codes' || tab === 'groups') && (
               <button type="button" onClick={() => setDialog(tab === 'codes' ? { type: 'code' } : { type: 'group' })} className={BTN_ACCENT}>
                 <Plus className="size-4" /> {tab === 'codes' ? 'New tax code' : 'New tax group'}
               </button>
@@ -410,13 +419,13 @@ export const TaxLive: React.FC = () => {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1 border-b border-border" role="tablist">
-          {([['codes', 'Tax codes'], ['groups', 'Tax groups'], ['periods', 'Filing periods']] as const).map(([v, label]) => (
+          {([['codes', 'Tax codes'], ['groups', 'Tax groups'], ['periods', 'Filing periods'], ['pack', 'Country pack']] as const).map(([v, label]) => (
             <button key={v} type="button" role="tab" aria-selected={tab === v} onClick={() => setTab(v)} className={cn('-mb-px border-b-2 px-3 py-2 text-[13px] font-medium transition-colors', tab === v ? 'border-accent text-accent' : 'border-transparent text-text-muted hover:text-text-primary')}>
               {label}
             </button>
           ))}
         </div>
-        {tab !== 'periods' && (
+        {(tab === 'codes' || tab === 'groups') && (
           <label className="flex items-center gap-1.5 text-xs text-text-muted">
             <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} /> Show turned-off ones
           </label>
@@ -424,6 +433,7 @@ export const TaxLive: React.FC = () => {
       </div>
 
       {tab === 'periods' && <TaxPeriods />}
+      {tab === 'pack' && <TaxPackTab />}
 
       {tab === 'codes' && (
         <TableCard>

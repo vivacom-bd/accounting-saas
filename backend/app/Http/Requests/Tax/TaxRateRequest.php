@@ -18,6 +18,8 @@ final class TaxRateRequest extends CompanyRequest
             'rate' => ['required', 'string', 'regex:'.TaxCodeRequest::RATE_PATTERN],
             'effective_from' => ['required', 'date_format:Y-m-d'],
             'effective_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:effective_from'],
+            'source' => ['nullable', 'string', 'max:255'],
+            'source_as_of' => ['nullable', 'date_format:Y-m-d'],
             'version' => ['required', 'integer', 'min:0'],
         ];
     }
@@ -30,6 +32,8 @@ final class TaxRateRequest extends CompanyRequest
             (string) $v['rate'],
             new DateTimeImmutable((string) $v['effective_from']),
             isset($v['effective_to']) ? new DateTimeImmutable((string) $v['effective_to']) : null,
+            isset($v['source']) && trim((string) $v['source']) !== '' ? trim((string) $v['source']) : null,
+            isset($v['source_as_of']) ? new DateTimeImmutable((string) $v['source_as_of']) : null,
         );
     }
 

@@ -14,12 +14,14 @@ use Illuminate\Support\Carbon;
  * @property string $rate a fraction, "0.050000" = 5%
  * @property Carbon $effective_from
  * @property Carbon|null $effective_to inclusive
+ * @property string|null $source
+ * @property Carbon|null $source_as_of
  */
 class TaxRate extends BaseModel
 {
     /** @return array<string, string> */
     protected function casts(): array
     {
-        return ['effective_from' => 'date', 'effective_to' => 'date'];
+        return ['effective_from' => 'date', 'effective_to' => 'date', 'source_as_of' => 'date'];
     }
 }

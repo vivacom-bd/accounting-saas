@@ -21,6 +21,9 @@ final class TaxRateResource extends JsonResource
             'rate' => $this->rate,
             'effective_from' => Json::date($this->effective_from),
             'effective_to' => Json::date($this->effective_to),
+            /** Where the rate came from and when it was checked; null when nobody said. */
+            'source' => $this->source,
+            'source_as_of' => Json::date($this->source_as_of),
         ];
     }
 }

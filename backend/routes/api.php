@@ -61,6 +61,7 @@ use App\Http\Controllers\Sharing\PublicInvoiceController;
 use App\Http\Controllers\Signing\SigningController;
 use App\Http\Controllers\Tax\TaxCodeController;
 use App\Http\Controllers\Tax\TaxGroupController;
+use App\Http\Controllers\Tax\TaxPackController;
 use App\Http\Controllers\Tax\TaxPeriodController;
 use App\Http\Controllers\Trade\BillController;
 use App\Http\Controllers\Trade\ContactController;
@@ -241,6 +242,12 @@ Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent', 'c
         Route::post('tax-groups', [TaxGroupController::class, 'store'])->name('tax-groups.store');
         Route::put('tax-groups/{taxGroup}', [TaxGroupController::class, 'update'])->whereUuid('taxGroup')->name('tax-groups.update');
         Route::post('tax-groups/{taxGroup}/deactivate', [TaxGroupController::class, 'deactivate'])->whereUuid('taxGroup')->name('tax-groups.deactivate');
+
+        // Country packs (3c.22): what is on offer and applied, apply (idempotent), settings, and which tax codes feed which return section
+        Route::get('tax-pack', [TaxPackController::class, 'show'])->name('tax-pack.show');
+        Route::post('tax-pack/apply', [TaxPackController::class, 'apply'])->name('tax-pack.apply');
+        Route::put('tax-pack/settings', [TaxPackController::class, 'settings'])->name('tax-pack.settings');
+        Route::put('tax-pack/sections/{section}/codes', [TaxPackController::class, 'sectionCodes'])->where('section', '[a-z0-9_]+')->name('tax-pack.section-codes');
 
         // Tax periods (D15 item 13): generated monthly, filed with a frozen snapshot, reopened by a second person
         Route::get('tax-periods', [TaxPeriodController::class, 'index'])->name('tax-periods.index');

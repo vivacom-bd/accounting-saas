@@ -8,6 +8,7 @@ import { LiveReportShell } from './LiveReportShell';
 import { ReportError, ReportLoading, fmt } from './parts';
 import { useReportSelection } from './useSelection';
 import { DocumentsDrill, type DocumentsTarget } from './DocumentsDrill';
+import { TaxPackSections, type PackReturn } from '@/pages/Tax/live/TaxPackSections';
 
 const GRID = 'grid grid-cols-[minmax(12rem,1fr)_9rem_9rem] gap-3';
 const RC_GRID = 'grid grid-cols-[minmax(12rem,1fr)_9rem_9rem_9rem] gap-3';
@@ -110,7 +111,15 @@ export const LiveTaxReturn: React.FC = () => {
               <span />
               <span className={cn('text-right tabular-nums', tone(tr.netPayable))}>{money(tr.netPayable)}</span>
             </div>
-            <p className="mt-4 px-2 text-xs text-text-muted">Totals per tax code. Filing boxes depend on the tax authority and are not set up yet.</p>
+            {tr.pack ? (
+              <div className="mt-6 border-t border-border px-2 pt-4" data-testid="tax-return-pack">
+                <div className="pb-2 text-[13px] font-semibold text-text-primary">Return by section ({(tr.pack as PackReturn).name} pack)</div>
+                <TaxPackSections pack={tr.pack as PackReturn} currency={tr.currency} />
+                <p className="mt-3 text-xs text-text-muted">Adjustments and credits are entered on the tax period, so they show as 0 here. The totals per tax code above are the books’ figures; the sections lay them out.</p>
+              </div>
+            ) : (
+              <p className="mt-4 px-2 text-xs text-text-muted">Totals per tax code. Filing boxes depend on the tax authority and are not set up yet.</p>
+            )}
           </div>
         </ReportCard>
       )}
