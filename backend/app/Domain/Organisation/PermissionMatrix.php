@@ -37,7 +37,7 @@ final class PermissionMatrix
     private const array MODULES = [
         'journals', 'invoices', 'bills', 'receipts', 'payments', 'contacts', 'items', 'banking', 'recurring',
         'periods', 'accounts', 'dimensions', 'tax', 'fx', 'settings', 'reports',
-        'purchase_requisitions', 'purchase_orders', 'goods_receipts', 'budgets', 'transfers', 'write_offs', 'provisions', 'fixed_assets',
+        'purchase_requisitions', 'purchase_orders', 'goods_receipts', 'budgets', 'transfers', 'write_offs', 'provisions', 'fixed_assets', 'tax_periods',
     ];
 
     private const array SALES_VIEWS = ['contacts.view', 'invoices.view', 'items.view', 'receipts.view'];
@@ -58,7 +58,7 @@ final class PermissionMatrix
         'periods.reopen.request',
         'purchase_requisitions.create', 'purchase_requisitions.submit', 'purchase_orders.create', 'purchase_orders.submit', 'goods_receipts.create',
         'documents.send', 'documents.share',
-        'budgets.manage',
+        'budgets.manage', 'tax_periods.manage',
         'fixed_assets.manage', 'fixed_assets.run_depreciation', 'fixed_assets.dispose', 'fixed_assets.revalue',
         'transfers.create', 'transfers.submit', 'transfers.receive', 'write_offs.create', 'write_offs.submit', 'provisions.create', 'provisions.submit',
     ];
@@ -70,7 +70,7 @@ final class PermissionMatrix
     private const array MANAGE = [
         'periods.close', 'periods.reopen.approve', 'periods.year_end', 'periods.post_soft_closed', 'periods.post_adjustment',
         'accounts.manage', 'dimensions.manage', 'tax.manage', 'fx.manage',
-        'settings.manage', 'provisions.manage',
+        'settings.manage', 'provisions.manage', 'tax_periods.file', 'tax_periods.reopen',
     ];
 
     /** @return list<string> every permission name, deduplicated, in matrix order */
@@ -111,6 +111,12 @@ final class PermissionMatrix
     public static function isProvisions(string $permission): bool
     {
         return str_starts_with($permission, 'provisions.');
+    }
+
+    /** Added by plan 3c.21a (tax periods: view, manage = generate and enter manual amounts, file, reopen). */
+    public static function isTaxPeriods(string $permission): bool
+    {
+        return str_starts_with($permission, 'tax_periods.');
     }
 
     /** Added by plan 3c.12 (credit limit override). */

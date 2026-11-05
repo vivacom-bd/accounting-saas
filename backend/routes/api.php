@@ -61,6 +61,7 @@ use App\Http\Controllers\Sharing\PublicInvoiceController;
 use App\Http\Controllers\Signing\SigningController;
 use App\Http\Controllers\Tax\TaxCodeController;
 use App\Http\Controllers\Tax\TaxGroupController;
+use App\Http\Controllers\Tax\TaxPeriodController;
 use App\Http\Controllers\Trade\BillController;
 use App\Http\Controllers\Trade\ContactController;
 use App\Http\Controllers\Trade\CreditApplicationController;
@@ -239,6 +240,14 @@ Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent', 'c
         Route::post('tax-groups', [TaxGroupController::class, 'store'])->name('tax-groups.store');
         Route::put('tax-groups/{taxGroup}', [TaxGroupController::class, 'update'])->whereUuid('taxGroup')->name('tax-groups.update');
         Route::post('tax-groups/{taxGroup}/deactivate', [TaxGroupController::class, 'deactivate'])->whereUuid('taxGroup')->name('tax-groups.deactivate');
+
+        // Tax periods (D15 item 13): generated monthly, filed with a frozen snapshot, reopened by a second person
+        Route::get('tax-periods', [TaxPeriodController::class, 'index'])->name('tax-periods.index');
+        Route::post('tax-periods', [TaxPeriodController::class, 'store'])->name('tax-periods.store');
+        Route::get('tax-periods/{taxPeriod}', [TaxPeriodController::class, 'show'])->whereUuid('taxPeriod')->name('tax-periods.show');
+        Route::put('tax-periods/{taxPeriod}/amounts', [TaxPeriodController::class, 'amounts'])->whereUuid('taxPeriod')->name('tax-periods.amounts');
+        Route::post('tax-periods/{taxPeriod}/file', [TaxPeriodController::class, 'file'])->whereUuid('taxPeriod')->name('tax-periods.file');
+        Route::post('tax-periods/{taxPeriod}/reopen', [TaxPeriodController::class, 'reopen'])->whereUuid('taxPeriod')->name('tax-periods.reopen');
 
         // Exchange rates and unrealised-FX revaluation runs
         Route::get('fx-rates', [ExchangeRateController::class, 'index'])->name('fx-rates.index');

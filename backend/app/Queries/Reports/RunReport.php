@@ -57,6 +57,9 @@ final class RunReport
         if ($name === 'budget-vs-actual') {
             return $this->budget($key, $company, $input);
         }
+        if ($name === 'tax-return') {
+            return $this->taxReturnFor($company, $input);
+        }
         [$p, $query] = match ($name) {
             'trial-balance' => [($input['view'] ?? null) === 'movement' || isset($input['from']) ? $this->params->range($company, $input) : $this->params->asOf($company, $input), $this->trialBalance],
             'balance-sheet' => [$this->params->asOf($company, $input), $this->balanceSheet],
@@ -65,7 +68,6 @@ final class RunReport
             'ap-aging' => [$this->params->asOf($company, $input), fn (ReportParams $p): array => ($this->aging)($p, false)],
             'customer-statement' => [$this->params->range($company, $input), fn (ReportParams $p): array => ($this->statement)($p, true)],
             'supplier-statement' => [$this->params->range($company, $input), fn (ReportParams $p): array => ($this->statement)($p, false)],
-            'tax-return' => [$this->params->range($company, $input), $this->taxReturn],
             'asset-schedule' => [$this->params->range($company, $input), $this->assetSchedule],
             default => [$this->params->range($company, $input), $this->cashFlow],
         };
@@ -74,6 +76,22 @@ final class RunReport
         }
 
         return $this->runner->cached($company->id, $key, $p->cacheKey(), fn (): array => ['generated_at' => gmdate('Y-m-d\TH:i:s\Z')] + $query($p));
+    }
+
+    /**
+     * The tax return: the cached totals per tax code, unchanged, plus the country pack layer when the company applied a pack (3c.22).
+     * `$manual` are a tax period's manual amounts (section key → minor units).
+     *
+     * @param  array<string, mixed>  $input
+     * @param  array<string, int>  $manual
+     * @return array<string, mixed>
+     */
+    public function taxReturnFor(Company $company, array $input, array $manual = []): array
+    {
+        $p = $this->params->range($company, $input);
+        $base = $this->runner->cached($company->id, 'tax_return', $p->cacheKey(), fn (): array => ['generated_at' => gmdate('Y-m-d\TH:i:s\Z')] + ($this->taxReturn)($p));
+
+        return $base;
     }
 
     /**

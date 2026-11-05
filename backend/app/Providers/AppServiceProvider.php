@@ -55,6 +55,7 @@ use App\Models\Recurring\RecurringInvoice;
 use App\Models\Recurring\RecurringJournal;
 use App\Models\Tax\TaxCode;
 use App\Models\Tax\TaxGroup;
+use App\Models\Tax\TaxPeriod;
 use App\Models\Trade\Contact;
 use App\Models\Trade\CreditApplication;
 use App\Models\Trade\Invoice;
@@ -98,6 +99,7 @@ use App\Policies\Reports\ReportPolicy;
 use App\Policies\SigningPolicy;
 use App\Policies\Tax\TaxCodePolicy;
 use App\Policies\Tax\TaxGroupPolicy;
+use App\Policies\Tax\TaxPeriodPolicy;
 use App\Policies\Trade\ContactPolicy;
 use App\Policies\Trade\CreditApplicationPolicy;
 use App\Policies\Trade\InvoicePolicy;
@@ -249,6 +251,7 @@ class AppServiceProvider extends ServiceProvider
             Gate::policy($bankModel, BankingPolicy::class);
         }
         Gate::policy(TaxCode::class, TaxCodePolicy::class);
+        Gate::policy(TaxPeriod::class, TaxPeriodPolicy::class);
         Gate::policy(TaxGroup::class, TaxGroupPolicy::class);
         Gate::policy(WebhookEndpoint::class, WebhookEndpointPolicy::class);
         Gate::policy(AuditEvent::class, AuditPolicy::class);
