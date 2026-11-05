@@ -13,6 +13,7 @@ import { reportQuery, REPORT_PARAMS, useReportDimensions } from '@/data/reports'
 import { useRouteCompany } from '@/data/session';
 import { CheckToggle, SelectBox } from '../ReportParts';
 import { generatedLabel } from './parts';
+import { LayoutsMenu } from './LayoutsMenu';
 
 const CUSTOM = '__custom';
 const dateInput = 'h-8 px-2 rounded-md border border-border bg-surface text-xs text-text-primary hover:border-border-strong focus:outline-none focus:border-accent';
@@ -164,6 +165,7 @@ export const LiveReportShell: React.FC<LiveReportShellProps> = ({
           </CheckToggle>
         )}
         <div className="ml-auto flex items-center gap-2">
+          <LayoutsMenu report={report} kind={kind} selection={selection} onApply={onChange} />
           <button
             type="button"
             onClick={() => window.print()}

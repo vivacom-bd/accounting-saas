@@ -22,3 +22,5 @@ Schedule::command('recurring:run')->dailyAt('02:00')->timezone('UTC')->onOneServ
 Schedule::command('approvals:remind')->hourly()->onOneServer();
 // Overdue-invoice reminders for companies that switched them on (plan 3c.7); each company's own date applies.
 Schedule::command('dunning:run')->dailyAt('06:00')->timezone('UTC')->onOneServer();
+// Scheduled report deliveries (plan 3c.23): every hour, each company's own timezone and hour decide what is due; one run per schedule and date, unique in the database.
+Schedule::command('reports:run-schedules')->hourly()->onOneServer();

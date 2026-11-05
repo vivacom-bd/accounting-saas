@@ -4,6 +4,6 @@
   <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #dfe3e8;border-radius:4px;padding:24px">
     <div style="white-space:pre-line">{{ $body }}</div>
   </div>
-  <p style="max-width:560px;margin:12px auto 0;font-size:11px;color:#66707d">Sent on behalf of {{ $company }}. The document is attached as a PDF.</p>
+  <p style="max-width:560px;margin:12px auto 0;font-size:11px;color:#66707d">Sent on behalf of {{ $company }}. The document is attached as {{ $attachedAs }}.</p>
 </body>
 </html>

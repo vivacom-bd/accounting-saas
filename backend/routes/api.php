@@ -54,6 +54,8 @@ use App\Http\Controllers\Recurring\RecurringRunController;
 use App\Http\Controllers\Reports\ListingReportController;
 use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\Reports\ReportExportController;
+use App\Http\Controllers\Reports\ReportLayoutController;
+use App\Http\Controllers\Reports\ReportScheduleController;
 use App\Http\Controllers\Sharing\InvoiceShareLinkController;
 use App\Http\Controllers\Sharing\PublicInvoiceController;
 use App\Http\Controllers\Signing\SigningController;
@@ -341,6 +343,15 @@ Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent', 'c
         Route::get('reports/tax-return/documents', [ListingReportController::class, 'taxReturnDocuments'])->name('reports.tax-return.documents');
         Route::get('reports/period-close', [ListingReportController::class, 'periodClose'])->name('reports.period-close');
         Route::get('reports/audit-trail/bundle', [ListingReportController::class, 'auditBundle'])->middleware('throttle:report-exports')->name('reports.audit-trail.bundle');
+        // Saved layouts and scheduled delivery (3c.23); declared before the {report} export route so `layouts` is never read as a report.
+        Route::get('reports/layouts', [ReportLayoutController::class, 'index'])->name('reports.layouts.index');
+        Route::post('reports/layouts', [ReportLayoutController::class, 'store'])->name('reports.layouts.store');
+        Route::put('reports/layouts/{layout}', [ReportLayoutController::class, 'update'])->whereUuid('layout')->name('reports.layouts.update');
+        Route::delete('reports/layouts/{layout}', [ReportLayoutController::class, 'destroy'])->whereUuid('layout')->name('reports.layouts.destroy');
+        Route::get('reports/layouts/{layout}/schedule', [ReportScheduleController::class, 'show'])->whereUuid('layout')->name('reports.layouts.schedule.show');
+        Route::put('reports/layouts/{layout}/schedule', [ReportScheduleController::class, 'upsert'])->whereUuid('layout')->name('reports.layouts.schedule.upsert');
+        Route::delete('reports/layouts/{layout}/schedule', [ReportScheduleController::class, 'destroy'])->whereUuid('layout')->name('reports.layouts.schedule.destroy');
+        Route::get('reports/schedule-recipients', [ReportScheduleController::class, 'recipients'])->name('reports.schedule-recipients');
         Route::get('reports/exports/{exportId}', [ReportExportController::class, 'show'])->whereUuid('exportId')->name('reports.exports.show');
         Route::get('reports/{report}/export', [ReportExportController::class, 'export'])->whereIn('report', ReportExport::REPORTS)->middleware('throttle:report-exports')->name('reports.export');
 

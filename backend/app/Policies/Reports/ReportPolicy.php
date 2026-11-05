@@ -24,4 +24,16 @@ final class ReportPolicy
     {
         return $this->context->can($principal, 'reports.export', 'reports:export');
     }
+
+    /** Saved layouts (plan 3c.23) are people's own: anyone who can view reports, API tokens excepted. */
+    public function layouts(Authenticatable $principal): bool
+    {
+        return $this->context->personCan($principal, 'reports.view');
+    }
+
+    /** Scheduling email delivery (plan 3c.23): `reports.schedule`, people only. */
+    public function schedule(Authenticatable $principal): bool
+    {
+        return $this->context->personCan($principal, 'reports.schedule');
+    }
 }

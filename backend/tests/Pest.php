@@ -13,7 +13,7 @@ use Tests\TestCase;
 pest()->extend(TestCase::class)->use(ResetsDatabase::class)
     ->in('Feature', 'Database', 'Invariants', 'Concurrency', 'Api');
 
-pest()->use(MakesApiCalls::class)->in('Api/Ledger', 'Api/Trade', 'Api/Files', 'Api/Recurring', 'Api/Settings', 'Api/Workflow', 'Api/Org', 'Api/Audit', 'Api/Procurement', 'Api/Documents', 'Api/Notifications', 'Feature/FixedAssets', 'Invariants/FixedAssets');
+pest()->use(MakesApiCalls::class)->in('Api/Ledger', 'Api/Trade', 'Api/Files', 'Api/Recurring', 'Api/Settings', 'Api/Workflow', 'Api/Org', 'Api/Audit', 'Api/Procurement', 'Api/Documents', 'Api/Notifications', 'Api/Reports', 'Feature/FixedAssets', 'Invariants/FixedAssets');
 pest()->use(TradeApi::class)->in('Api/Trade', 'Api/Files', 'Api/Recurring', 'Api/Settings', 'Api/Workflow', 'Api/Org', 'Api/Audit', 'Api/Procurement', 'Api/Documents', 'Api/Notifications', 'Feature/FixedAssets', 'Invariants/FixedAssets');
 pest()->use(ProcurementApi::class)->in('Api/Procurement');
 pest()->use(AssetApi::class)->in('Feature/FixedAssets', 'Invariants/FixedAssets');

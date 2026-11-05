@@ -44,6 +44,9 @@ final class PermissionMatrix
 
     private const array EXPORT = ['reports.export'];
 
+    /** Scheduled delivery of a saved report layout by email (plan 3c.23); existing companies got it from a backfill migration. */
+    private const array SCHEDULE = ['reports.schedule'];
+
     private const array DAILY = [
         'journals.create', 'journals.submit',
         'invoices.create', 'invoices.submit', 'receipts.create',
@@ -74,7 +77,7 @@ final class PermissionMatrix
     public static function permissions(): array
     {
         return array_values(array_unique([
-            ...self::views(), ...self::EXPORT, ...self::DAILY, ...self::APPROVE, ...self::REVERSE,
+            ...self::views(), ...self::EXPORT, ...self::SCHEDULE, ...self::DAILY, ...self::APPROVE, ...self::REVERSE,
             ...self::MANAGE, 'audit.view', 'audit.verify',
         ]));
     }
@@ -130,7 +133,7 @@ final class PermissionMatrix
         return match ($role) {
             self::OWNER => $all,
             self::FINANCE_MANAGER => array_values(array_diff($all, ['audit.verify'])),
-            self::ACCOUNTANT => [...self::views(), ...self::EXPORT, ...self::DAILY],
+            self::ACCOUNTANT => [...self::views(), ...self::EXPORT, ...self::SCHEDULE, ...self::DAILY],
             self::APPROVER => [...self::views(), ...self::EXPORT, ...self::APPROVE],
             self::SALES_ASSISTANT => [
                 ...self::SALES_VIEWS,

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { exportReport } from '../src/api/live/reports';
 import { ApiError } from '../src/api/errors';
+import { describeError } from '../src/api/messages';
 
 const json = (status: number, body: unknown, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', ...headers } });
@@ -37,6 +38,14 @@ describe('exportReport', () => {
       .mockResolvedValueOnce(json(202, { data: { id: 'e1', status: 'queued', report: 'x', format: 'pdf' } }))
       .mockResolvedValueOnce(json(200, { data: { id: 'e1', status: 'failed' } }));
     await expect(exportReport('co1', 'trial-balance', 'pdf', {}, { pollMs: 1 })).rejects.toMatchObject({ code: 'export_failed' });
+  });
+
+  it('carries the plain message of a failed export so the screen can show why', async () => {
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(json(202, { data: { id: 'e1', status: 'queued', report: 'x', format: 'pdf' } }))
+      .mockResolvedValueOnce(json(200, { data: { id: 'e1', status: 'failed', message: 'The PDF could not be made. Try again in a few minutes, or export to Excel or CSV instead.' } }));
+    const err = await exportReport('co1', 'trial-balance', 'pdf', {}, { pollMs: 1 }).catch((e: unknown) => e);
+    expect(describeError(err)).toBe('The PDF could not be made. Try again in a few minutes, or export to Excel or CSV instead.');
   });
 
   it('keeps the code of a refusal (rate limit, no permission)', async () => {

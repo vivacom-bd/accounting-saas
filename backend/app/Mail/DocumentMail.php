@@ -12,7 +12,7 @@ use Illuminate\Mail\Mailables\Envelope;
 
 /**
  * A document emailed to a customer or supplier. The subject and body are the finished text the sender confirmed: the views
- * print the body escaped, so nothing in it is ever treated as markup. The PDF is attached from memory.
+ * print the body escaped, so nothing in it is ever treated as markup. The attachment (a PDF unless a mime type is given) is attached from memory.
  */
 final class DocumentMail extends Mailable
 {
@@ -24,6 +24,7 @@ final class DocumentMail extends Mailable
         private readonly string $pdf,
         private readonly string $displayName = '',
         private readonly string $replyAddress = '',
+        private readonly string $mime = 'application/pdf',
     ) {}
 
     public function envelope(): Envelope
@@ -40,12 +41,16 @@ final class DocumentMail extends Mailable
 
     public function content(): Content
     {
-        return new Content(view: 'mail.document', text: 'mail.document-text', with: ['company' => $this->companyName, 'body' => $this->messageBody]);
+        return new Content(view: 'mail.document', text: 'mail.document-text', with: ['company' => $this->companyName, 'body' => $this->messageBody, 'attachedAs' => match ($this->mime) {
+            'text/csv' => 'a CSV file',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'an Excel file',
+            default => 'a PDF',
+        }]);
     }
 
     /** @return list<Attachment> */
     public function attachments(): array
     {
-        return [Attachment::fromData(fn () => $this->pdf, $this->attachmentName)->withMime('application/pdf')];
+        return [Attachment::fromData(fn () => $this->pdf, $this->attachmentName)->withMime($this->mime)];
     }
 }

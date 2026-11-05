@@ -271,7 +271,7 @@ describe('ledger lines, drill and exports', () => {
     expect(drillQuery({ account_id: A1, from: '2026-10-01', to: '2026-10-31', exclude_closing: false })).toEqual({ account_id: A1, from: '2026-10-01', to: '2026-10-31', exclude_closing: 'false' });
   });
   it('reads an export ticket', () => {
-    expect(parseExportTicket({ data: { id: 'e1', status: 'queued', report: 'trial-balance', format: 'pdf' } })).toEqual({ id: 'e1', status: 'queued' });
+    expect(parseExportTicket({ data: { id: 'e1', status: 'queued', report: 'trial-balance', format: 'pdf' } })).toEqual({ id: 'e1', status: 'queued', message: null });
     expect(parseExportTicket({ data: { id: 'e1', status: 'failed' } }).status).toBe('failed');
   });
 });
