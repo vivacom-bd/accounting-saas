@@ -4826,6 +4826,73 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/companies/{company}/reports/layouts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The layouts the person can use: their own and the ones shared with the company; the default first */
+        get: operations["reports.layouts.index"];
+        put?: never;
+        post: operations["reports.layouts.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/reports/layouts/{layout}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["reports.layouts.update"];
+        post?: never;
+        delete: operations["reports.layouts.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/reports/layouts/{layout}/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The schedule on one of your layouts with its recent runs; 404 when there is none */
+        get: operations["reports.layouts.schedule.show"];
+        put: operations["reports.layouts.schedule.upsert"];
+        post?: never;
+        delete: operations["reports.layouts.schedule.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/reports/schedule-recipients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The people a scheduled report can be mailed to by name: members who can work in this company */
+        get: operations["reports.schedule-recipients"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/me": {
         parameters: {
             query?: never;
@@ -8639,6 +8706,137 @@ export interface components {
             };
         };
         /**
+         * ReportLayoutRequest
+         * @description Save (or change) a report layout: a name, who sees it, and the report's parameters, as the report's query string takes them.
+         */
+        ReportLayoutRequest: {
+            /** @enum {string} */
+            report: "trial-balance" | "profit-and-loss" | "balance-sheet" | "cash-flow" | "general-ledger" | "ar-aging" | "ap-aging" | "customer-statement" | "supplier-statement" | "tax-return" | "budget-vs-actual";
+            name: string;
+            /** @enum {string} */
+            visibility: "private" | "company";
+            is_default?: boolean;
+            params: {
+                /**
+                 * @description Move with the calendar: this_month, last_month, this_year_to_date, last_year_to_date, or today (as-of reports). Leave out for a fixed period.
+                 * @enum {string|null}
+                 */
+                rule?: "this_month" | "last_month" | "this_year_to_date" | "last_year_to_date" | "today" | null;
+                /** Format: uuid */
+                period_id?: string | null;
+                /** Format: date */
+                as_of?: string | null;
+                /** Format: date */
+                from?: string | null;
+                /** Format: date */
+                to?: string | null;
+                /** @enum {string|null} */
+                basis?: "month" | "ytd" | null;
+                /** @enum {string|null} */
+                view?: "balances" | "movement" | null;
+                /** @enum {string|null} */
+                comparison?: "none" | "previous_period" | "previous_year" | null;
+                hide_zero?: boolean | null;
+                /** @description Dimension id → value id. */
+                dimensions?: string[] | null;
+                /** Format: uuid */
+                breakdown?: string | null;
+                /** Format: uuid */
+                account_id?: string | null;
+                /** Format: uuid */
+                contact_id?: string | null;
+                /** Format: uuid */
+                budget_id?: string | null;
+            };
+            /** @description Send what you loaded: a stale value answers 409. */
+            version?: number;
+        };
+        /** ReportLayoutResource */
+        ReportLayoutResource: {
+            id: string;
+            report: string;
+            name: string;
+            /** @description private | company */
+            visibility: string;
+            mine: boolean;
+            owner_name: string | null;
+            is_default: boolean;
+            params: {
+                [key: string]: unknown;
+            };
+            resolved: {
+                [key: string]: unknown;
+            } | null;
+            problem: string | null;
+            /** @description The owner's schedule in short, or null. */
+            schedule: {
+                active: boolean;
+                description: string;
+                last_status: string | null;
+            } | null;
+            version: number;
+        };
+        /**
+         * ReportScheduleRequest
+         * @description Set or change a layout's scheduled email delivery, in friendly terms: how often, which day, which hour, which format, to whom.
+         */
+        ReportScheduleRequest: {
+            /** @enum {string} */
+            frequency: "daily" | "weekly" | "monthly" | "quarterly";
+            /** @description Weekly: 1 (Monday) to 7 (Sunday). */
+            weekday?: number | null;
+            /** @description Monthly and quarterly (January, April, July, October): a day from 1 to 28, or `last_day`. */
+            month_day?: number | null;
+            last_day?: boolean;
+            /** @description The hour of the day, 0 to 23, in the company's timezone. */
+            hour: number;
+            /** @enum {string} */
+            format: "pdf" | "xlsx" | "csv";
+            /** @description People of the company, by user id. */
+            recipient_user_ids: string[];
+            /** @description Other email addresses. */
+            recipient_emails: string[];
+            active?: boolean;
+            version?: number;
+        };
+        /** ReportScheduleResource */
+        ReportScheduleResource: {
+            id: string;
+            layout_id: string;
+            frequency: string;
+            weekday: number | null;
+            month_day: number | null;
+            last_day: boolean;
+            hour: number;
+            format: string;
+            /** @description In words: "Every Monday at 07:00". */
+            description: string;
+            timezone: string;
+            recipient_user_ids: string[];
+            recipient_people: {
+                id: string;
+                name: string;
+                email: string;
+            }[];
+            recipient_emails: string[];
+            active: boolean;
+            /** @description paused_by_owner | owner_lost_rights when `active` is false. */
+            paused_reason: string | null;
+            next_run_at: string | null;
+            last_run_at: string | null;
+            last_status: string | null;
+            runs: {
+                id: string;
+                due_on: string;
+                status: string;
+                message: string | null;
+                recipients: number;
+                bytes: number | null;
+                finished_at: string | null;
+            }[];
+            version: number;
+        };
+        /**
          * RequisitionRequest
          * @description Create (POST) or replace (PUT, with `version`) a draft purchase requisition. The estimate is in the company's base
          *     currency; totals are the server's. A line needs an item or a description.
@@ -9091,7 +9289,7 @@ export interface components {
         /** UserNotificationResource */
         UserNotificationResource: {
             id: string;
-            /** @description approval_requested, approval_reminder, document_approved, document_returned, import_finished, import_failed, report_ready, send_failed */
+            /** @description approval_requested, approval_reminder, document_approved, document_returned, import_finished, import_failed, report_ready, report_failed, send_failed */
             kind: string;
             title: string;
             body: string | null;
@@ -22149,6 +22347,9 @@ export interface operations {
                         data: {
                             id: string;
                             status: unknown;
+                            report: unknown;
+                            format: unknown;
+                            message: unknown;
                         };
                     };
                 };
@@ -22238,6 +22439,248 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "reports.layouts.index": {
+        parameters: {
+            query?: {
+                report?: "trial-balance" | "profit-and-loss" | "balance-sheet" | "cash-flow" | "general-ledger" | "ar-aging" | "ap-aging" | "customer-statement" | "supplier-statement" | "tax-return" | "budget-vs-actual";
+            };
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `ReportLayoutResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ReportLayoutResource"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "reports.layouts.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportLayoutRequest"];
+            };
+        };
+        responses: {
+            /** @description `ReportLayoutResource` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ReportLayoutResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "reports.layouts.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                layout: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportLayoutRequest"];
+            };
+        };
+        responses: {
+            /** @description `ReportLayoutResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ReportLayoutResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "reports.layouts.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                layout: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "reports.layouts.schedule.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                layout: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ReportScheduleResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ReportScheduleResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "reports.layouts.schedule.upsert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                layout: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportScheduleRequest"];
+            };
+        };
+        responses: {
+            /** @description `ReportScheduleResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ReportScheduleResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "reports.layouts.schedule.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                layout: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "reports.schedule-recipients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            name: string;
+                            email: string;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "session.me": {

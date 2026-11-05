@@ -34403,11 +34403,17 @@
                                                 "id": {
                                                     "type": "string"
                                                 },
-                                                "status": {}
+                                                "status": {},
+                                                "report": {},
+                                                "format": {},
+                                                "message": {}
                                             },
                                             "required": [
                                                 "id",
-                                                "status"
+                                                "status",
+                                                "report",
+                                                "format",
+                                                "message"
                                             ]
                                         }
                                     },
@@ -34912,6 +34918,479 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/reports/layouts": {
+            "get": {
+                "operationId": "reports.layouts.index",
+                "summary": "The layouts the person can use: their own and the ones shared with the company; the default first",
+                "tags": [
+                    "ReportLayout"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "report",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "trial-balance",
+                                "profit-and-loss",
+                                "balance-sheet",
+                                "cash-flow",
+                                "general-ledger",
+                                "ar-aging",
+                                "ap-aging",
+                                "customer-statement",
+                                "supplier-statement",
+                                "tax-return",
+                                "budget-vs-actual"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `ReportLayoutResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ReportLayoutResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "reports.layouts.store",
+                "tags": [
+                    "ReportLayout"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReportLayoutRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`ReportLayoutResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ReportLayoutResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/reports/layouts/{layout}": {
+            "put": {
+                "operationId": "reports.layouts.update",
+                "tags": [
+                    "ReportLayout"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "layout",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReportLayoutRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ReportLayoutResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ReportLayoutResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "reports.layouts.destroy",
+                "tags": [
+                    "ReportLayout"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "layout",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/reports/layouts/{layout}/schedule": {
+            "get": {
+                "operationId": "reports.layouts.schedule.show",
+                "summary": "The schedule on one of your layouts with its recent runs; 404 when there is none",
+                "tags": [
+                    "ReportSchedule"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "layout",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ReportScheduleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ReportScheduleResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "reports.layouts.schedule.upsert",
+                "tags": [
+                    "ReportSchedule"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "layout",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReportScheduleRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ReportScheduleResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ReportScheduleResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "reports.layouts.schedule.destroy",
+                "tags": [
+                    "ReportSchedule"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "layout",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/reports/schedule-recipients": {
+            "get": {
+                "operationId": "reports.schedule-recipients",
+                "summary": "The people a scheduled report can be mailed to by name: members who can work in this company",
+                "tags": [
+                    "ReportSchedule"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "email": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "name",
+                                                    "email"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -51157,6 +51636,533 @@
                 ],
                 "title": "ReopenRequestResource"
             },
+            "ReportLayoutRequest": {
+                "type": "object",
+                "description": "Save (or change) a report layout: a name, who sees it, and the report's parameters, as the report's query string takes them.",
+                "properties": {
+                    "report": {
+                        "type": "string",
+                        "enum": [
+                            "trial-balance",
+                            "profit-and-loss",
+                            "balance-sheet",
+                            "cash-flow",
+                            "general-ledger",
+                            "ar-aging",
+                            "ap-aging",
+                            "customer-statement",
+                            "supplier-statement",
+                            "tax-return",
+                            "budget-vs-actual"
+                        ]
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "visibility": {
+                        "type": "string",
+                        "enum": [
+                            "private",
+                            "company"
+                        ]
+                    },
+                    "is_default": {
+                        "type": "boolean"
+                    },
+                    "params": {
+                        "type": "object",
+                        "properties": {
+                            "rule": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "Move with the calendar: this_month, last_month, this_year_to_date, last_year_to_date, or today (as-of reports). Leave out for a fixed period.",
+                                "enum": [
+                                    "this_month",
+                                    "last_month",
+                                    "this_year_to_date",
+                                    "last_year_to_date",
+                                    "today",
+                                    null
+                                ]
+                            },
+                            "period_id": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "uuid"
+                            },
+                            "as_of": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "date"
+                            },
+                            "from": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "date"
+                            },
+                            "to": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "date"
+                            },
+                            "basis": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "month",
+                                    "ytd",
+                                    null
+                                ]
+                            },
+                            "view": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "balances",
+                                    "movement",
+                                    null
+                                ]
+                            },
+                            "comparison": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "none",
+                                    "previous_period",
+                                    "previous_year",
+                                    null
+                                ]
+                            },
+                            "hide_zero": {
+                                "type": [
+                                    "boolean",
+                                    "null"
+                                ]
+                            },
+                            "dimensions": {
+                                "type": [
+                                    "array",
+                                    "null"
+                                ],
+                                "description": "Dimension id \u2192 value id.",
+                                "items": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f-]{36}$"
+                                },
+                                "maxItems": 8
+                            },
+                            "breakdown": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "uuid"
+                            },
+                            "account_id": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "uuid"
+                            },
+                            "contact_id": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "uuid"
+                            },
+                            "budget_id": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "format": "uuid"
+                            }
+                        }
+                    },
+                    "version": {
+                        "type": "integer",
+                        "description": "Send what you loaded: a stale value answers 409.",
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "report",
+                    "name",
+                    "visibility",
+                    "params"
+                ],
+                "title": "ReportLayoutRequest"
+            },
+            "ReportLayoutResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "report": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "visibility": {
+                        "type": "string",
+                        "description": "private | company"
+                    },
+                    "mine": {
+                        "type": "boolean"
+                    },
+                    "owner_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_default": {
+                        "type": "boolean"
+                    },
+                    "params": {
+                        "type": "object",
+                        "additionalProperties": {}
+                    },
+                    "resolved": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": {}
+                    },
+                    "problem": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "schedule": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "The owner's schedule in short, or null.",
+                        "properties": {
+                            "active": {
+                                "type": "boolean"
+                            },
+                            "description": {
+                                "type": "string"
+                            },
+                            "last_status": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "active",
+                            "description",
+                            "last_status"
+                        ]
+                    },
+                    "version": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "id",
+                    "report",
+                    "name",
+                    "visibility",
+                    "mine",
+                    "owner_name",
+                    "is_default",
+                    "params",
+                    "resolved",
+                    "problem",
+                    "schedule",
+                    "version"
+                ],
+                "title": "ReportLayoutResource"
+            },
+            "ReportScheduleRequest": {
+                "type": "object",
+                "description": "Set or change a layout's scheduled email delivery, in friendly terms: how often, which day, which hour, which format, to whom.",
+                "properties": {
+                    "frequency": {
+                        "type": "string",
+                        "enum": [
+                            "daily",
+                            "weekly",
+                            "monthly",
+                            "quarterly"
+                        ]
+                    },
+                    "weekday": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Weekly: 1 (Monday) to 7 (Sunday).",
+                        "minimum": 1,
+                        "maximum": 7
+                    },
+                    "month_day": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Monthly and quarterly (January, April, July, October): a day from 1 to 28, or `last_day`.",
+                        "minimum": 1,
+                        "maximum": 28
+                    },
+                    "last_day": {
+                        "type": "boolean"
+                    },
+                    "hour": {
+                        "type": "integer",
+                        "description": "The hour of the day, 0 to 23, in the company's timezone.",
+                        "minimum": 0,
+                        "maximum": 23
+                    },
+                    "format": {
+                        "type": "string",
+                        "enum": [
+                            "pdf",
+                            "xlsx",
+                            "csv"
+                        ]
+                    },
+                    "recipient_user_ids": {
+                        "type": "array",
+                        "description": "People of the company, by user id.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "maxItems": 10
+                    },
+                    "recipient_emails": {
+                        "type": "array",
+                        "description": "Other email addresses.",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 254
+                        },
+                        "maxItems": 10
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "version": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "frequency",
+                    "hour",
+                    "format",
+                    "recipient_user_ids",
+                    "recipient_emails"
+                ],
+                "title": "ReportScheduleRequest"
+            },
+            "ReportScheduleResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "layout_id": {
+                        "type": "string"
+                    },
+                    "frequency": {
+                        "type": "string"
+                    },
+                    "weekday": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "month_day": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "last_day": {
+                        "type": "boolean"
+                    },
+                    "hour": {
+                        "type": "integer"
+                    },
+                    "format": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "In words: \"Every Monday at 07:00\"."
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "recipient_user_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "recipient_people": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "email": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "name",
+                                "email"
+                            ]
+                        }
+                    },
+                    "recipient_emails": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "paused_reason": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "paused_by_owner | owner_lost_rights when `active` is false."
+                    },
+                    "next_run_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "last_run_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "last_status": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "runs": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "due_on": {
+                                    "type": "string"
+                                },
+                                "status": {
+                                    "type": "string"
+                                },
+                                "message": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "recipients": {
+                                    "type": "integer"
+                                },
+                                "bytes": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "finished_at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "due_on",
+                                "status",
+                                "message",
+                                "recipients",
+                                "bytes",
+                                "finished_at"
+                            ]
+                        }
+                    },
+                    "version": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "id",
+                    "layout_id",
+                    "frequency",
+                    "weekday",
+                    "month_day",
+                    "last_day",
+                    "hour",
+                    "format",
+                    "description",
+                    "timezone",
+                    "recipient_user_ids",
+                    "recipient_people",
+                    "recipient_emails",
+                    "active",
+                    "paused_reason",
+                    "next_run_at",
+                    "last_run_at",
+                    "last_status",
+                    "runs",
+                    "version"
+                ],
+                "title": "ReportScheduleResource"
+            },
             "RequisitionRequest": {
                 "type": "object",
                 "description": "Create (POST) or replace (PUT, with `version`) a draft purchase requisition. The estimate is in the company's base\ncurrency; totals are the server's. A line needs an item or a description.",
@@ -52734,7 +53740,7 @@
                     },
                     "kind": {
                         "type": "string",
-                        "description": "approval_requested, approval_reminder, document_approved, document_returned, import_finished, import_failed, report_ready, send_failed"
+                        "description": "approval_requested, approval_reminder, document_approved, document_returned, import_finished, import_failed, report_ready, report_failed, send_failed"
                     },
                     "title": {
                         "type": "string"
