@@ -18,7 +18,7 @@ final class NotificationPlanner
 {
     public const array TYPES = [
         'document.submitted', 'document.approved', 'document.returned', 'import.applied', 'import.failed',
-        NotificationEvent::REPORT_READY, NotificationEvent::SEND_FAILED,
+        NotificationEvent::REPORT_READY, NotificationEvent::REPORT_FAILED, NotificationEvent::SEND_FAILED,
     ];
 
     public function __construct(private readonly ApprovalAudience $audience, private readonly ImportOwners $imports) {}
@@ -37,9 +37,27 @@ final class NotificationPlanner
             'document.submitted', 'document.approved', 'document.returned' => $this->approvals($m, $company, $key),
             'import.applied', 'import.failed' => $this->import($m, $company, $key),
             NotificationEvent::REPORT_READY => $this->one((string) ($p['user_id'] ?? ''), $company, 'report_ready', 'Your report is ready', 'Your '.str_replace('-', ' ', (string) ($p['report'] ?? 'report')).' export can be downloaded now.', null, null, 'reports/'.(string) ($p['report'] ?? ''), $key),
+            NotificationEvent::REPORT_FAILED => $this->reportFailed($p, $company, $key),
             NotificationEvent::SEND_FAILED => $this->one((string) ($p['user_id'] ?? ''), $company, 'send_failed', 'An email did not go out', (string) ($p['label'] ?? 'A document').' could not be sent. Open it to see the reason and try again.', (string) ($p['link_type'] ?? ''), (string) ($p['link_id'] ?? ''), (string) ($p['link'] ?? ''), $key),
             default => [],
         };
+    }
+
+    /**
+     * A queued export that failed, or a scheduled report that did not go out. The message was written in plain words by the job.
+     *
+     * @param  array<string, mixed>  $p
+     * @return list<NotificationDraft>
+     */
+    private function reportFailed(array $p, string $company, string $key): array
+    {
+        $name = str_replace('-', ' ', (string) ($p['report'] ?? 'report'));
+        $scheduled = ($p['kind'] ?? 'export') === 'scheduled';
+
+        return $this->one((string) ($p['user_id'] ?? ''), $company, 'report_failed',
+            $scheduled ? 'A scheduled report did not go out' : 'Your report could not be made',
+            $scheduled ? "The scheduled {$name}: ".(string) ($p['message'] ?? 'it could not be sent.') : "Your {$name} export did not finish. ".(string) ($p['message'] ?? 'Try again in a few minutes.'),
+            null, null, 'reports/'.(string) ($p['report'] ?? ''), $key);
     }
 
     /** @return list<NotificationDraft> */

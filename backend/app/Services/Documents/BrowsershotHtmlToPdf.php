@@ -8,14 +8,15 @@ use App\Contracts\HtmlToPdf;
 use Spatie\Browsershot\Browsershot;
 
 /**
- * Headless Chromium through Browsershot, the same engine as the report PDFs (04_TRD §2). Needs node, the `puppeteer`
+ * Headless Chromium through Browsershot: the one way documents and report exports launch it (04_TRD §2), so
+ * `reports.chromium_path` and `reports.node_module_path` apply to both. Needs node, the `puppeteer`
  * module and a Chromium binary (`reports.chromium_path`) on the machine that runs it: the `exports` worker, never a web process.
  */
 final class BrowsershotHtmlToPdf implements HtmlToPdf
 {
-    public function pdf(string $html, string $footerHtml = ''): string
+    public function pdf(string $html, string $footerHtml = '', bool $landscape = false): string
     {
-        $shot = Browsershot::html($html)->format('A4')->margins(14, 14, 18, 14)->noSandbox()->showBackground()->timeout(60);
+        $shot = Browsershot::html($html)->format('A4')->landscape($landscape)->margins(14, 14, 18, 14)->noSandbox()->showBackground()->timeout(60);
         if ($footerHtml !== '') {
             $shot->showBrowserHeaderAndFooter()->hideHeader()->footerHtml($footerHtml);
         }

@@ -36,9 +36,10 @@ final class ExportStore
         $this->put($tenantId, $companyId, $id, ['status' => 'ready', 'path' => $path] + $extra + $record);
     }
 
-    public function failed(string $tenantId, string $companyId, string $id): void
+    /** @param string $message plain words for the person; never the exception text */
+    public function failed(string $tenantId, string $companyId, string $id, string $message = ''): void
     {
-        $this->put($tenantId, $companyId, $id, ['status' => 'failed'] + ($this->find($tenantId, $companyId, $id) ?? []));
+        $this->put($tenantId, $companyId, $id, ['status' => 'failed', 'message' => $message] + ($this->find($tenantId, $companyId, $id) ?? []));
     }
 
     /** @return array<string, mixed>|null */

@@ -11,6 +11,8 @@ final readonly class NotificationEvent implements OutboxEvent
 {
     public const string REPORT_READY = 'report.ready';
 
+    public const string REPORT_FAILED = 'report.failed';
+
     public const string SEND_FAILED = 'document.send_failed';
 
     /** @param array<string, mixed> $payload */

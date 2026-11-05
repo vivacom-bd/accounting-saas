@@ -87,7 +87,7 @@ final class ReportExportController extends Controller
             abort(404);
         }
         if (($record['status'] ?? '') !== 'ready') {
-            return response()->json(['data' => ['id' => $exportId, 'status' => $record['status'] ?? 'queued']]);
+            return response()->json(['data' => ['id' => $exportId, 'status' => $record['status'] ?? 'queued', 'report' => $record['report'] ?? null, 'format' => $record['format'] ?? null, 'message' => ($record['status'] ?? '') === 'failed' ? ($record['message'] ?? 'The export could not be made.') : null]]);
         }
 
         $path = (string) $record['path'];

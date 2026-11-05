@@ -932,8 +932,8 @@ export function parseDrillSummary(summary: unknown, account: unknown): DrillSumm
 
 /** Queued exports answer 202 with an id, then `{id, status}` until the file is ready. */
 export type ExportStatus = 'queued' | 'running' | 'ready' | 'failed';
-export function parseExportTicket(data: unknown): { id: string; status: ExportStatus } {
+export function parseExportTicket(data: unknown): { id: string; status: ExportStatus; message: string | null } {
   const d = rec(rec(data, 'export').data, 'export.data');
   const status = d.status === 'ready' || d.status === 'failed' || d.status === 'running' ? d.status : 'queued';
-  return { id: str(d.id, 'export.id'), status };
+  return { id: str(d.id, 'export.id'), status, message: typeof d.message === 'string' && d.message !== '' ? d.message : null };
 }

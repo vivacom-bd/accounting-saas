@@ -14,12 +14,16 @@ final class FakePdfEngine implements HtmlToPdf
 
     public ?\Throwable $fail = null;
 
-    public function pdf(string $html, string $footerHtml = ''): string
+    /** @var list<bool> */
+    public array $landscape = [];
+
+    public function pdf(string $html, string $footerHtml = '', bool $landscape = false): string
     {
         if ($this->fail !== null) {
             throw $this->fail;
         }
         $this->html[] = $html;
+        $this->landscape[] = $landscape;
 
         return "%PDF-1.4\n% fake pdf for tests\n".md5($html)."\n%%EOF";
     }

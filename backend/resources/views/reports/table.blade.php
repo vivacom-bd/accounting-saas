@@ -8,12 +8,15 @@
     <meta charset="utf-8">
     <title>{{ $table->title }}</title>
     <style>
-        body { font-family: Helvetica, Arial, sans-serif; font-size: 10px; color: #111; }
+        body { font-family: Helvetica, Arial, sans-serif; font-size: {{ $compact ? '8px' : '10px' }}; color: #111; }
+        thead { display: table-header-group; }
+        tr { page-break-inside: avoid; }
         h1 { font-size: 16px; margin: 0 0 2px; }
         .subtitle { color: #555; margin-bottom: 12px; }
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; border-bottom: 1px solid #111; padding: 3px 4px; }
         td { padding: 2px 4px; border-bottom: 1px solid #eee; }
+        td.tok { word-break: break-all; }
         .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
         tr.heading td { font-weight: 700; padding-top: 8px; border-bottom: 0; }
         tr.total td { font-weight: 700; border-top: 1px solid #111; }
@@ -38,7 +41,7 @@
                         @if (is_array($cell))
                             <td class="num">{{ $table->formats?->number($cell['amount'], $table->decimals) ?? Amounts::text($cell['amount'], $table->decimals) }}</td>
                         @else
-                            <td @class(['num' => $table->columns[$i]['numeric'] ?? false])>{{ $table->formats?->date((string) $cell) ?? $cell }}</td>
+                            <td @class(['num' => $table->columns[$i]['numeric'] ?? false, 'tok' => preg_match('/^\S{24,}$/u', (string) $cell) === 1])>{{ $table->formats?->date((string) $cell) ?? $cell }}</td>
                         @endif
                     @endforeach
                 </tr>

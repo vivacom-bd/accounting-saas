@@ -29,7 +29,7 @@ export interface BellNotification {
 export function bellKind(kind: string): NotificationKind {
   if (kind.startsWith('approval') || kind === 'document_approved' || kind === 'document_returned') return 'approval';
   if (kind.startsWith('import')) return 'import';
-  if (kind === 'report_ready') return 'report';
+  if (kind === 'report_ready' || kind === 'report_failed') return 'report';
   if (kind === 'send_failed') return 'send';
   return 'period';
 }

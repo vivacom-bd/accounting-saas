@@ -17,7 +17,7 @@ final class UserNotificationResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            /** approval_requested, approval_reminder, document_approved, document_returned, import_finished, import_failed, report_ready, send_failed */
+            /** approval_requested, approval_reminder, document_approved, document_returned, import_finished, import_failed, report_ready, report_failed, send_failed */
             'kind' => $this->kind,
             'title' => $this->title,
             'body' => $this->body,

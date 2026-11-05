@@ -25,6 +25,15 @@ return [
     // Where node finds the `puppeteer` module (NODE_PATH). Empty: the global `npm root -g`.
     'node_module_path' => env('REPORTS_NODE_MODULE_PATH', ''),
 
+    // Scheduled delivery (plan 3c.23): most recipients on one schedule; the largest attachment a scheduled mail carries (bytes);
+    // scheduled mails a company may send per hour (a run over the limit waits and tries again, up to `schedule_retry_minutes` x 6).
+    'schedule_max_recipients' => 10,
+    'schedule_max_bytes' => (int) env('REPORTS_SCHEDULE_MAX_BYTES', 10 * 1024 * 1024),
+    'scheduled_emails_per_hour' => (int) env('REPORTS_SCHEDULED_EMAILS_PER_HOUR', 30),
+    'schedule_retry_minutes' => 10,
+    // A run still `queued` this long after it was claimed never finished (a worker died): the next pass marks it failed.
+    'schedule_stuck_minutes' => 180,
+
     // 13 §16: exports are limited per company.
-    'exports_per_hour' => 10,
+    'exports_per_hour' => (int) env('REPORTS_EXPORTS_PER_HOUR', 10),
 ];

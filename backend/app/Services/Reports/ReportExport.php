@@ -62,6 +62,26 @@ final class ReportExport
         return ['table' => new ReportTable($table->title, $table->subtitle, $table->columns, $rows, $decimals, CompanyFormats::for($company)), 'rows' => count($rows)];
     }
 
+    /**
+     * Runs `$work` with the reports reading the replica, as heavy runs do (13 §13). Restored afterwards: workers and sync queues
+     * share config.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $work
+     * @return T
+     */
+    public static function onExportConnection(callable $work): mixed
+    {
+        $previous = config('reports.connection');
+        config(['reports.connection' => config('reports.export_connection')]);
+        try {
+            return $work();
+        } finally {
+            config(['reports.connection' => $previous]);
+        }
+    }
+
     /** Writes the table to a path (a file or `php://output`) in the format. */
     public function write(ReportTable $table, string $format, string $path): void
     {

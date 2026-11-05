@@ -15,6 +15,8 @@ export function describeError(e: unknown): string {
         return 'Your session has ended. Sign in again.';
       case 'version_conflict':
         return 'Someone else changed this while you were editing.';
+      case 'export_failed':
+        return e.detail || 'The export could not be produced. Try again in a few minutes.';
       case 'signature_required':
         return 'This action needs your signing PIN.';
       case 'validation_failed':

@@ -165,8 +165,8 @@ export async function exportReport(
     if (!poll.ok) throw await failure(poll);
     const type = poll.headers.get('Content-Type') ?? '';
     if (!type.includes('json')) return { blob: await poll.blob(), filename: filenameOf(poll, fallback) };
-    const status = parseExportTicket(await poll.json()).status;
-    if (status === 'failed') throw new ApiError({ status: 500, code: 'export_failed', detail: 'The export could not be produced.', requestId: null });
+    const ticketNow = parseExportTicket(await poll.json());
+    if (ticketNow.status === 'failed') throw new ApiError({ status: 500, code: 'export_failed', detail: ticketNow.message ?? 'The export could not be produced. Try again in a few minutes.', requestId: null });
   }
   throw new ApiError({ status: 504, code: 'export_timeout', detail: 'The export is taking longer than expected. Try again later.', requestId: null });
 }

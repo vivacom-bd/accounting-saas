@@ -39,14 +39,7 @@ final class RunReportExport implements ShouldQueue
 
     public function handle(TenantContext $tenant, ReportExport $exports, ExportStore $store): void
     {
-        // Heavy runs read the replica (13 §13). Restored afterwards: workers and sync queues share config.
-        $previous = config('reports.connection');
-        config(['reports.connection' => config('reports.export_connection')]);
-        try {
-            $this->export($tenant, $exports, $store);
-        } finally {
-            config(['reports.connection' => $previous]);
-        }
+        ReportExport::onExportConnection(fn () => $this->export($tenant, $exports, $store));
     }
 
     private function export(TenantContext $tenant, ReportExport $exports, ExportStore $store): void
@@ -75,8 +68,22 @@ final class RunReportExport implements ShouldQueue
         });
     }
 
+    /**
+     * The export did not finish: the record says so with a plain message (the screen shows it), and the bell tells whoever asked
+     * (`report.failed`). The exception text goes to the log, never to the person.
+     */
     public function failed(Throwable $e): void
     {
-        app(ExportStore::class)->failed($this->tenantId, $this->companyId, $this->exportId);
+        report($e);
+        $message = $this->format === 'pdf'
+            ? 'The PDF could not be made. Try again in a few minutes, or export to Excel or CSV instead.'
+            : 'The file could not be made. Try again in a few minutes.';
+        app(ExportStore::class)->failed($this->tenantId, $this->companyId, $this->exportId, $message);
+        $owner = app(ExportStore::class)->find($this->tenantId, $this->companyId, $this->exportId)['owner'] ?? null;
+        if (is_string($owner)) {
+            app(TenantContext::class)->run($this->tenantId, fn () => app(OutboxPublisher::class)->publish(new NotificationEvent(NotificationEvent::REPORT_FAILED, [
+                'company_id' => $this->companyId, 'user_id' => $owner, 'report' => $this->report, 'export_id' => $this->exportId, 'message' => $message,
+            ])));
+        }
     }
 }
