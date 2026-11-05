@@ -25,6 +25,8 @@ use App\Models\Banking\BankRule;
 use App\Models\Banking\BankStatementLine;
 use App\Models\Banking\BankTransaction;
 use App\Models\Budgets\Budget;
+use App\Models\Consolidation\ConsolidationGroup;
+use App\Models\Consolidation\ConsolidationMember;
 use App\Models\EInvoicing\CompanyEInvoicing;
 use App\Models\Files\Attachment;
 use App\Models\Fiscal\FiscalPeriod;
@@ -74,6 +76,7 @@ use App\Models\Workflow\ApprovalWorkflow;
 use App\Policies\Audit\AuditPolicy;
 use App\Policies\Banking\BankingPolicy;
 use App\Policies\Budgets\BudgetPolicy;
+use App\Policies\Consolidation\ConsolidationPolicy;
 use App\Policies\EInvoicing\EInvoicingPolicy;
 use App\Policies\Files\AttachmentPolicy;
 use App\Policies\Fiscal\PeriodPolicy;
@@ -216,6 +219,8 @@ class AppServiceProvider extends ServiceProvider
         // Explicit map, no guessing (13 §7). Policies take any principal and decide for people (permissions)
         // and API clients (token abilities) themselves; whatever approves, reverses or closes asks for a person.
         Gate::policy(Company::class, CompanyPolicy::class);
+        Gate::policy(ConsolidationGroup::class, ConsolidationPolicy::class);
+        Gate::policy(ConsolidationMember::class, ConsolidationPolicy::class);
         Gate::policy(PracticeOverview::class, PracticePolicy::class);
         Gate::policy(Invitation::class, InvitationPolicy::class);
         Gate::policy(ApiClient::class, ApiClientPolicy::class);

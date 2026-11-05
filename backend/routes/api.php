@@ -10,6 +10,7 @@ use App\Http\Controllers\Banking\BankReconciliationController;
 use App\Http\Controllers\Banking\BankRuleController;
 use App\Http\Controllers\Budgets\BudgetController;
 use App\Http\Controllers\Budgets\BudgetReportController;
+use App\Http\Controllers\Consolidation\ConsolidationGroupController;
 use App\Http\Controllers\Documents\DocumentEmailController;
 use App\Http\Controllers\Documents\DocumentPdfController;
 use App\Http\Controllers\Documents\DunningController;
@@ -143,6 +144,22 @@ Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent'])->
     Route::post('webhook-endpoints/{webhook}/enable', [WebhookEndpointController::class, 'enable'])->whereUuid('webhook')->name('webhook-endpoints.enable');
     Route::get('webhook-endpoints/{webhook}/deliveries', [WebhookEndpointController::class, 'deliveries'])->whereUuid('webhook')->name('webhook-endpoints.deliveries');
     Route::post('webhook-endpoints/{webhook}/deliveries/{delivery}/redeliver', [WebhookEndpointController::class, 'redeliver'])->whereUuid(['webhook', 'delivery'])->name('webhook-endpoints.redeliver');
+
+    // Consolidation (D16, plan 3c.29): organisation-level; owners and admins manage, view rights in every member are also needed
+    Route::prefix('consolidation')->group(function (): void {
+        Route::get('groups', [ConsolidationGroupController::class, 'index'])->name('consolidation.groups.index');
+        Route::post('groups', [ConsolidationGroupController::class, 'store'])->name('consolidation.groups.store');
+        Route::get('groups/{group}', [ConsolidationGroupController::class, 'show'])->whereUuid('group')->name('consolidation.groups.show');
+        Route::put('groups/{group}', [ConsolidationGroupController::class, 'update'])->whereUuid('group')->name('consolidation.groups.update');
+        Route::post('groups/{group}/members', [ConsolidationGroupController::class, 'addMember'])->whereUuid('group')->name('consolidation.groups.members.store');
+        Route::put('members/{member}/ownership', [ConsolidationGroupController::class, 'setOwnership'])->whereUuid('member')->name('consolidation.members.ownership');
+        Route::get('groups/{group}/accounts', [ConsolidationGroupController::class, 'accounts'])->whereUuid('group')->name('consolidation.accounts.index');
+        Route::post('groups/{group}/accounts', [ConsolidationGroupController::class, 'storeAccount'])->whereUuid('group')->name('consolidation.accounts.store');
+        Route::put('groups/{group}/accounts/{groupAccount}', [ConsolidationGroupController::class, 'updateAccount'])->whereUuid(['group', 'groupAccount'])->name('consolidation.accounts.update');
+        Route::get('members/{member}/mapping', [ConsolidationGroupController::class, 'mapping'])->whereUuid('member')->name('consolidation.members.mapping');
+        Route::put('members/{member}/mapping', [ConsolidationGroupController::class, 'map'])->whereUuid('member')->name('consolidation.members.map');
+        Route::get('groups/{group}/unmapped', [ConsolidationGroupController::class, 'unmapped'])->whereUuid('group')->name('consolidation.groups.unmapped');
+    });
 
     // Signing PIN (ADR-0004): grants are per user and session, so these need the SPA session.
     Route::put('signing/pin', [SigningController::class, 'setPin'])->name('signing.pin');
