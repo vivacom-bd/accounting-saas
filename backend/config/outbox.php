@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Contracts\OutboxHandler;
 use App\Services\Notifications\NotificationPlanner;
+use App\Support\Outbox\EInvoiceOutboxHandler;
 use App\Support\Outbox\KpiOutboxHandler;
 use App\Support\Outbox\NotificationOutboxHandler;
 use App\Support\Outbox\WebhookOutboxHandler;
@@ -23,5 +24,7 @@ return [
         array_fill_keys(KpiOutboxHandler::TYPES, [KpiOutboxHandler::class]),
         // In-app notifications (plan 3c.6).
         array_fill_keys(NotificationPlanner::TYPES, [NotificationOutboxHandler::class]),
+        // E-invoicing (plan 3c.27): a posted sales invoice or credit note is queued for the tax authority after commit, never during posting.
+        ['invoice.posted' => [EInvoiceOutboxHandler::class]],
     ),
 ];

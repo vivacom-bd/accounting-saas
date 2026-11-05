@@ -18,6 +18,7 @@ import { TAX_KIND_LABEL, fractionToPercent, percentToFraction, toGroupRequest, t
 import { localDateISO } from '@/api/adapters/onboarding';
 import { TaxPeriods } from './TaxPeriods';
 import { TaxPackTab } from './TaxPackTab';
+import { EInvoicingTab } from './EInvoicingTab';
 import { BTN_ACCENT, BTN_GHOST, ErrorLine, LoadingLine, TableCard, inputClass } from '@/pages/Sales/live/parts';
 
 const KINDS = ['vat', 'gst', 'sales', 'wht', 'compound', 'exempt', 'zero', 'reverse_charge'] as const;
@@ -357,7 +358,7 @@ const GroupDialog: React.FC<{ group?: LiveTaxGroup; codes: LiveTaxCode[]; onClos
 
 /* ------------------------------------------------------------------------ page */
 
-type Tab = 'codes' | 'groups' | 'periods' | 'pack';
+type Tab = 'codes' | 'groups' | 'periods' | 'pack' | 'einvoicing';
 
 /** Tax codes with their dated rates, and tax groups. The tax return itself is under Reports. */
 export const TaxLive: React.FC = () => {
@@ -419,7 +420,7 @@ export const TaxLive: React.FC = () => {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1 border-b border-border" role="tablist">
-          {([['codes', 'Tax codes'], ['groups', 'Tax groups'], ['periods', 'Filing periods'], ['pack', 'Country pack']] as const).map(([v, label]) => (
+          {([['codes', 'Tax codes'], ['groups', 'Tax groups'], ['periods', 'Filing periods'], ['pack', 'Country pack'], ['einvoicing', 'E-invoicing']] as const).map(([v, label]) => (
             <button key={v} type="button" role="tab" aria-selected={tab === v} onClick={() => setTab(v)} className={cn('-mb-px border-b-2 px-3 py-2 text-[13px] font-medium transition-colors', tab === v ? 'border-accent text-accent' : 'border-transparent text-text-muted hover:text-text-primary')}>
               {label}
             </button>
@@ -434,6 +435,7 @@ export const TaxLive: React.FC = () => {
 
       {tab === 'periods' && <TaxPeriods />}
       {tab === 'pack' && <TaxPackTab />}
+      {tab === 'einvoicing' && <EInvoicingTab />}
 
       {tab === 'codes' && (
         <TableCard>

@@ -37,10 +37,10 @@ final class PermissionMatrix
     private const array MODULES = [
         'journals', 'invoices', 'bills', 'receipts', 'payments', 'contacts', 'items', 'banking', 'recurring',
         'periods', 'accounts', 'dimensions', 'tax', 'fx', 'settings', 'reports',
-        'purchase_requisitions', 'purchase_orders', 'goods_receipts', 'budgets', 'transfers', 'write_offs', 'provisions', 'fixed_assets', 'tax_periods',
+        'purchase_requisitions', 'purchase_orders', 'goods_receipts', 'budgets', 'transfers', 'write_offs', 'provisions', 'fixed_assets', 'tax_periods', 'einvoicing',
     ];
 
-    private const array SALES_VIEWS = ['contacts.view', 'invoices.view', 'items.view', 'receipts.view'];
+    private const array SALES_VIEWS = ['contacts.view', 'invoices.view', 'items.view', 'receipts.view', 'einvoicing.view'];
 
     private const array EXPORT = ['reports.export'];
 
@@ -70,7 +70,7 @@ final class PermissionMatrix
     private const array MANAGE = [
         'periods.close', 'periods.reopen.approve', 'periods.year_end', 'periods.post_soft_closed', 'periods.post_adjustment',
         'accounts.manage', 'dimensions.manage', 'tax.manage', 'fx.manage',
-        'settings.manage', 'provisions.manage', 'tax_periods.file', 'tax_periods.reopen',
+        'settings.manage', 'provisions.manage', 'tax_periods.file', 'tax_periods.reopen', 'einvoicing.manage',
     ];
 
     /** @return list<string> every permission name, deduplicated, in matrix order */
@@ -117,6 +117,12 @@ final class PermissionMatrix
     public static function isTaxPeriods(string $permission): bool
     {
         return str_starts_with($permission, 'tax_periods.');
+    }
+
+    /** Added by plan 3c.27 (e-invoicing: view the status, manage = turn on, choose the adapter, retry a submission). */
+    public static function isEinvoicing(string $permission): bool
+    {
+        return str_starts_with($permission, 'einvoicing.');
     }
 
     /** Added by plan 3c.12 (credit limit override). */

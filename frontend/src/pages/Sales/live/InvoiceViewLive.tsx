@@ -37,6 +37,7 @@ import { CreditLimitRefusal, CreditLimitWarnings } from '@/components/live/Credi
 import { isCreditLimitRefusal, txErrorText, type CreditWarning } from '@/api/adapters/transactions';
 import type { LiveDocPayment } from '@/api/adapters/settlement';
 import { DocPayments, paymentTitle } from './DocPayments';
+import { EInvoiceStatusPanel } from './EInvoiceStatusPanel';
 import { DocStatusPill, ErrorLine, LoadingLine, inputClass, tradeVerdictText } from './parts';
 import { SIDES, isCreditKind, type Side } from './side';
 
@@ -547,6 +548,7 @@ export const InvoiceViewLive: React.FC<{ side?: Side }> = ({ side = 'sales' }) =
           </ul>
         </section>
       )}
+      {side === 'sales' && (doc.kind === 'sales_invoice' || doc.kind === 'credit_note') && <EInvoiceStatusPanel documentId={doc.id} posted={doc.status === 'posted' || doc.status === 'reversed'} />}
 
       {side === 'sales' && <SendLog family="invoices" id={doc.id} />}
 

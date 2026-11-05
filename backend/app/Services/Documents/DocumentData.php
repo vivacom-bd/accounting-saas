@@ -10,6 +10,7 @@ use App\Domain\Shared\DomainRuleViolation;
 use App\Domain\Shared\FormatPreferences;
 use App\Domain\Trade\InvoiceKind;
 use App\Models\Banking\BankAccount;
+use App\Models\EInvoicing\EInvoiceSubmission;
 use App\Models\Ledger\Account;
 use App\Models\Ledger\Journal;
 use App\Models\Organisation\Company;
@@ -26,6 +27,7 @@ use App\Models\Trade\Item;
 use App\Models\Trade\Settlement;
 use App\Models\Trade\WhtCertificate;
 use App\Queries\Reports\RunReport;
+use App\Services\EInvoicing\EInvoiceQr;
 use App\Support\Formats\CompanyFormats;
 use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
@@ -209,7 +211,28 @@ final class DocumentData
                 'memo' => $doc->memo,
                 'payment_instructions' => $sales && ! $doc->kind->isNote() ? $this->look->for($company->id)['payment_instructions'] : '',
                 'is_purchase' => ! $sales,
+                'einvoice' => $this->einvoice($doc),
             ],
+        ];
+    }
+
+    /**
+     * The tax authority's number and QR code, only for a document the authority ACCEPTED (plan 3c.27). Anything else prints nothing,
+     * so a pending, failed or rejected document never carries a number it does not have. Kept apart from our own document number.
+     *
+     * @return array{number: string, qr: string|null, timestamp: string|null}|null
+     */
+    private function einvoice(Invoice $doc): ?array
+    {
+        $s = EInvoiceSubmission::query()->where('invoice_id', $doc->id)->where('status', 'accepted')->orderByDesc('document_version')->first();
+        if ($s === null || $s->authority_number === null) {
+            return null;
+        }
+
+        return [
+            'number' => $s->authority_number,
+            'qr' => $s->qr_payload === null || $s->qr_payload === '' ? null : EInvoiceQr::dataUri($s->qr_payload),
+            'timestamp' => $s->authority_timestamp?->format('j M Y H:i').' UTC',
         ];
     }
 

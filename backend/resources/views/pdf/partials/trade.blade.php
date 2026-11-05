@@ -53,6 +53,13 @@
   </div>
 </div>
 
+@if (! empty($einvoice))
+  <div class="box" data-testid="pdf-einvoice">
+    <div class="label">Tax authority</div>
+    <div>Authority document number: <strong>{{ $einvoice['number'] }}</strong>@if ($einvoice['timestamp']) · {{ $einvoice['timestamp'] }}@endif</div>
+    @if ($einvoice['qr'])<img src="{{ $einvoice['qr'] }}" alt="QR code" style="width:96px;height:96px;margin-top:6px">@endif
+  </div>
+@endif
 @if (! empty($memo))
   <div class="box"><div class="label">Notes</div>{{ $memo }}</div>
 @endif

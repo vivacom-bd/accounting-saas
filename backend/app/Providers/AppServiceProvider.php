@@ -25,6 +25,7 @@ use App\Models\Banking\BankRule;
 use App\Models\Banking\BankStatementLine;
 use App\Models\Banking\BankTransaction;
 use App\Models\Budgets\Budget;
+use App\Models\EInvoicing\CompanyEInvoicing;
 use App\Models\Files\Attachment;
 use App\Models\Fiscal\FiscalPeriod;
 use App\Models\Fiscal\FiscalYear;
@@ -73,6 +74,7 @@ use App\Models\Workflow\ApprovalWorkflow;
 use App\Policies\Audit\AuditPolicy;
 use App\Policies\Banking\BankingPolicy;
 use App\Policies\Budgets\BudgetPolicy;
+use App\Policies\EInvoicing\EInvoicingPolicy;
 use App\Policies\Files\AttachmentPolicy;
 use App\Policies\Fiscal\PeriodPolicy;
 use App\Policies\FixedAssets\AssetTransactionPolicy;
@@ -252,6 +254,7 @@ class AppServiceProvider extends ServiceProvider
         }
         Gate::policy(TaxCode::class, TaxCodePolicy::class);
         Gate::policy(TaxPeriod::class, TaxPeriodPolicy::class);
+        Gate::policy(CompanyEInvoicing::class, EInvoicingPolicy::class);
         Gate::policy(TaxGroup::class, TaxGroupPolicy::class);
         Gate::policy(WebhookEndpoint::class, WebhookEndpointPolicy::class);
         Gate::policy(AuditEvent::class, AuditPolicy::class);

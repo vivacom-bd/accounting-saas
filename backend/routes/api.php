@@ -14,6 +14,7 @@ use App\Http\Controllers\Documents\DocumentEmailController;
 use App\Http\Controllers\Documents\DocumentPdfController;
 use App\Http\Controllers\Documents\DunningController;
 use App\Http\Controllers\Documents\StatementRunController;
+use App\Http\Controllers\EInvoicing\EInvoicingController;
 use App\Http\Controllers\Files\AttachmentBlobController;
 use App\Http\Controllers\Files\AttachmentController;
 use App\Http\Controllers\Fiscal\FiscalPeriodController;
@@ -248,6 +249,12 @@ Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent', 'c
         Route::post('tax-pack/apply', [TaxPackController::class, 'apply'])->name('tax-pack.apply');
         Route::put('tax-pack/settings', [TaxPackController::class, 'settings'])->name('tax-pack.settings');
         Route::put('tax-pack/sections/{section}/codes', [TaxPackController::class, 'sectionCodes'])->where('section', '[a-z0-9_]+')->name('tax-pack.section-codes');
+
+        // E-invoicing (3c.27): settings (off by default), a document's status with the authority, and a manual retry
+        Route::get('einvoicing', [EInvoicingController::class, 'show'])->name('einvoicing.show');
+        Route::put('einvoicing', [EInvoicingController::class, 'update'])->name('einvoicing.update');
+        Route::get('invoices/{document}/einvoice', [EInvoicingController::class, 'status'])->whereUuid('document')->name('invoices.einvoice');
+        Route::post('invoices/{document}/einvoice/retry', [EInvoicingController::class, 'retry'])->whereUuid('document')->name('invoices.einvoice.retry');
 
         // Tax periods (D15 item 13): generated monthly, filed with a frozen snapshot, reopened by a second person
         Route::get('tax-periods', [TaxPeriodController::class, 'index'])->name('tax-periods.index');
