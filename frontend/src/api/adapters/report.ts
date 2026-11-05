@@ -759,11 +759,26 @@ export interface TaxSide {
   totalNet: number;
   totalTax: number;
 }
+/** Self-assessed (reverse-charge) tax on bills: output booked, input claimed, and their net, which is part of the net tax payable. */
+export interface ReverseChargeRow {
+  code: string;
+  name: string;
+  recoverable: boolean;
+  base: number;
+  output: number;
+  input: number;
+}
+export interface ReverseChargeSection {
+  rows: ReverseChargeRow[];
+  totals: { base: number; output: number; input: number; net: number };
+}
 export interface TaxReturnView extends Head {
   from: string;
   to: string;
   sales: TaxSide;
   purchases: TaxSide;
+  /** Null when the server sent no section (an older answer). */
+  reverseCharge: ReverseChargeSection | null;
   netPayable: number;
 }
 
@@ -790,6 +805,26 @@ function taxSide(v: unknown, what: string): TaxSide {
   };
 }
 
+function reverseChargeSection(v: unknown): ReverseChargeSection | null {
+  if (!isRec(v)) return null;
+  const totals = rec(v.totals, 'reverse_charge.totals');
+  return {
+    rows: list(v.rows, 'reverse_charge.rows').map((r) => {
+      const row = rec(r, 'row');
+      const code = isRec(row.tax_code) ? row.tax_code : null;
+      return {
+        code: code ? (optStr(code.code) ?? '') : '',
+        name: code ? (optStr(code.name) ?? '') : 'No tax code',
+        recoverable: row.recoverable === true,
+        base: mon(row.base, 'row.base'),
+        output: mon(row.output, 'row.output'),
+        input: mon(row.input, 'row.input'),
+      };
+    }),
+    totals: { base: mon(totals.base, 'totals.base'), output: mon(totals.output, 'totals.output'), input: mon(totals.input, 'totals.input'), net: mon(totals.net, 'totals.net') },
+  };
+}
+
 export function parseTaxReturn(data: unknown): TaxReturnView {
   const o = rec(data, 'tax return');
   return {
@@ -798,6 +833,7 @@ export function parseTaxReturn(data: unknown): TaxReturnView {
     to: str(o.to, 'to'),
     sales: taxSide(o.sales, 'sales'),
     purchases: taxSide(o.purchases, 'purchases'),
+    reverseCharge: reverseChargeSection(o.reverse_charge),
     netPayable: mon(o.net_tax_payable, 'net_tax_payable'),
   };
 }

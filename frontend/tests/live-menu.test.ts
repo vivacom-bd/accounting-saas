@@ -19,6 +19,7 @@ describe('menu in live mode', () => {
   it('lists procurement and leaves out screens that are not connected', async () => {
     const live = labels(await menus('live'));
     for (const l of ['Requisitions', 'Purchase orders', 'Receipts', 'Procurement reports', 'Bills', 'Import data', 'Fixed assets', 'Budgets']) expect(live).toContain(l);
+    for (const l of ['Transfers', 'Write-offs', 'Bad-debt provisioning']) expect(live).toContain(l);
   });
 
   it('hides exactly the unconnected items', async () => {
@@ -33,6 +34,7 @@ describe('menu in live mode', () => {
   it('keeps the whole menu in mock mode', async () => {
     const mock = labels(await menus('mock'));
     for (const l of ['Fixed assets', 'Budgets', 'Import data']) expect(mock).toContain(l);
+    for (const l of ['Transfers', 'Write-offs', 'Bad-debt provisioning']) expect(mock).not.toContain(l);
   });
 });
 

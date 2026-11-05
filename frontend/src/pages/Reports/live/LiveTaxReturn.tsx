@@ -10,6 +10,7 @@ import { useReportSelection } from './useSelection';
 import { DocumentsDrill, type DocumentsTarget } from './DocumentsDrill';
 
 const GRID = 'grid grid-cols-[minmax(12rem,1fr)_9rem_9rem] gap-3';
+const RC_GRID = 'grid grid-cols-[minmax(12rem,1fr)_9rem_9rem_9rem] gap-3';
 
 export const LiveTaxReturn: React.FC = () => {
   const company = useRouteCompany();
@@ -75,6 +76,35 @@ export const LiveTaxReturn: React.FC = () => {
           <div className="min-w-[560px]">
             {side('Sales: tax charged (output)', tr.sales, 'tax-sales-total')}
             {side('Purchases: tax paid (input)', tr.purchases, 'tax-purchases-total')}
+            {tr.reverseCharge && tr.reverseCharge.rows.length > 0 && (
+              <div className="mb-6" data-testid="tax-reverse-charge">
+                <div className="px-2 pb-1 text-[13px] font-semibold text-text-primary">Purchases: tax you account for yourself (reverse charge)</div>
+                <p className="px-2 pb-2 text-xs text-text-muted">The supplier charged no tax on these bills. The tax is booked as output, and as input where you can claim it back, on the same amount. Only the net of the two is added to the tax payable.</p>
+                <div className={`${RC_GRID} px-2 py-2 border-b border-border text-[11px] font-semibold uppercase tracking-[0.04em] text-text-muted`}>
+                  <span>Tax code</span><span className="text-right">Amount</span><span className="text-right">Output</span><span className="text-right">Input claimed</span>
+                </div>
+                <div className="divide-y divide-border/60">
+                  {tr.reverseCharge.rows.map((r, i) => (
+                    <div key={`${r.code}-${i}`} className={`${RC_GRID} items-baseline px-2 py-1.5 text-xs`}>
+                      <span className="text-text-primary">
+                        {r.code && <span className="font-code text-text-muted mr-2">{r.code}</span>}
+                        {r.name}
+                        {!r.recoverable && <span className="ml-2 text-text-muted">not recoverable, counted as cost</span>}
+                      </span>
+                      <span className="text-right tabular-nums">{money(r.base)}</span>
+                      <span className="text-right tabular-nums">{money(r.output)}</span>
+                      <span className="text-right tabular-nums">{money(r.input)}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className={`${RC_GRID} items-baseline px-2 py-2 border-t border-border text-[13px] font-semibold`} data-testid="tax-reverse-charge-total">
+                  <span className="text-text-primary">Total (net {money(tr.reverseCharge.totals.net)})</span>
+                  <span className="text-right tabular-nums">{money(tr.reverseCharge.totals.base)}</span>
+                  <span className="text-right tabular-nums">{money(tr.reverseCharge.totals.output)}</span>
+                  <span className="text-right tabular-nums">{money(tr.reverseCharge.totals.input)}</span>
+                </div>
+              </div>
+            )}
             <div className={`${GRID} items-baseline px-2 py-3 border-t border-text-primary border-b-[3px] border-double text-sm font-semibold`} data-testid="tax-net-payable">
               <span className="text-text-primary">Net tax payable</span>
               <span />

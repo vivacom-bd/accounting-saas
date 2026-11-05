@@ -11,6 +11,7 @@ import type { DocResource, DocQuery } from '@/api/live/trade';
 import { toDoc, type ApiInvoice, type LiveDoc } from '@/api/adapters/invoice';
 import { toCreditApplication, toDocPayment, type LiveDocPayment } from '@/api/adapters/settlement';
 import type { Intent } from '@/api/idempotency';
+import { readWarnings } from '@/api/adapters/transactions';
 import { approvalsKey } from './journals';
 import { contactsKey } from './contacts';
 import { settlementsKey } from './settlements';
@@ -116,8 +117,13 @@ export function useDocActions(resource: DocResource = 'invoices') {
     /** Writes nothing on the server, so no refresh. */
     preview: (id: string, intent: Intent) => live.previewDoc(company.id, resource, id, intent),
     /** `matchOverrideReason`: a bill the three-way match refused, passed on by someone who holds the override permission. */
-    submit: (id: string, version: number, intent: Intent, matchOverrideReason?: string) =>
-      after(live.transitionDoc(company.id, resource, id, 'submit', { version, ...(matchOverrideReason ? { match_override_reason: matchOverrideReason } : {}) }, intent)),
+    /** `creditLimitOverrideReason`: an invoice the credit limit refused, passed on by a second person who holds the override permission. */
+    submit: async (id: string, version: number, intent: Intent, matchOverrideReason?: string, creditLimitOverrideReason?: string): Promise<LiveDoc> => {
+      const body = { version, ...(matchOverrideReason ? { match_override_reason: matchOverrideReason } : {}), ...(creditLimitOverrideReason ? { credit_limit_override_reason: creditLimitOverrideReason } : {}) };
+      const answer = await live.submitDocFull(company.id, resource, id, body, intent);
+      const doc = await after(Promise.resolve(answer.data));
+      return Object.assign(doc, { warnings: readWarnings(answer) });
+    },
     approve: (id: string, version: number, intent: Intent) => after(live.transitionDoc(company.id, resource, id, 'approve', { version }, intent)),
     sendBack: (id: string, comment: string, version: number, intent: Intent) => after(live.transitionDoc(company.id, resource, id, 'return', { comment, version }, intent)),
     voidDraft: (id: string, reason: string, version: number, intent: Intent) => after(live.transitionDoc(company.id, resource, id, 'void', { reason, version }, intent)),

@@ -11,6 +11,8 @@ import {
   Percent,
   ShoppingCart,
   PackageCheck,
+  ArrowRightLeft,
+  Eraser,
 } from 'lucide-react';
 
 export type NavIcon = React.ComponentType<{ className?: string }>;
@@ -56,6 +58,7 @@ const allNavSections = (coSlug: string, pendingApprovalsCount: number): NavSecti
   { id: 'banking', title: 'Banking', items: [
     { label: 'Bank accounts', to: `/${coSlug}/banking`, icon: CreditCard },
     { label: 'Bank rules', to: `/${coSlug}/banking/rules`, icon: Wand2 },
+    ...(IS_LIVE ? [{ label: 'Transfers', to: `/${coSlug}/banking/transfers`, icon: ArrowRightLeft }] : []),
   ] },
   {
     id: 'reports', title: 'Reports',
@@ -83,6 +86,10 @@ const allNavSections = (coSlug: string, pendingApprovalsCount: number): NavSecti
       { label: 'Chart of accounts', to: `/${coSlug}/accounts`, icon: Layers },
       { label: 'Fixed assets', to: `/${coSlug}/assets`, icon: Package },
       { label: 'Budgets', to: `/${coSlug}/budgets`, icon: BarChart3 },
+      ...(IS_LIVE ? [
+        { label: 'Write-offs', to: `/${coSlug}/write-offs`, icon: Eraser },
+        { label: 'Bad-debt provisioning', to: `/${coSlug}/accounting/provisioning`, icon: Percent },
+      ] : []),
       { label: 'Exchange rates', to: `/${coSlug}/fx-rates`, icon: Coins },
       { label: 'Periods & close', to: `/${coSlug}/periods`, icon: Calendar },
       ...(IS_LIVE ? [{ label: 'Tax codes', to: `/${coSlug}/tax`, icon: Percent }] : []),

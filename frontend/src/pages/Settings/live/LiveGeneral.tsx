@@ -7,7 +7,8 @@ import { ApiError } from '@/api/errors';
 import type { ApiSettings } from '@/api/live/admin';
 import { fieldError } from '@/api/messages';
 import { isSigningCancelled } from '@/data/signing';
-import { TAX_ROUNDING_LABEL, profilePatch, purchasingErrors, purchasingPatch, toProfileForm, toPurchasingForm, type ProfileForm, type PurchasingForm } from '@/api/adapters/admin';
+import { CREDIT_LIMIT_MODES } from '@/api/adapters/transactions';
+import { TAX_ROUNDING_LABEL, creditLimitPatch, toCreditLimitMode, profilePatch, purchasingErrors, purchasingPatch, toProfileForm, toPurchasingForm, type ProfileForm, type PurchasingForm } from '@/api/adapters/admin';
 import { Checkbox } from '@/components/ui/checkbox';
 import { settingsKey, useAdminActions, useSettings } from '@/data/admin';
 import { useQueryClient } from '@tanstack/react-query';
@@ -41,6 +42,8 @@ const GeneralForm: React.FC<{ settings: ApiSettings; companyId: string }> = ({ s
   const [form, setForm] = useState<ProfileForm>(saved);
   const savedPurchasing = toPurchasingForm(loaded);
   const [purchasing, setPurchasing] = useState<PurchasingForm>(savedPurchasing);
+  const savedCredit = toCreditLimitMode(loaded);
+  const [creditMode, setCreditMode] = useState<string>(savedCredit);
   const [tried, setTried] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
@@ -48,7 +51,7 @@ const GeneralForm: React.FC<{ settings: ApiSettings; companyId: string }> = ({ s
   const qc = useQueryClient();
 
   const canEdit = settings.data.can.update;
-  const patch = { ...profilePatch(saved, form), ...purchasingPatch(savedPurchasing, purchasing) };
+  const patch = { ...profilePatch(saved, form), ...purchasingPatch(savedPurchasing, purchasing), ...creditLimitPatch(savedCredit, creditMode) };
   const dirty = Object.keys(patch).length > 0;
   const pctErrors = tried ? purchasingErrors(purchasing) : {};
   const set = (k: keyof ProfileForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm({ ...form, [k]: e.target.value });
@@ -140,11 +143,18 @@ const GeneralForm: React.FC<{ settings: ApiSettings; companyId: string }> = ({ s
           </div>
         </div>
       </SettingsCard>
+      <SettingsCard title="Credit limit" description="What happens when an invoice would take a customer over the credit limit set on their card.">
+        <Field id="co-credit-mode" label="When an invoice is submitted" hint={CREDIT_LIMIT_MODES.find((m) => m.value === creditMode)?.hint} error={fieldError(error, 'credit_limit_mode')}>
+          <select id="co-credit-mode" className={field} value={creditMode} onChange={(e) => setCreditMode(e.target.value)} disabled={!canEdit}>
+            {CREDIT_LIMIT_MODES.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+          </select>
+        </Field>
+      </SettingsCard>
       <FormError error={error} />
       {canEdit ? (
         <div className="flex gap-2">
           <button type="submit" className={primary} disabled={!dirty || busy}>{busy ? 'Saving…' : 'Save changes'}</button>
-          <button type="button" className={secondary} disabled={!dirty || busy} onClick={() => { setForm(saved); setPurchasing(savedPurchasing); setTried(false); setError(null); }}>Discard</button>
+          <button type="button" className={secondary} disabled={!dirty || busy} onClick={() => { setForm(saved); setPurchasing(savedPurchasing); setCreditMode(savedCredit); setTried(false); setError(null); }}>Discard</button>
         </div>
       ) : (
         <p className="text-[13px] text-text-muted">You can read these details but not change them.</p>

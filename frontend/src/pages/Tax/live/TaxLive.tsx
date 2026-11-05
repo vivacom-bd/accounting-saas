@@ -122,7 +122,7 @@ const CodeDialog: React.FC<{ code?: LiveTaxCode; onClose: () => void; onConflict
           <Field id="tc-name" label="Name" error={errors.name}>
             <input id="tc-name" value={form.name} onChange={(e) => set('name', e.target.value)} className={inputClass} autoFocus={Boolean(code)} />
           </Field>
-          <Field id="tc-kind" label="Kind" error={errors.kind}>
+          <Field id="tc-kind" label="Kind" error={errors.kind} hint={form.kind === 'reverse_charge' ? 'For purchase bills where you account for the tax yourself. The supplier charges none, so it is not in the bill total; the tax is booked as output and, if recoverable, as input on the same amount.' : undefined}>
             <select id="tc-kind" value={form.kind} onChange={(e) => set('kind', e.target.value)} className={inputClass}>
               {KINDS.map((k) => (<option key={k} value={k}>{TAX_KIND_LABEL[k]}</option>))}
             </select>

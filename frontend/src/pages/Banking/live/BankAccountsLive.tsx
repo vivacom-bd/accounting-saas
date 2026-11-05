@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { AlertCircle, ArrowRight, CheckCircle2, Pencil, Plus, Upload } from 'lucide-react';
+import { AlertCircle, ArrowRight, ArrowRightLeft, CheckCircle2, Pencil, Plus, Upload } from 'lucide-react';
 import { PageHeader } from '@/components/domain/PageHeader';
 import { EmptyState } from '@/components/domain/EmptyState';
 import { StatusPill } from '@/components/domain/StatusPill';
@@ -56,6 +56,10 @@ export const BankAccountsLive: React.FC = () => {
           <>
             <Link to={`/${company.slug}/banking/rules`} className={buttonSecondary}>
               Rules
+            </Link>
+            <Link to={`/${company.slug}/banking/transfers/new`} className={buttonSecondary}>
+              <ArrowRightLeft className="size-4 text-text-muted" />
+              Transfer money
             </Link>
             <Link to={`/${company.slug}/banking/import`} className={buttonSecondary}>
               <Upload className="size-4 text-text-muted" />

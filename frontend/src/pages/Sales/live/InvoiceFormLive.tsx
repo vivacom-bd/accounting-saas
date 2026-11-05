@@ -36,6 +36,8 @@ import {
 } from '@/api/adapters/invoice';
 import { matchOverrideRefusal, matchRefusal, type MatchRefusal } from '@/api/adapters/procurement';
 import { MatchRefusalNotice } from '@/pages/Purchases/live/MatchPanels';
+import { CreditLimitRefusal } from '@/components/live/CreditLimitNotice';
+import { isCreditLimitRefusal, txErrorText } from '@/api/adapters/transactions';
 import type { InvoiceKind } from '@/types';
 import type { Violation } from '@/api/errors';
 import { BTN_ACCENT, BTN_GHOST, ErrorLine, LoadingLine, inputClass } from './parts';
@@ -139,6 +141,8 @@ const InvoiceFormInner: React.FC<{ side: Side }> = ({ side }) => {
   const [justLoaded, setJustLoaded] = useState(false);
   // `sig` is the bill as it was submitted: editing it makes the refusal out of date, and it is not shown any more.
   const [refusal, setRefusal] = useState<(MatchRefusal & { sig: string }) | null>(null);
+  // The credit limit stopped the submit (refuse mode); a second person may pass it with a reason.
+  const [creditRefusal, setCreditRefusal] = useState<{ message: string; sig: string } | null>(null);
 
   const saveSlot = useRef(new IntentSlot()).current;
   const submitSlot = useRef(new IntentSlot()).current;
@@ -298,6 +302,16 @@ const InvoiceFormInner: React.FC<{ side: Side }> = ({ side }) => {
       setHeaderErrors([]);
       return;
     }
+    if (side === 'sales' && isCreditLimitRefusal(e)) {
+      const first = e instanceof ApiError ? (e.violations?.find((v) => v.code === 'credit_limit_exceeded')?.message ?? e.detail) : '';
+      setCreditRefusal({ message: first, sig: contentSig });
+      setHeaderErrors([]);
+      return;
+    }
+    if (e instanceof ApiError && (e.code === 'credit_limit_override_forbidden' || e.code === 'credit_limit_override_self_forbidden')) {
+      setHeaderErrors([txErrorText(e, 'You cannot override a credit limit.')]);
+      return;
+    }
     const overrideRefused = matchOverrideRefusal(e);
     if (overrideRefused) {
       setHeaderErrors([describeV({ code: overrideRefused, message: '' })]);
@@ -396,18 +410,19 @@ const InvoiceFormInner: React.FC<{ side: Side }> = ({ side }) => {
     if (res?.preview.valid) setReviewOpen(true);
   };
 
-  const confirmSubmit = async (matchOverrideReason?: string) => {
+  const confirmSubmit = async (matchOverrideReason?: string, creditLimitReason?: string) => {
     if (!draft) return;
     setReviewOpen(false);
     setBusy('submit');
     const { id, version } = draft;
-    const intent = submitSlot.for(`${id}:${version}:${matchOverrideReason ?? ''}`);
+    const intent = submitSlot.for(`${id}:${version}:${matchOverrideReason ?? ''}:${creditLimitReason ?? ''}`);
     try {
-      const d = await run(() => actions.submit(id, version, intent, matchOverrideReason));
+      const d = await run(() => actions.submit(id, version, intent, matchOverrideReason, creditLimitReason));
       submitSlot.clear();
       setRefusal(null);
+      setCreditRefusal(null);
       toast.success(d.status === 'posted' ? `Posted as ${d.number ?? `a numbered ${noun.one}`}` : 'Sent for approval. It posts when an approver signs it.');
-      navigate(`/${coSlug}/${S.docsPath}/${d.id}`);
+      navigate(`/${coSlug}/${S.docsPath}/${d.id}`, { state: d.warnings && d.warnings.length > 0 ? { warnings: d.warnings } : undefined });
     } catch (e) {
       showError(e);
     } finally {
@@ -527,6 +542,9 @@ const InvoiceFormInner: React.FC<{ side: Side }> = ({ side }) => {
             </div>
           ))}
         </div>
+      )}
+      {creditRefusal && creditRefusal.sig === contentSig && (
+        <CreditLimitRefusal message={creditRefusal.message} canOverride={Boolean(saved?.can.override_credit_limit)} busy={working} onSubmitAnyway={(reason) => void confirmSubmit(undefined, reason)} />
       )}
       {refusal && refusal.sig === contentSig && <MatchRefusalNotice refusal={refusal} canOverride={Boolean(saved?.can.override_match)} busy={working} onSubmitAnyway={(reason) => void confirmSubmit(reason)} />}
       {periodWarning && (
@@ -665,6 +683,7 @@ const InvoiceFormInner: React.FC<{ side: Side }> = ({ side }) => {
                             {refs.taxCodes.filter((t) => side === 'sales' || t.kind !== 'wht').map((t) => (
                               <option key={t.id} value={t.id}>
                                 {t.code}
+                                {side === 'purchases' && t.kind === 'reverse_charge' ? ' (reverse charge)' : ''}
                                 {side === 'purchases' && !t.is_recoverable ? ' (not claimable)' : ''}
                               </option>
                             ))}
@@ -705,7 +724,13 @@ const InvoiceFormInner: React.FC<{ side: Side }> = ({ side }) => {
           <dl className="flex flex-col gap-1.5">
             <div className="flex justify-between"><dt className="text-text-secondary">Subtotal</dt><dd className="tabular-nums">{formatMoney(saved.subtotal_fc, saved.currency)}</dd></div>
             <div className="flex justify-between"><dt className="text-text-secondary">Tax</dt><dd className="tabular-nums">{formatMoney(saved.tax_total_fc, saved.currency)}</dd></div>
-            <div className="flex justify-between border-t border-border pt-1.5 font-semibold"><dt>Total</dt><dd className="tabular-nums">{formatMoney(saved.total_fc, saved.currency)}</dd></div>
+            <div className="flex justify-between border-t border-border pt-1.5 font-semibold"><dt>{side === 'purchases' && saved.reverse_charge_total_fc > 0 ? 'Total payable to the supplier' : 'Total'}</dt><dd className="tabular-nums">{formatMoney(saved.total_fc, saved.currency)}</dd></div>
+            {side === 'purchases' && saved.reverse_charge_total_fc > 0 && (
+              <div className="flex justify-between text-text-secondary" data-testid="doc-reverse-charge">
+                <dt title="Tax you account for yourself. The supplier did not charge it, so it is not in the total and you do not pay it to them.">Reverse-charge tax (not payable)</dt>
+                <dd className="tabular-nums">{formatMoney(saved.reverse_charge_total_fc, saved.currency)}</dd>
+              </div>
+            )}
             {side === 'purchases' && saved.wht_code_id && (
               <div className="flex justify-between text-text-secondary"><dt>Withheld when paid</dt><dd className="tabular-nums" data-testid="doc-wht">{formatMoney(saved.wht_amount_fc, saved.currency)}</dd></div>
             )}

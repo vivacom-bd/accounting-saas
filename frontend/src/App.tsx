@@ -47,6 +47,13 @@ import { Dimensions } from './pages/Accounting/Dimensions';
 import { FixedAssets } from './pages/Accounting/FixedAssets';
 import { Budgets } from './pages/Accounting/Budgets';
 import { BudgetsLive } from './pages/Accounting/live/BudgetsLive';
+import { ProvisionRunViewLive, ProvisioningLive } from './pages/Accounting/live/ProvisioningLive';
+import { TransfersLive } from './pages/Banking/live/TransfersLive';
+import { TransferFormLive } from './pages/Banking/live/TransferFormLive';
+import { TransferViewLive } from './pages/Banking/live/TransferViewLive';
+import { WriteOffsLive } from './pages/Sales/live/WriteOffsLive';
+import { RecoveryFormLive, WriteOffFormLive } from './pages/Sales/live/WriteOffFormLive';
+import { RecoveryViewLive, WriteOffViewLive } from './pages/Sales/live/WriteOffViewLive';
 import { LiveBudgetVsActual } from './pages/Reports/live/LiveBudgetVsActual';
 import { AuditLog } from './pages/Accounting/AuditLog';
 import { AuditLogLive } from './pages/Accounting/live/AuditLogLive';
@@ -269,11 +276,21 @@ export default function App() {
           <Route path="assets" element={IS_LIVE ? <FixedAssetsLive /> : <FixedAssets />} />
           <Route path="budgets" element={IS_LIVE ? <BudgetsLive /> : <Budgets />} />
           {IS_LIVE && <Route path="reports/budget-vs-actual" element={<LiveBudgetVsActual />} />}
+          {IS_LIVE && <Route path="write-offs" element={<WriteOffsLive />} />}
+          {IS_LIVE && <Route path="write-offs/new" element={<WriteOffFormLive />} />}
+          {IS_LIVE && <Route path="write-offs/:id" element={<WriteOffViewLive />} />}
+          {IS_LIVE && <Route path="write-off-recoveries/new" element={<RecoveryFormLive />} />}
+          {IS_LIVE && <Route path="write-off-recoveries/:id" element={<RecoveryViewLive />} />}
+          {IS_LIVE && <Route path="accounting/provisioning" element={<ProvisioningLive />} />}
+          {IS_LIVE && <Route path="accounting/provisioning/runs/:id" element={<ProvisionRunViewLive />} />}
 
           {/* Banking */}
           <Route path="banking" element={<BankAccountsList />} />
           <Route path="banking/rules" element={<BankRules />} />
           {IS_LIVE && <Route path="banking/import" element={<BankImportLive />} />}
+          {IS_LIVE && <Route path="banking/transfers" element={<TransfersLive />} />}
+          {IS_LIVE && <Route path="banking/transfers/new" element={<TransferFormLive />} />}
+          {IS_LIVE && <Route path="banking/transfers/:id" element={<TransferViewLive />} />}
           <Route path="banking/:id/reconcile" element={<BankReconcile />} />
 
           {/* Reports */}

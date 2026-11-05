@@ -31,6 +31,10 @@ const GROUPS = [
   { type: 'purchase_order_revision', label: 'Purchase order revisions' },
   { type: 'depreciation_run', label: 'Depreciation runs' },
   { type: 'asset_transaction', label: 'Asset sales, write-downs and revaluations' },
+  { type: 'fund_transfer', label: 'Fund transfers' },
+  { type: 'write_off', label: 'Write-offs' },
+  { type: 'write_off_recovery', label: 'Recoveries after write-off' },
+  { type: 'provision_run', label: 'Bad-debt provisions' },
 ] as const;
 
 /** The server's reason codes for a skipped document, in words. Unknown codes fall back to the server's reason. */

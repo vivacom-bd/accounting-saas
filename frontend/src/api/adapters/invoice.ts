@@ -29,12 +29,16 @@ export interface DocCan {
   send: boolean;
   /** May make and revoke the online link of this invoice (3c.7b); a sales invoice only. */
   share: boolean;
+  /** Customer invoice: may start a write-off (3c.9). */
+  write_off: boolean;
+  /** Draft customer invoice: may be submitted past a credit limit that refuses it, by someone who did not make it (3c.12). */
+  override_credit_limit: boolean;
 }
 
 export function toDocCan(raw: unknown): DocCan {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const b = (k: string) => r[k] === true;
-  return { update: b('update'), submit: b('submit'), approve: b('approve'), return: b('return'), void: b('void'), reverse: b('reverse'), override_match: b('override_match'), send: b('send'), share: b('share') };
+  return { update: b('update'), submit: b('submit'), approve: b('approve'), return: b('return'), void: b('void'), reverse: b('reverse'), override_match: b('override_match'), send: b('send'), share: b('share'), write_off: b('write_off'), override_credit_limit: b('override_credit_limit') };
 }
 
 export interface LiveDocLine {
@@ -53,6 +57,17 @@ export interface LiveDocLine {
   /** Bills only: the order line this line bills, and the receipt line it bills. Null for everything else. */
   purchase_order_line_id: string | null;
   goods_receipt_line_id: string | null;
+  /** Bills: the self-assessed reverse-charge tax on this line, document currency. Zero on other lines. */
+  reverse_charge_fc: number;
+}
+
+export interface LiveWriteOffRef {
+  id: string;
+  number: string | null;
+  status: string;
+  write_off_date: string;
+  amount: number;
+  recovered: number;
 }
 
 export interface LiveDoc {
@@ -79,6 +94,12 @@ export interface LiveDoc {
   /** Base currency. */
   wht_amount: number;
   wht_code_id: string | null;
+  /** Bills: self-assessed reverse-charge tax. It is not part of the total and is not owed to the supplier. Document currency and base. */
+  reverse_charge_total_fc: number;
+  reverse_charge_total: number;
+  /** Customer invoices: what is written off and not recovered, in the document currency, and the write-offs behind it. Zero with no write-offs. */
+  written_off_fc: number;
+  write_offs: LiveWriteOffRef[];
   settled_fc: number;
   /** Base currency. Zero until the document is posted. For a credit note: the credit still left to apply. */
   settled: number;
@@ -98,6 +119,8 @@ export interface LiveDoc {
   version: number;
   lines: LiveDocLine[];
   can: DocCan;
+  /** Set by a submit only: what the server wants the person to know (a credit limit exceeded in warn mode). */
+  warnings?: Array<{ code: string; message: string }>;
 }
 
 const money = (m: ApiMoney): number => fromApiMoney(m);
@@ -118,6 +141,7 @@ export function toDocLine(l: ApiInvoiceLine): LiveDocLine {
     dimensions: l.dimensions ?? {},
     purchase_order_line_id: l.purchase_order_line_id ?? null,
     goods_receipt_line_id: l.goods_receipt_line_id ?? null,
+    reverse_charge_fc: l.reverse_charge_fc ? money(l.reverse_charge_fc) : 0,
   };
 }
 
@@ -144,6 +168,10 @@ export function toDoc(a: ApiInvoice): LiveDoc {
     wht_amount_fc: money(a.wht_amount_fc),
     wht_amount: money(a.wht_amount),
     wht_code_id: a.wht_code_id ?? null,
+    reverse_charge_total_fc: a.reverse_charge_total_fc ? money(a.reverse_charge_total_fc) : 0,
+    reverse_charge_total: a.reverse_charge_total ? money(a.reverse_charge_total) : 0,
+    written_off_fc: moneyOrNull(a.written_off) ?? 0,
+    write_offs: (a.write_offs ?? []).map((w) => ({ id: w.id, number: w.number, status: w.status, write_off_date: w.write_off_date ?? '', amount: money(w.amount), recovered: money(w.recovered) })),
     settled_fc: money(a.settled_fc),
     settled: money(a.settled),
     amount_due: money(a.amount_due),

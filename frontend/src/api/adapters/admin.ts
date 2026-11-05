@@ -164,6 +164,10 @@ export function purchasingPatch(saved: PurchasingForm, next: PurchasingForm): Pu
   return patch;
 }
 
+/** Credit limit at invoice submit (3c.12): the saved mode, and only a changed mode goes in the patch. */
+export const toCreditLimitMode = (s: ApiSettings): string => (s.credit_limit_mode === 'warn' || s.credit_limit_mode === 'refuse' ? s.credit_limit_mode : 'off');
+export const creditLimitPatch = (saved: string, next: string): { credit_limit_mode?: string } => (next !== saved ? { credit_limit_mode: next } : {});
+
 /** Field errors the browser can see before asking: a percentage must be 0 to 100. */
 export function purchasingErrors(f: PurchasingForm): Partial<Record<PurchasingPctField, string>> {
   const out: Partial<Record<PurchasingPctField, string>> = {};

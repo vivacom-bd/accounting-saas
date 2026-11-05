@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { CheckCircle, Clock, Copy, FilePlus, Link2, Pencil, Receipt, RotateCcw, Send, Trash2 } from 'lucide-react';
+import { CheckCircle, Clock, Copy, Eraser, FilePlus, Link2, Pencil, Receipt, RotateCcw, Send, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/domain/PageHeader';
 import { SignDialog } from '@/components/domain/SignDialog';
 import { AttachmentsPanel } from '@/components/live/AttachmentsPanel';
@@ -32,6 +32,8 @@ import { toApiDate } from '@/api/adapters/dates';
 import { matchOverrideRefusal, matchLineFor, matchRefusal, type MatchRefusal } from '@/api/adapters/procurement';
 import { describePurchaseViolation } from '@/api/tradeViolations';
 import { BillMatchPanel, MatchRefusalNotice } from '@/pages/Purchases/live/MatchPanels';
+import { CreditLimitRefusal, CreditLimitWarnings } from '@/components/live/CreditLimitNotice';
+import { isCreditLimitRefusal, txErrorText, type CreditWarning } from '@/api/adapters/transactions';
 import type { LiveDocPayment } from '@/api/adapters/settlement';
 import { DocPayments, paymentTitle } from './DocPayments';
 import { DocStatusPill, ErrorLine, LoadingLine, inputClass, tradeVerdictText } from './parts';
@@ -67,6 +69,10 @@ export const InvoiceViewLive: React.FC<{ side?: Side }> = ({ side = 'sales' }) =
   const [applyDate, setApplyDate] = useState('');
   const [problem, setProblem] = useState('');
   const [refusal, setRefusal] = useState<MatchRefusal | null>(null);
+  const [creditRefusal, setCreditRefusal] = useState<string | null>(null);
+  // Warnings the form carried over after a submit that went ahead (credit limit in warn mode).
+  const location = useLocation();
+  const [warnings, setWarnings] = useState<CreditWarning[]>(() => ((location.state as { warnings?: CreditWarning[] } | null)?.warnings ?? []));
   const slots = useRef(new Map<string, IntentSlot>());
   const slotFor = (name: string) => {
     let s = slots.current.get(name);
@@ -122,6 +128,14 @@ export const InvoiceViewLive: React.FC<{ side?: Side }> = ({ side = 'sales' }) =
       setRefusal(refused);
       return;
     }
+    if (side === 'sales' && isCreditLimitRefusal(e)) {
+      setCreditRefusal(e instanceof ApiError ? (e.violations?.find((v) => v.code === 'credit_limit_exceeded')?.message ?? e.detail) : '');
+      return;
+    }
+    if (e instanceof ApiError && (e.code === 'credit_limit_override_forbidden' || e.code === 'credit_limit_override_self_forbidden')) {
+      toast.error(txErrorText(e, 'You cannot override a credit limit.'));
+      return;
+    }
     const overrideRefused = matchOverrideRefusal(e);
     if (overrideRefused) {
       toast.error(describePurchaseViolation({ code: overrideRefused, message: '' }));
@@ -152,10 +166,12 @@ export const InvoiceViewLive: React.FC<{ side?: Side }> = ({ side = 'sales' }) =
   }
 
   const sig = `${doc.id}:${doc.version}`;
-  const doSubmit = async (matchOverrideReason?: string) => {
-    const r = await perform('submit', `${sig}:${matchOverrideReason ?? ''}`, 'submit', (intent) => actions.submit(doc.id, doc.version, intent, matchOverrideReason));
+  const doSubmit = async (matchOverrideReason?: string, creditLimitReason?: string) => {
+    const r = await perform('submit', `${sig}:${matchOverrideReason ?? ''}:${creditLimitReason ?? ''}`, 'submit', (intent) => actions.submit(doc.id, doc.version, intent, matchOverrideReason, creditLimitReason));
     if (r) {
       setRefusal(null);
+      setCreditRefusal(null);
+      if (r.warnings && r.warnings.length > 0) setWarnings(r.warnings);
       toast.success(r.status === 'posted' ? `Posted as ${r.number}` : 'Sent for approval');
     }
   };
@@ -282,6 +298,10 @@ export const InvoiceViewLive: React.FC<{ side?: Side }> = ({ side = 'sales' }) =
         </div>
       )}
 
+      {warnings.length > 0 && <CreditLimitWarnings warnings={warnings} onDismiss={() => setWarnings([])} />}
+      {creditRefusal !== null && (
+        <CreditLimitRefusal message={creditRefusal} canOverride={doc.can.override_credit_limit} busy={busy} onSubmitAnyway={(reason) => void doSubmit(undefined, reason)} />
+      )}
       {refusal && <MatchRefusalNotice refusal={refusal} canOverride={doc.can.override_match} busy={busy} onSubmitAnyway={(reason) => void doSubmit(reason)} />}
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -381,10 +401,19 @@ export const InvoiceViewLive: React.FC<{ side?: Side }> = ({ side = 'sales' }) =
             {doc.wht_code_id && (
               <div className="flex justify-between text-text-secondary"><dt>Withheld when paid ({refs.taxCodes.find((t) => t.id === doc.wht_code_id)?.code ?? 'WHT'})</dt><dd className="tabular-nums" data-testid="doc-wht">{formatMoney(doc.wht_amount_fc, doc.currency)}</dd></div>
             )}
+            {doc.reverse_charge_total_fc > 0 && (
+              <div className="flex justify-between text-text-secondary" data-testid="doc-reverse-charge">
+                <dt title="Tax you account for yourself on this bill. The supplier did not charge it, so it is not part of the total and you do not pay it to them.">Reverse-charge tax (not payable to the supplier)</dt>
+                <dd className="tabular-nums">{formatMoney(doc.reverse_charge_total_fc, doc.currency)}</dd>
+              </div>
+            )}
             {foreign && <div className="flex justify-between text-xs text-text-muted"><dt>In {base}</dt><dd className="tabular-nums">{formatMoney(doc.total, base)}</dd></div>}
             {posted && (
               <>
-                <div className="flex justify-between text-text-secondary"><dt>{isCredit ? 'Applied so far' : 'Paid so far'}</dt><dd className="tabular-nums">{formatMoney(doc.settled_fc, doc.currency)}</dd></div>
+                <div className="flex justify-between text-text-secondary"><dt>{isCredit ? 'Applied so far' : 'Paid so far'}</dt><dd className="tabular-nums">{formatMoney(doc.settled_fc - doc.written_off_fc, doc.currency)}</dd></div>
+                {doc.written_off_fc > 0 && (
+                  <div className="flex justify-between text-text-secondary" data-testid="doc-written-off"><dt>Written off</dt><dd className="tabular-nums">{formatMoney(doc.written_off_fc, doc.currency)}</dd></div>
+                )}
                 <div className="flex justify-between font-semibold"><dt>{isCredit ? 'Credit left' : side === 'sales' ? 'Still owed' : 'Still to pay'}{foreign ? ` (${base})` : ''}</dt><dd className="tabular-nums" data-testid="doc-amount-due">{formatMoney(doc.amount_due, base)}</dd></div>
               </>
             )}
@@ -454,6 +483,11 @@ export const InvoiceViewLive: React.FC<{ side?: Side }> = ({ side = 'sales' }) =
                     <FilePlus className="size-4" /> Apply to {side === 'sales' ? 'an invoice' : 'a bill'}
                   </button>
                 )}
+                {side === 'sales' && !isCredit && can.write_off && (
+                  <button type="button" onClick={() => navigate(`/${coSlug}/write-offs/new?invoice=${doc.id}`)} className={BTN_SECONDARY}>
+                    <Eraser className="size-4 text-text-muted" /> Write off
+                  </button>
+                )}
                 <div className="grid grid-cols-2 gap-2">
                   {!isCredit && (
                     <button type="button" onClick={() => navigate(`/${coSlug}/${S.creditsPath}/new?invoice=${doc.id}`)} className={BTN_SECONDARY}>
@@ -497,6 +531,22 @@ export const InvoiceViewLive: React.FC<{ side?: Side }> = ({ side = 'sales' }) =
       />
 
       {side === 'sales' && !isCredit && <InvoiceLinks invoiceId={doc.id} posted={doc.status === 'posted'} canShare={doc.can.share} />}
+      {side === 'sales' && doc.write_offs.length > 0 && (
+        <section className={cn(CARD, 'p-5')} aria-label="Write-offs" data-testid="doc-write-offs">
+          <h2 className="text-[13px] font-semibold text-text-primary">Written off</h2>
+          <ul className="mt-3 flex flex-col divide-y divide-border text-[13px]">
+            {doc.write_offs.filter((w) => w.status !== 'void').map((w) => (
+              <li key={w.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5">
+                <Link to={`/${coSlug}/write-offs/${w.id}`} className="font-medium text-accent hover:underline">{w.number ?? 'Draft'}</Link>
+                <span className="text-text-muted">{formatDate(w.write_off_date)}</span>
+                <span className="text-xs text-text-secondary">{w.status === 'posted' ? 'In the books' : w.status === 'reversed' ? 'Reversed' : w.status === 'pending_approval' ? 'Waiting for approval' : 'Draft'}</span>
+                <span className="ml-auto tabular-nums">{formatMoney(w.amount, doc.currency)}{w.recovered > 0 ? ` · ${formatMoney(w.recovered, doc.currency)} recovered` : ''}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {side === 'sales' && <SendLog family="invoices" id={doc.id} />}
 
       <AttachmentsPanel type={side === 'sales' ? 'invoice' : 'bill'} parentId={doc.id} posted={doc.status === 'posted' || doc.status === 'reversed'} />

@@ -26,6 +26,7 @@ export interface SettingsPatch {
   tax_rounding?: string;
   posting_accounts?: Record<string, string | null>;
   require_purchase_order?: boolean;
+  credit_limit_mode?: string;
   po_price_tolerance_pct?: string;
   po_quantity_tolerance_pct?: string;
   receipt_over_tolerance_pct?: string;

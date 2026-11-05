@@ -74,6 +74,9 @@ export const transitionDoc = async (
   body: Record<string, unknown>,
   intent: Intent,
 ) => (await post<ApiInvoice>(`${base(company)}/${resource}/${id}/${action}`, body, intent)).data;
+/** Submit keeps the whole answer: `warnings` (a credit limit exceeded in warn mode) travel next to the document. */
+export const submitDocFull = (company: string, resource: DocResource, id: string, body: Record<string, unknown>, intent: Intent) =>
+  post<ApiInvoice>(`${base(company)}/${resource}/${id}/submit`, body, intent) as Promise<{ data: ApiInvoice; warnings?: unknown }>;
 /** Applies this posted credit note (or debit note) to an open document of the same contact. */
 export const applyCredit = async (company: string, resource: DocResource, id: string, body: { invoice_id: string; amount_fc: number; date?: string }, intent: Intent) =>
   (await post<ApiCreditApplication>(`${base(company)}/${resource}/${id}/allocate`, body, intent)).data;

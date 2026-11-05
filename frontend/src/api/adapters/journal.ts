@@ -269,13 +269,13 @@ export const journalTypeLabel = (type: string): string => (type === 'asset' ? 'F
 
 /* ------------------------------------------------------------------- approvals */
 
-export type ApprovalDocType = 'manual_journal' | 'sales_invoice' | 'purchase_bill' | 'settlement' | 'payment_run' | 'purchase_requisition' | 'purchase_order' | 'purchase_order_revision' | 'depreciation_run' | 'asset_transaction' | 'other';
+export type ApprovalDocType = 'manual_journal' | 'sales_invoice' | 'purchase_bill' | 'settlement' | 'payment_run' | 'purchase_requisition' | 'purchase_order' | 'purchase_order_revision' | 'depreciation_run' | 'asset_transaction' | 'fund_transfer' | 'write_off' | 'write_off_recovery' | 'provision_run' | 'other';
 
 export interface ApprovalItem {
   id: string;
   document_type: ApprovalDocType;
   /** The API's own type, as `bulk-approve` wants it. */
-  api_type: 'journal' | 'invoice' | 'bill' | 'settlement' | 'payment_run' | 'purchase_requisition' | 'purchase_order' | 'purchase_order_revision' | 'depreciation_run' | 'asset_transaction';
+  api_type: 'journal' | 'invoice' | 'bill' | 'settlement' | 'payment_run' | 'purchase_requisition' | 'purchase_order' | 'purchase_order_revision' | 'depreciation_run' | 'asset_transaction' | 'fund_transfer' | 'write_off' | 'write_off_recovery' | 'provision_run';
   document_id: string;
   document_number: string;
   title: string;
@@ -289,7 +289,7 @@ export interface ApprovalItem {
   /** The document's lock version, for `return`. */
   version: number;
   /** Where to open it, for the procurement documents (a revision opens its order). Null for the older kinds, which the inbox routes itself. */
-  link: { path: 'requisitions' | 'purchase-orders' | 'assets'; id: string; tab?: string } | null;
+  link: { path: 'requisitions' | 'purchase-orders' | 'assets' | 'banking/transfers' | 'write-offs' | 'write-off-recoveries' | 'accounting/provisioning/runs'; id: string; tab?: string } | null;
 }
 
 type ApprovalDoc = Record<string, unknown> & { purchase_order_id?: string; amount?: ApiMoney; number?: string | null; memo?: string | null; kind?: string; created_by?: string | null; submitted_by?: string | null; version?: number };
@@ -345,6 +345,14 @@ export function toApprovalItem(a: ApiApproval): ApprovalItem {
     api_type = 'asset_transaction';
     title = `${TX_KIND_LABEL[kind] ?? 'Asset adjustment'}${doc.memo ? `: ${String(doc.memo)}` : ''}`;
     link = { path: 'assets', id: a.document_id, tab: 'adjustments' };
+  } else if (t === 'fund_transfer' || t === 'write_off' || t === 'write_off_recovery' || t === 'provision_run') {
+    // Opened on its own page, where it is read, approved or sent back (plan 3c.8 to 3c.12a).
+    document_type = t;
+    api_type = t;
+    const noun = { fund_transfer: 'Fund transfer', write_off: 'Write-off', write_off_recovery: 'Recovery after write-off', provision_run: 'Bad-debt provision' }[t];
+    title = `${noun}${doc.memo ? `: ${String(doc.memo)}` : ''}`;
+    const path = { fund_transfer: 'banking/transfers', write_off: 'write-offs', write_off_recovery: 'write-off-recoveries', provision_run: 'accounting/provisioning/runs' } as const;
+    link = { path: path[t], id: a.document_id };
   } else {
     title = String(t);
   }
