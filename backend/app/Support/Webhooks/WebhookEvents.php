@@ -33,7 +33,7 @@ final class WebhookEvents
         'purchase_requisition.approved', 'purchase_requisition.rejected',
         'purchase_order.approved', 'purchase_order.revised', 'purchase_order.cancelled', 'purchase_order.closed',
         'goods_receipt.recorded', 'goods_receipt.reversed', 'bill.match_overridden',
-        'fund_transfer.posted', 'fund_transfer.received', 'fund_transfer.reversed', 'write_off.posted', 'write_off.reversed',
+        'fund_transfer.posted', 'fund_transfer.received', 'fund_transfer.reversed', 'write_off.posted', 'write_off.reversed', 'write_off_recovery.posted', 'write_off_recovery.reversed',
         'provision_run.posted', 'provision_run.reversed', 'invoice.credit_limit_overridden',
     ];
 

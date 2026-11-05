@@ -8,6 +8,7 @@ use App\Contracts\Postable;
 use App\Domain\Trade\InvoiceKind;
 use App\Domain\Workflow\DocumentStatus;
 use App\Models\BaseModel;
+use App\Models\Transactions\WriteOff;
 use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -75,6 +76,12 @@ class Invoice extends BaseModel implements Postable
     public function lines(): HasMany
     {
         return $this->hasMany(InvoiceLine::class)->orderBy('line_no');
+    }
+
+    /** @return HasMany<WriteOff, $this> */
+    public function writeOffs(): HasMany
+    {
+        return $this->hasMany(WriteOff::class)->orderBy('write_off_date');
     }
 
     /** What is still owed, in base: for supplier documents the withheld tax is not owed to the supplier (docStatus.ts). */

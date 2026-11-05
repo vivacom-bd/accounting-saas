@@ -44,6 +44,7 @@ use App\Models\Trade\Settlement;
 use App\Models\Trade\WhtCertificate;
 use App\Models\Transactions\ProvisionRun;
 use App\Models\Transactions\WriteOff;
+use App\Models\Transactions\WriteOffRecovery;
 use App\Models\Transfers\FundTransfer;
 use App\Models\Workflow\ApprovalWorkflow;
 use App\Support\Tenancy\CompanyContext;
@@ -76,6 +77,7 @@ final class CompanyBindings
         'paymentRun' => PaymentRun::class,
         'provisionRun' => ProvisionRun::class,
         'writeOff' => WriteOff::class,
+        'writeOffRecovery' => WriteOffRecovery::class,
         'fundTransfer' => FundTransfer::class,
         'assetCategory' => AssetCategory::class,
         'fixedAsset' => FixedAsset::class,

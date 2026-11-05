@@ -134,6 +134,6 @@ trait HandlesTradeDocuments
 
     private function fresh(string $id): Invoice
     {
-        return Invoice::query()->with('lines')->findOrFail($id);
+        return Invoice::query()->with(['lines', 'writeOffs'])->findOrFail($id);
     }
 }

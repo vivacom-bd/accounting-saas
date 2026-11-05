@@ -17,6 +17,7 @@ use App\Models\Trade\PaymentRun;
 use App\Models\Trade\Settlement;
 use App\Models\Transactions\ProvisionRun;
 use App\Models\Transactions\WriteOff;
+use App\Models\Transactions\WriteOffRecovery;
 use App\Models\Transfers\FundTransfer;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -111,6 +112,12 @@ class ApprovalRequest extends BaseModel
     public function writeOff(): BelongsTo
     {
         return $this->belongsTo(WriteOff::class, 'document_id');
+    }
+
+    /** @return BelongsTo<WriteOffRecovery, $this> null unless the document is a recovery after write-off */
+    public function writeOffRecovery(): BelongsTo
+    {
+        return $this->belongsTo(WriteOffRecovery::class, 'document_id');
     }
 
     /** @return BelongsTo<FundTransfer, $this> null unless the document is a fund transfer */

@@ -117,3 +117,28 @@ it('never lets the maker of an invoice override its credit limit, and keeps the 
         expect($breaches)->toBe(0)->and(DB::table('credit_limit_checks')->where('outcome', 'overridden')->count())->toBe(1)->and(LedgerChecks::problems())->toBe([]);
     });
 });
+
+it('keeps AR, the aging and every ledger invariant through write-offs, recoveries, receipts and reversals', function (): void {
+    $this->workflow('write_off_recovery');
+    $a = $this->sale(5000);   // 5,500
+    $b = $this->sale(10000);  // 11,000
+    $off = fn (array $invoice, int $amount): array => $this->submitDoc('write-offs', $this->draftDoc('write-offs', ['invoice_id' => $invoice['id'], 'write_off_date' => '2026-04-20', 'amount_fc' => $amount, 'reason' => 'Uncollectable'])['id']);
+    $recover = function (array $w, int $amount, string $date = '2026-05-10'): array {
+        $r = $this->draftDoc('write-off-recoveries', ['write_off_id' => $w['id'], 'recovery_date' => $date, 'amount_fc' => $amount, 'reason' => 'Part paid']);
+        $this->asPerson($this->accountant, signing: true)->postJson($this->api("write-off-recoveries/{$r['id']}/submit"), [], $this->key())->assertOk();
+
+        return $this->asPerson($this->approver, signing: true)->postJson($this->api("write-off-recoveries/{$r['id']}/approve"), [], $this->key())->assertOk()->json('data');
+    };
+    $wa = $off($a, 5500);
+    $wb = $off($b, 6000);
+    $r1 = $recover($wa, 2000);
+    $recover($wb, 6000);
+    $this->postedSettlement('receipt', $this->t->customer, 2000, [[$a['id'], 2000]], '2026-05-15');
+    $this->asPerson($this->owner, signing: true)->postJson($this->api("write-off-recoveries/{$r1['id']}/reverse"), [], $this->key())->assertStatus(422);
+
+    $this->inTenant(function (): void {
+        expect(LedgerChecks::problems())->toBe([])->and(LedgerChecks::makerCheckerBreaches())->toBe([]);
+    });
+    $aging = $this->asPerson($this->owner)->getJson($this->api('reports/ar-aging?as_of=2026-05-31'))->assertOk()->json('data');
+    expect($aging['totals']['open']['amount'])->toBe($this->net('1100'))->and($this->net('1100'))->toBe(11000)->and($this->net('7105'))->toBe(-8000);
+});

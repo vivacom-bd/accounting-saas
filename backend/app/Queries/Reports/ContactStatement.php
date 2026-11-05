@@ -14,13 +14,13 @@ use Illuminate\Validation\ValidationException;
  * an opening balance before `from`, then every line in date order with a running balance, in base currency. A customer
  * balance is debit - credit (what they owe); a supplier balance is credit - debit (what we owe). Reversed documents show
  * both their original and their reversal lines, so they net out. Each line carries the document number resolved from the
- * journal's source (credit applications use the journal's own reference, "credit / document").
+ * journal's source (write-offs and recoveries show their own number as typed rows; credit applications use the journal's own reference, "credit / document").
  */
 final class ContactStatement
 {
     private const array LABELS = [
         'sales_invoice' => 'invoice', 'credit_note' => 'credit_note', 'purchase_bill' => 'bill', 'debit_note' => 'debit_note',
-        'credit_application' => 'credit_application',
+        'credit_application' => 'credit_application', 'write_off' => 'write_off', 'write_off_recovery' => 'write_off_recovery',
     ];
 
     public function __construct(private readonly ReportRunner $runner) {}
@@ -45,10 +45,12 @@ final class ContactStatement
 
         $lines = $db->select(
             "SELECT j.id AS journal_id, j.journal_date, j.number AS journal_number, j.source_type, j.source_id, j.reference, j.reversal_of_id, l.description, l.debit, l.credit,
-                    i.number AS invoice_number, s.number AS settlement_number, s.kind::text AS settlement_kind
+                    i.number AS invoice_number, s.number AS settlement_number, s.kind::text AS settlement_kind, wo.number AS write_off_number, wr.number AS recovery_number
              FROM journal_lines l JOIN journals j ON j.id = l.journal_id JOIN accounts a ON a.id = l.account_id
              LEFT JOIN invoices i ON i.id = j.source_id AND j.source_type = i.kind::text
              LEFT JOIN settlements s ON s.id = j.source_id AND j.source_type = 'settlement'
+             LEFT JOIN write_offs wo ON wo.id = j.source_id AND j.source_type = 'write_off'
+             LEFT JOIN write_off_recoveries wr ON wr.id = j.source_id AND j.source_type = 'write_off_recovery'
              WHERE l.company_id = ? AND l.contact_id = ? AND a.control_type::text = ? AND j.status IN ('posted', 'reversed') AND j.journal_date BETWEEN ? AND ?
              ORDER BY j.journal_date, j.posted_at, j.id, l.line_no",
             [$p->companyId, $contactId, $control, $from, $p->to],
@@ -65,7 +67,7 @@ final class ContactStatement
             $debits += $debit;
             $credits += $credit;
             $type = (string) ($l->source_type ?? 'manual');
-            $number = $l->invoice_number ?? $l->settlement_number ?? ($type === 'credit_application' ? $l->reference : null);
+            $number = $l->invoice_number ?? $l->settlement_number ?? $l->write_off_number ?? $l->recovery_number ?? ($type === 'credit_application' ? $l->reference : null);
             $rows[] = [
                 'date' => $l->journal_date,
                 'type' => $l->reversal_of_id !== null ? 'reversal' : ($type === 'settlement' ? (string) $l->settlement_kind : (self::LABELS[$type] ?? $type)),

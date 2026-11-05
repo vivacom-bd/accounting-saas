@@ -97,12 +97,14 @@ final class ArApAging
               (SELECT COALESCE(SUM(c.source_amount), 0) FROM credit_applications c LEFT JOIN journals cj ON cj.id = c.reversal_journal_id
                 WHERE c.note_id = i.id AND c.applied_on <= :d5 AND (c.reversed_at IS NULL OR cj.journal_date > :d6)) AS applied_from,
               (SELECT COALESCE(SUM(w.amount), 0) FROM write_offs w LEFT JOIN journals wj ON wj.id = w.reversal_journal_id
-                WHERE w.invoice_id = i.id AND w.status IN ('posted', 'reversed') AND w.write_off_date <= :d9 AND (w.status = 'posted' OR wj.journal_date > :d10)) AS written_off
+                WHERE w.invoice_id = i.id AND w.status IN ('posted', 'reversed') AND w.write_off_date <= :d9 AND (w.status = 'posted' OR wj.journal_date > :d10)) AS written_off,
+              (SELECT COALESCE(SUM(x.amount), 0) FROM write_off_recoveries x LEFT JOIN journals xj ON xj.id = x.reversal_journal_id
+                WHERE x.invoice_id = i.id AND x.status IN ('posted', 'reversed') AND x.recovery_date <= :d11 AND (x.status = 'posted' OR xj.journal_date > :d12)) AS recovered
             FROM invoices i LEFT JOIN journals rj ON rj.id = i.reversal_journal_id
             WHERE i.company_id = :company AND i.kind::text IN (:k1, :k2) AND i.status IN ('posted', 'reversed') AND i.issue_date <= :d7
               AND (i.status = 'posted' OR rj.journal_date > :d8)
             SQL, [
-            'd1' => $asOf, 'd2' => $asOf, 'd3' => $asOf, 'd4' => $asOf, 'd5' => $asOf, 'd6' => $asOf, 'd7' => $asOf, 'd8' => $asOf, 'd9' => $asOf, 'd10' => $asOf,
+            'd1' => $asOf, 'd2' => $asOf, 'd3' => $asOf, 'd4' => $asOf, 'd5' => $asOf, 'd6' => $asOf, 'd7' => $asOf, 'd8' => $asOf, 'd9' => $asOf, 'd10' => $asOf, 'd11' => $asOf, 'd12' => $asOf,
             'company' => $p->companyId, 'k1' => $docKinds, 'k2' => $noteKind,
         ]);
 
@@ -131,7 +133,7 @@ final class ArApAging
         $items = [];
 
         foreach ($docs as $d) {
-            $open = (int) $d->net - (int) $d->allocated - (int) $d->applied_to - (int) $d->applied_from - (int) $d->written_off;
+            $open = (int) $d->net - (int) $d->allocated - (int) $d->applied_to - (int) $d->applied_from - (int) $d->written_off + (int) $d->recovered;
             if ($open <= 0) {
                 continue;
             }

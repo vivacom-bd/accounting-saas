@@ -35,6 +35,7 @@ use App\Http\Resources\ReopenRequestResource;
 use App\Http\Resources\SettlementResource;
 use App\Http\Resources\TaxCodeResource;
 use App\Http\Resources\TaxGroupResource;
+use App\Http\Resources\WriteOffRecoveryResource;
 use App\Http\Resources\WriteOffResource;
 use App\Models\Banking\BankAccount;
 use App\Models\Banking\BankMatch;
@@ -67,6 +68,7 @@ use App\Models\Trade\PaymentRun;
 use App\Models\Trade\Settlement;
 use App\Models\Transactions\ProvisionRun;
 use App\Models\Transactions\WriteOff;
+use App\Models\Transactions\WriteOffRecovery;
 use App\Models\Transfers\FundTransfer;
 use App\Models\Workflow\ApprovalWorkflow;
 use Illuminate\Database\Eloquent\Model;
@@ -107,6 +109,7 @@ final class SubjectRepresenter
         'payment_runs' => [PaymentRun::class, PaymentRunResource::class, ['items']],
         'provision_runs' => [ProvisionRun::class, ProvisionRunResource::class, []],
         'write_offs' => [WriteOff::class, WriteOffResource::class, []],
+        'write_off_recoveries' => [WriteOffRecovery::class, WriteOffRecoveryResource::class, []],
         'fund_transfers' => [FundTransfer::class, FundTransferResource::class, []],
         'bank_accounts' => [BankAccount::class, BankAccountResource::class, []],
         'bank_rules' => [BankRule::class, BankRuleResource::class, []],

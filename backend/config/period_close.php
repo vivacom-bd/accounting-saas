@@ -7,6 +7,7 @@ use App\Services\Fiscal\PendingApprovalsCheck;
 use App\Services\Fiscal\UnpostedDraftsCheck;
 use App\Services\FixedAssets\DepreciationRunCheck;
 use App\Services\Fx\FxRevaluationCheck;
+use App\Services\Transfers\FundTransferInTransitCheck;
 
 return [
     // The close checklist (02_AppFlow).
@@ -16,5 +17,6 @@ return [
         FxRevaluationCheck::class,
         DepreciationRunCheck::class,
         BankReconciliationCheck::class,
+        FundTransferInTransitCheck::class,
     ],
 ];

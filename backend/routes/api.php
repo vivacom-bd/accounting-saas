@@ -69,6 +69,7 @@ use App\Http\Controllers\Trade\SettlementController;
 use App\Http\Controllers\Trade\WhtCertificateController;
 use App\Http\Controllers\Transactions\ProvisionController;
 use App\Http\Controllers\Transactions\WriteOffController;
+use App\Http\Controllers\Transactions\WriteOffRecoveryController;
 use App\Http\Controllers\Transfers\FundTransferController;
 use App\Http\Controllers\Webhooks\WebhookEndpointController;
 use App\Http\Controllers\Workflow\ApprovalInboxController;
@@ -439,6 +440,14 @@ Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent', 'c
         Route::put('write-offs/{writeOff}', [WriteOffController::class, 'update'])->whereUuid('writeOff')->name('write-offs.update');
         foreach (['posting-preview' => 'preview', 'submit' => 'submit', 'approve' => 'approve', 'return' => 'return', 'void' => 'void', 'reverse' => 'reverse'] as $verb => $method) {
             Route::post("write-offs/{writeOff}/{$verb}", [WriteOffController::class, $method])->whereUuid('writeOff')->name("write-offs.{$method}");
+        }
+        // Recovery after write-off: its own document against one posted write-off (D15 items 2 and 9)
+        Route::get('write-off-recoveries', [WriteOffRecoveryController::class, 'index'])->name('write-off-recoveries.index');
+        Route::post('write-off-recoveries', [WriteOffRecoveryController::class, 'store'])->name('write-off-recoveries.store');
+        Route::get('write-off-recoveries/{writeOffRecovery}', [WriteOffRecoveryController::class, 'show'])->whereUuid('writeOffRecovery')->name('write-off-recoveries.show');
+        Route::put('write-off-recoveries/{writeOffRecovery}', [WriteOffRecoveryController::class, 'update'])->whereUuid('writeOffRecovery')->name('write-off-recoveries.update');
+        foreach (['posting-preview' => 'preview', 'submit' => 'submit', 'approve' => 'approve', 'return' => 'return', 'void' => 'void', 'reverse' => 'reverse'] as $verb => $method) {
+            Route::post("write-off-recoveries/{writeOffRecovery}/{$verb}", [WriteOffRecoveryController::class, $method])->whereUuid('writeOffRecovery')->name("write-off-recoveries.{$method}");
         }
         // Bad-debt provisioning: rates per aging bucket, a preview, and approved runs (D15 item 2)
         Route::get('provision-rates', [ProvisionController::class, 'rates'])->name('provision-rates.show');

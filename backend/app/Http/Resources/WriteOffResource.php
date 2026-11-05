@@ -34,6 +34,7 @@ final class WriteOffResource extends JsonResource
             'allowance_used' => Json::money($this->allowance_used, $base),
             'expense' => Json::money($this->expense, $base),
             'recovered' => Json::money($this->recovered_fc, $this->currency),
+            'recoverable' => Json::money($this->status->value === 'posted' ? $this->amount_fc - $this->recovered_fc : 0, $this->currency),
             'reason' => $this->reason,
             'reference' => $this->reference,
             'memo' => $this->memo,
@@ -47,7 +48,7 @@ final class WriteOffResource extends JsonResource
             'posted_at' => Json::time($this->posted_at),
             'version' => $this->lock_version,
             'can' => Json::can($request, $this->resource, [
-                'update' => 'update', 'submit' => 'submit', 'approve' => 'approve', 'return' => 'return', 'void' => 'void', 'reverse' => 'reverse',
+                'update' => 'update', 'submit' => 'submit', 'approve' => 'approve', 'return' => 'return', 'void' => 'void', 'reverse' => 'reverse', 'recover' => 'recover',
             ]),
         ];
     }

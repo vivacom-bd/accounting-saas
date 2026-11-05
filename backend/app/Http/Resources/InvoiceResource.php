@@ -6,6 +6,7 @@ namespace App\Http\Resources;
 
 use App\Contracts\Clock;
 use App\Domain\Trade\PaymentStatus;
+use App\Domain\Workflow\DocumentStatus;
 use App\Http\Support\Json;
 use App\Models\Trade\Invoice;
 use Illuminate\Http\Request;
@@ -67,9 +68,15 @@ final class InvoiceResource extends JsonResource
             'version' => $this->lock_version,
             // The list answers summaries; one document comes with its lines.
             'lines' => $this->whenLoaded('lines', fn () => InvoiceLineResource::collection($this->lines->each(fn ($l) => $l->setRelation('invoice', $this->resource)))),
+            // Write-offs against a customer invoice, with what has come back since (posted ones only count in the totals).
+            'write_offs' => InvoiceWriteOffResource::collection($this->whenLoaded('writeOffs')),
+            'written_off' => $this->whenLoaded('writeOffs', fn () => Json::money(
+                (int) $this->writeOffs->where('status', DocumentStatus::Posted)->sum(fn ($w) => $w->amount_fc - $w->recovered_fc),
+                $this->currency,
+            )),
             'can' => Json::can($request, $this->resource, [
                 'update' => 'update', 'submit' => 'submit', 'approve' => 'approve',
-                'return' => 'return', 'void' => 'void', 'reverse' => 'reverse', 'override_match' => 'overrideMatch', 'send' => 'send', 'share' => 'share',
+                'return' => 'return', 'void' => 'void', 'reverse' => 'reverse', 'override_match' => 'overrideMatch', 'send' => 'send', 'share' => 'share', 'write_off' => 'writeOff',
             ]),
         ];
     }

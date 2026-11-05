@@ -63,6 +63,12 @@ final class WriteOffPolicy
             || $this->context->allows($principal, 'write_offs.approve', $w->company_id);
     }
 
+    /** The hint for "Record a recovery": a posted write-off with something not yet recovered. */
+    public function recover(Authenticatable $principal, WriteOff $w): bool
+    {
+        return $w->status === DocumentStatus::Posted && $w->recovered_fc < $w->amount_fc && $this->context->personCan($principal, 'write_offs.create', $w->company_id);
+    }
+
     public function reverse(Authenticatable $principal, WriteOff $w): bool
     {
         return $principal instanceof User && $w->status === DocumentStatus::Posted && $this->context->allows($principal, 'write_offs.reverse', $w->company_id);

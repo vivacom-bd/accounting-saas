@@ -114,6 +114,13 @@ final class InvoicePolicy
             && $this->view($principal, $invoice);
     }
 
+    /** Write off the open amount of a posted customer invoice (plan 3c.9): the hint for the button; the Action checks the amount. */
+    public function writeOff(Authenticatable $principal, Invoice $invoice): bool
+    {
+        return $invoice->status === DocumentStatus::Posted && $invoice->kind === InvoiceKind::SalesInvoice && $invoice->amountDueFc() > 0
+            && $this->context->personCan($principal, 'write_offs.create', $invoice->company_id);
+    }
+
     /** Submit this draft bill past a purchase order mismatch, with a reason (13 §10). People only, and never its own maker. */
     public function overrideMatch(Authenticatable $principal, Invoice $invoice): bool
     {

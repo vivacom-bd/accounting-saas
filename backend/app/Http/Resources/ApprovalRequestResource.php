@@ -107,6 +107,21 @@ final class ApprovalRequestResource extends JsonResource
                 'version' => $writeOff->lock_version,
             ];
         }
+        $recovery = $this->writeOffRecovery;
+        if ($recovery !== null) {
+            return [
+                'id' => $recovery->id,
+                'number' => $recovery->number,
+                'recovery_date' => Json::date($recovery->recovery_date),
+                'contact_id' => $recovery->contact_id,
+                'reference' => $recovery->reference,
+                'memo' => $recovery->reason,
+                'amount' => $amount,
+                'created_by' => $recovery->created_by,
+                'submitted_by' => $recovery->submitted_by,
+                'version' => $recovery->lock_version,
+            ];
+        }
         $transfer = $this->fundTransfer;
         if ($transfer !== null) {
             return [
