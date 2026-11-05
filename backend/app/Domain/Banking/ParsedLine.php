@@ -18,5 +18,7 @@ final readonly class ParsedLine
         public ?int $balanceAfter = null,
         /** Line number (CSV, SGML) or entry number in the file. */
         public int $sourceLine = 0,
+        /** When set, the line's identity is this key instead of its date and wording (M-Pesa: the receipt number and amount). */
+        public ?string $dedupeKey = null,
     ) {}
 }

@@ -12,6 +12,7 @@ import {
   guessLocale,
   guessSign,
   importProblems,
+  describeImportWarning,
   mappingProblem,
   parseAmountInput,
   peekCsv,
@@ -221,7 +222,14 @@ describe('statements and imports', () => {
   });
   it('maps an import result, including a file that was already imported', () => {
     const r = toStatementImport({ statement: null, lines_imported: 0, duplicate_lines_skipped: 3, already_imported: true, warnings: [] });
-    expect(r).toEqual({ statement: null, lines_imported: 0, duplicate_lines_skipped: 3, already_imported: true, warnings: [] });
+    expect(r).toEqual({ statement: null, lines_imported: 0, duplicate_lines_skipped: 3, already_imported: true, warnings: [], skipped_rows: [] });
+  });
+  it('keeps the rows an M-Pesa import left out and words its warnings plainly', () => {
+    const skipped = [{ line: 8, reference: 'SCB1P2Q3R4', status: 'FAILED', reason: 'not_completed' }];
+    const r = toStatementImport({ statement: null, lines_imported: 3, duplicate_lines_skipped: 0, already_imported: false, warnings: ['mpesa_layout_unconfirmed'], skipped_rows: skipped } as never);
+    expect(r.skipped_rows).toEqual(skipped);
+    expect(describeImportWarning('mpesa_layout_unconfirmed')).toContain('not been checked against a real business statement');
+    expect(describeImportWarning('mpesa_rows_skipped')).toContain('left out');
   });
   it('lists file problems with their line numbers, from the violations', () => {
     const e = new ApiError({ status: 422, code: 'statement_malformed', detail: 'x', requestId: null, violations: [{ code: 'a', line_no: 3, message: "'12.345' has more than 2 decimals." }, { code: 'b', message: 'No lines.' }] });

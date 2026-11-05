@@ -10,6 +10,7 @@ final readonly class ParsedStatement
     /**
      * @param  list<ParsedLine>  $lines
      * @param  list<string>  $warnings
+     * @param  list<array{line: int, reference: string|null, status: string|null, reason: string}>  $skipped
      */
     public function __construct(
         public string $format,
@@ -21,6 +22,8 @@ final readonly class ParsedStatement
         public ?string $currency = null,
         public ?string $accountId = null,
         public array $warnings = [],
+        /** Rows the parser left out on purpose, each with its line and the reason (M-Pesa: rows that are not completed). */
+        public array $skipped = [],
     ) {}
 
     public function sum(): int

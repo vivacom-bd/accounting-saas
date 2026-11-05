@@ -26,6 +26,8 @@ final class BankStatementImportResource extends JsonResource
             'already_imported' => $this->alreadyImported,
             /** @var list<string> */
             'warnings' => $this->warnings,
+            /** Rows left out on purpose, each with its line, receipt, status and reason; empty for formats that skip nothing. */
+            'skipped_rows' => $this->skippedRows,
         ];
     }
 }

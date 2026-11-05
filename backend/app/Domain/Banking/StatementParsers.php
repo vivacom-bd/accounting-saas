@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Banking;
 
-/** Picks the parser for a declared (or sniffed) format and checks the statement's own arithmetic. */
+/** Picks the parser for a declared (or sniffed) format and checks the statement's own arithmetic. `mpesa` is never sniffed: it must be chosen. */
 final class StatementParsers
 {
-    public const array FORMATS = ['csv', 'ofx', 'camt'];
+    public const array FORMATS = ['csv', 'ofx', 'camt', 'mpesa'];
 
     /** @param array<string, mixed> $csvMapping */
     public function parse(string $content, string $format, array $csvMapping, int $scale = 2): ParsedStatement
@@ -22,12 +22,13 @@ final class StatementParsers
             throw StatementFormatException::at(null, 'statement_malformed', 'The file is binary, not a text statement.');
         }
         $format = $format === 'auto' ? self::sniff($content) : $format;
-        if ($format === 'csv' && ! mb_check_encoding($content, 'UTF-8')) {
+        if (in_array($format, ['csv', 'mpesa'], true) && ! mb_check_encoding($content, 'UTF-8')) {
             $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1252');
         }
 
         return match ($format) {
             'csv' => (new CsvStatementParser)->parse($content, $csvMapping, $scale),
+            'mpesa' => (new MpesaStatementParser)->parse($content, $csvMapping, $scale),
             'ofx' => (new OfxStatementParser)->parse($content, $scale),
             'camt' => (new CamtStatementParser)->parse($content, $scale),
             default => throw StatementFormatException::at(null, 'statement_format_unknown', "Unknown statement format {$format}."),

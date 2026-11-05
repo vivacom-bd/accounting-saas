@@ -208,8 +208,17 @@ export const BankImportLive: React.FC = () => {
                 {file && (
                   <p className="flex items-center gap-2 text-xs text-text-secondary">
                     <FileText className="size-4 text-text-muted" />
-                    {file.name} · {kind === 'csv' ? 'CSV, columns to be chosen' : kind === 'ofx' ? 'OFX, columns are read from the file' : 'CAMT.053, columns are read from the file'}
+                    {file.name} · {kind === 'csv' ? 'CSV, columns to be chosen' : kind === 'mpesa' ? 'M-Pesa statement, columns are found by their headings' : kind === 'ofx' ? 'OFX, columns are read from the file' : 'CAMT.053, columns are read from the file'}
                   </p>
+                )}
+                {file && (kind === 'csv' || kind === 'mpesa') && (
+                  <label className="flex items-start gap-2 text-[13px] text-text-primary">
+                    <input type="checkbox" checked={kind === 'mpesa'} onChange={(e) => setKind(e.target.checked ? 'mpesa' : 'csv')} className="mt-0.5" aria-label="This is an M-Pesa statement" />
+                    <span>
+                      This is an M-Pesa statement
+                      <span className="block text-[11px] text-text-muted">Columns are found by their headings (Receipt No, Completion Time, Details, Transaction Status, Paid in, Withdrawn, Balance). This layout is not yet confirmed against a real business export, so check the result against the original. Times are East Africa Time.</span>
+                    </span>
+                  </label>
                 )}
                 <div className="flex justify-end">
                   <button type="button" disabled={!file || !bank} onClick={() => setStep(kind === 'csv' ? 2 : 3)} className={primary}>
@@ -408,6 +417,16 @@ const ResultPanel: React.FC<{ result: StatementImportResult; bank: LiveBankAccou
         {describeImportWarning(w)}
       </p>
     ))}
+    {result.skipped_rows.length > 0 && (
+      <div data-testid="skipped-rows">
+        <p className="text-xs font-medium text-text-primary">Left out ({result.skipped_rows.length})</p>
+        <ul className="mt-1 flex flex-col gap-0.5 text-xs text-text-secondary">
+          {result.skipped_rows.map((r) => (
+            <li key={r.line}>Line {r.line}{r.reference ? `, receipt ${r.reference}` : ''}: {r.reason === 'not_completed' ? `status ${r.status ?? 'unknown'}, not completed` : r.reason === 'zero_amount' ? 'no amount' : r.reason === 'status_missing' ? 'no status' : r.reason}</li>
+          ))}
+        </ul>
+      </div>
+    )}
     <div className="flex gap-2">
       {bank && (
         <Link to={`/${slug}/banking/${bank.id}/reconcile`} className={primary}>

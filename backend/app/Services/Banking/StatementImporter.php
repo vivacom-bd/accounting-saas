@@ -29,7 +29,7 @@ final class StatementImporter
 
     /**
      * @param  array<string, mixed>  $mapping  CSV mapping (the request's, else the account's saved one)
-     * @return array{statement: BankStatement|null, inserted: int, skipped: int, warnings: list<string>, already_imported: bool}
+     * @return array{statement: BankStatement|null, inserted: int, skipped: int, warnings: list<string>, already_imported: bool, skipped_rows: list<array{line: int, reference: string|null, status: string|null, reason: string}>}
      */
     public function import(Actor $actor, BankAccount $account, string $content, ?string $fileName, string $format, array $mapping, ?int $openingOverride, ?int $closingOverride): array
     {
@@ -37,7 +37,7 @@ final class StatementImporter
         $hash = hash('sha256', $content);
         $same = BankStatement::query()->where('bank_account_id', $account->id)->where('file_hash', $hash)->first();
         if ($same !== null) {
-            return ['statement' => $same, 'inserted' => 0, 'skipped' => $same->line_count + $same->duplicates_skipped, 'warnings' => $same->warnings, 'already_imported' => true];
+            return ['statement' => $same, 'inserted' => 0, 'skipped' => $same->line_count + $same->duplicates_skipped, 'warnings' => $same->warnings, 'already_imported' => true, 'skipped_rows' => []];
         }
 
         $scale = (int) ($conn->table('currencies')->where('code', $account->currency)->value('minor_unit') ?? 2);
@@ -46,6 +46,10 @@ final class StatementImporter
             if ($mapping === []) {
                 throw StatementFormatException::at(null, 'mapping_required', 'A CSV statement needs a column mapping (none is saved for this account).');
             }
+        }
+        if ($format === 'mpesa') {
+            // Columns are found by header name; the saved mapping only fills in what the headers do not say.
+            $mapping = $mapping !== [] ? $mapping : ($account->import_mapping ?? []);
         }
         $parsed = $this->parsers->parse($content, $format, $mapping, $scale);
         if ($parsed->currency !== null && $parsed->currency !== $account->currency) {
@@ -77,7 +81,7 @@ final class StatementImporter
         }
         $skipped = count($parsed->lines) - count($fresh);
         if ($fresh === []) {
-            return ['statement' => null, 'inserted' => 0, 'skipped' => $skipped, 'warnings' => $warnings, 'already_imported' => false];
+            return ['statement' => null, 'inserted' => 0, 'skipped' => $skipped, 'warnings' => $warnings, 'already_imported' => false, 'skipped_rows' => $parsed->skipped];
         }
 
         $now = $this->clock->now();
@@ -112,6 +116,6 @@ final class StatementImporter
             $account->forceFill(['last_statement_balance' => $closing, 'last_statement_date' => $parsed->periodTo])->save();
         }
 
-        return ['statement' => $statement, 'inserted' => $inserted, 'skipped' => $skipped + (count($fresh) - $inserted), 'warnings' => $warnings, 'already_imported' => false];
+        return ['statement' => $statement, 'inserted' => $inserted, 'skipped' => $skipped + (count($fresh) - $inserted), 'warnings' => $warnings, 'already_imported' => false, 'skipped_rows' => $parsed->skipped];
     }
 }

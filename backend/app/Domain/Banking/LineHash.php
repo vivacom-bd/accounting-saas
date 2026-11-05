@@ -20,7 +20,9 @@ final class LineHash
         $seen = [];
         $out = [];
         foreach ($lines as $l) {
-            $key = implode("\x1f", [$bankAccountId, $l->txnDate, (string) $l->amount, self::norm($l->description), self::norm($l->reference ?? '')]);
+            $key = $l->dedupeKey !== null
+                ? implode("\x1f", [$bankAccountId, $l->dedupeKey])
+                : implode("\x1f", [$bankAccountId, $l->txnDate, (string) $l->amount, self::norm($l->description), self::norm($l->reference ?? '')]);
             $seen[$key] = ($seen[$key] ?? 0) + 1;
             $out[] = hash('sha256', $key."\x1f".$seen[$key]);
         }

@@ -12,7 +12,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 /**
- * Multipart statement upload: `file` (at most 2 MB), `format` (csv|ofx|camt|auto, default auto), `mapping` for CSV (a JSON object, or
+ * Multipart statement upload: `file` (at most 2 MB), `format` (csv|ofx|camt|mpesa|auto, default auto; mpesa is never guessed), `mapping` for CSV (a JSON object, or
  * a field per key; see CsvStatementParser), `save_mapping`, and optional `opening_balance` / `closing_balance` in minor units when the
  * file does not state them.
  */
@@ -23,7 +23,7 @@ final class ImportStatementRequest extends CompanyRequest
     {
         return [
             'file' => ['required', 'file', 'max:'.intdiv(StatementLimits::MAX_BYTES, 1024)],
-            'format' => ['nullable', 'string', Rule::in(['auto', 'csv', 'ofx', 'camt'])],
+            'format' => ['nullable', 'string', Rule::in(['auto', 'csv', 'ofx', 'camt', 'mpesa'])],
             'mapping' => ['nullable', 'array'],
             'save_mapping' => ['nullable', 'boolean'],
             'opening_balance' => ['nullable', 'integer'],

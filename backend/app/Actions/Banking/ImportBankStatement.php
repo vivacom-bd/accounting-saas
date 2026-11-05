@@ -28,7 +28,7 @@ final class ImportBankStatement
 {
     public function __construct(private readonly UnitOfWork $uow, private readonly SetupGuard $guard, private readonly StatementImporter $importer) {}
 
-    /** @return array{statement: BankStatement|null, inserted: int, skipped: int, warnings: list<string>, already_imported: bool} */
+    /** @return array{statement: BankStatement|null, inserted: int, skipped: int, warnings: list<string>, already_imported: bool, skipped_rows: list<array{line: int, reference: string|null, status: string|null, reason: string}>} */
     public function handle(Actor $actor, ImportStatementInput $in): array
     {
         return $this->uow->run($actor, function (LockSet $locks, AuditBuffer $audit, Outbox $outbox) use ($actor, $in) {

@@ -75,7 +75,7 @@ final class BankAccountController extends Controller
     {
         $r = $action->handle(RequestActor::from($request, $company->id), $request->toInput($bankAccount->id));
 
-        $result = new StatementImportResult($r['statement'], $r['inserted'], $r['skipped'], $r['already_imported'], $r['warnings']);
+        $result = new StatementImportResult($r['statement'], $r['inserted'], $r['skipped'], $r['already_imported'], $r['warnings'], $r['skipped_rows']);
 
         if ($r['inserted'] > 0) {
             return (new BankStatementImportResource($result))->response()->setStatusCode(201);

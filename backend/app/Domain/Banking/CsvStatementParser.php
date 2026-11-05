@@ -149,7 +149,7 @@ final class CsvStatementParser
      *
      * @return list<array{0: int, 1: list<string>}>
      */
-    private static function records(string $content, string $delimiter): array
+    public static function records(string $content, string $delimiter): array
     {
         $content = str_starts_with($content, "\xEF\xBB\xBF") ? substr($content, 3) : $content;
         $content = str_replace(["\r\n", "\r"], "\n", $content);

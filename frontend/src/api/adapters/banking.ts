@@ -123,7 +123,8 @@ export function mappingProblem(m: CsvMapping): string | null {
 
 /* ------------------------------------------------------------------ reading the file's first lines (display only) */
 
-export type FileKind = 'csv' | 'ofx' | 'camt';
+/** `mpesa` is never sniffed: the person says the CSV is an M-Pesa statement. */
+export type FileKind = 'csv' | 'ofx' | 'camt' | 'mpesa';
 
 /** What the file is, from its first bytes. The server detects the format again; this only decides whether columns need mapping. */
 export function sniffKind(name: string, head: string): FileKind {
@@ -371,6 +372,8 @@ export interface StatementImportResult {
   duplicate_lines_skipped: number;
   already_imported: boolean;
   warnings: string[];
+  /** Rows the server left out on purpose, with the reason (M-Pesa rows that are not completed). */
+  skipped_rows: Array<{ line: number; reference: string | null; status: string | null; reason: string }>;
 }
 
 export function toStatementImport(r: ApiStatementImport): StatementImportResult {
@@ -380,6 +383,7 @@ export function toStatementImport(r: ApiStatementImport): StatementImportResult 
     duplicate_lines_skipped: r.duplicate_lines_skipped,
     already_imported: r.already_imported,
     warnings: r.warnings ?? [],
+    skipped_rows: (r as { skipped_rows?: StatementImportResult['skipped_rows'] }).skipped_rows ?? [],
   };
 }
 
@@ -390,6 +394,12 @@ export function describeImportWarning(code: string): string {
       return 'The balances you gave do not agree with the lines in the file. Check them before you reconcile.';
     case 'balances_not_provided':
       return 'The file does not give both an opening and a closing balance, so its lines could not be checked against them.';
+    case 'mpesa_layout_unconfirmed':
+      return 'The M-Pesa layout has not been checked against a real business statement. Compare the lines below with the original before you rely on them.';
+    case 'mpesa_rows_skipped':
+      return 'Some rows were not completed and were left out. They are listed below.';
+    case 'mpesa_no_status_column':
+      return 'The file has no status column, so rows that did not complete could not be told apart and were all imported.';
     case 'opening_balance_from_previous_statement':
       return 'The opening balance was taken from the previous statement.';
     default:
