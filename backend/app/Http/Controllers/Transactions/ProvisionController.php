@@ -31,9 +31,11 @@ use App\Models\Transactions\ProvisionRun;
 use App\Queries\Transactions\ProvisionPreview;
 use App\Services\Transactions\ProvisionService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Bad-debt provisioning (`provisions.*`): rates per aging bucket, a read-only preview for an as-of date, and approved runs that post only
@@ -42,13 +44,14 @@ use Illuminate\Support\Facades\DB;
 final class ProvisionController extends Controller
 {
     #[Authorize('viewAny', ProvisionRun::class)]
-    public function rates(Company $company, ProvisionService $service): JsonResponse
+    public function rates(Request $request, Company $company, ProvisionService $service): JsonResponse
     {
         $stored = DB::table('provision_rates')->where('company_id', $company->id)->pluck('rate_pct', 'bucket')->map(fn ($v): string => (string) $v)->all();
 
         return new JsonResponse(['data' => [
             'buckets' => array_map(fn (string $b): array => ['bucket' => $b, 'label' => ProvisionMatrix::LABELS[$b], 'rate_pct' => $stored[$b] ?? null], ProvisionMatrix::BUCKETS),
             'configured' => count($stored) === count(ProvisionMatrix::BUCKETS),
+            'can' => ['manage_rates' => Gate::forUser($request->user())->allows('manageRates', ProvisionRun::class)],
         ]]);
     }
 

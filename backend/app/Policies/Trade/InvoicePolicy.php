@@ -114,6 +114,14 @@ final class InvoicePolicy
             && $this->view($principal, $invoice);
     }
 
+    /** Submit this draft customer invoice past a credit limit that refuses it, with a reason (plan 3c.12). People only, and never its own maker or submitter. */
+    public function overrideCreditLimit(Authenticatable $principal, Invoice $invoice): bool
+    {
+        return $invoice->status === DocumentStatus::Draft && $invoice->kind === InvoiceKind::SalesInvoice
+            && ! in_array($principal->getAuthIdentifier(), [$invoice->created_by, $invoice->submitted_by], true)
+            && $this->context->personCan($principal, 'invoices.override_credit_limit', $invoice->company_id);
+    }
+
     /** Write off the open amount of a posted customer invoice (plan 3c.9): the hint for the button; the Action checks the amount. */
     public function writeOff(Authenticatable $principal, Invoice $invoice): bool
     {

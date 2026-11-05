@@ -76,7 +76,7 @@ final class InvoiceResource extends JsonResource
             )),
             'can' => Json::can($request, $this->resource, [
                 'update' => 'update', 'submit' => 'submit', 'approve' => 'approve',
-                'return' => 'return', 'void' => 'void', 'reverse' => 'reverse', 'override_match' => 'overrideMatch', 'send' => 'send', 'share' => 'share', 'write_off' => 'writeOff',
+                'return' => 'return', 'void' => 'void', 'reverse' => 'reverse', 'override_match' => 'overrideMatch', 'send' => 'send', 'share' => 'share', 'write_off' => 'writeOff', 'override_credit_limit' => 'overrideCreditLimit',
             ]),
         ];
     }
