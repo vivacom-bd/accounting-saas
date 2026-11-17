@@ -73,21 +73,7 @@ final class CreateFixedAsset
                 $ledgerDate = $source['date'];
                 $dims = $dims + array_filter($source['dims'], static fn (?string $v): bool => $v !== null);
             }
-            $available = $in->availableFrom ?? $acquired;
-            if ($cost <= 0) {
-                throw DomainRuleViolation::single('asset_cost_invalid', 'The cost must be more than zero.');
-            }
-            if ($in->residual < 0 || $in->residual > $cost) {
-                throw DomainRuleViolation::single('asset_residual_invalid', 'The residual value must be between zero and the cost.');
-            }
-            if ($available < $acquired) {
-                throw DomainRuleViolation::single('asset_dates_invalid', 'The asset cannot be available for use before it was acquired.');
-            }
-
-            $method = $in->method ?? $category->default_method;
-            $life = $in->lifeMonths ?? $category->default_life_months;
-            $rate = $in->decliningRateBp ?? $category->default_declining_rate_bp;
-            Estimates::assert($category->is_depreciable, $method, $life, $rate, $in->unitsTotal);
+            [$available, $method, $life, $rate] = $this->terms($in, $category, $cost, $acquired);
 
             [$accumulated, $through, $months] = $opening ? $this->openingFigures($in, $cost, $available, $life, $this->calendars->forCompany($in->companyId)) : [0, null, 0];
 
@@ -122,6 +108,50 @@ final class CreateFixedAsset
 
             return $asset;
         });
+    }
+
+    /**
+     * Checks an opening asset against the rules of `handle` without writing anything (the import's preview). A capitalised asset
+     * needs a posted line and so is not checked here.
+     */
+    public function checkOpening(FixedAssetInput $in): void
+    {
+        $category = AssetCategory::query()->where('company_id', $in->companyId)->find($in->categoryId)
+            ?? throw DomainRuleViolation::single('not_found', 'The category does not exist.');
+        if (! $category->is_active) {
+            throw DomainRuleViolation::single('asset_category_inactive', 'That category is inactive.');
+        }
+        if ($in->cost === null || $in->acquiredOn === null || $in->openingAsOf === null) {
+            throw DomainRuleViolation::single('asset_source_required', 'An opening asset needs its cost, acquisition date and the date its accumulated depreciation is stated at.');
+        }
+        [$available, , $life] = $this->terms($in, $category, $in->cost, $in->acquiredOn);
+        $this->openingFigures($in, $in->cost, $available, $life, $this->calendars->forCompany($in->companyId));
+    }
+
+    /**
+     * The rules on cost, dates and estimates both ways of creating an asset share.
+     *
+     * @return array{0: string, 1: string, 2: int|null, 3: int|null} available from, method, life in months, declining rate
+     */
+    private function terms(FixedAssetInput $in, AssetCategory $category, int $cost, string $acquired): array
+    {
+        $available = $in->availableFrom ?? $acquired;
+        if ($cost <= 0) {
+            throw DomainRuleViolation::single('asset_cost_invalid', 'The cost must be more than zero.');
+        }
+        if ($in->residual < 0 || $in->residual > $cost) {
+            throw DomainRuleViolation::single('asset_residual_invalid', 'The residual value must be between zero and the cost.');
+        }
+        if ($available < $acquired) {
+            throw DomainRuleViolation::single('asset_dates_invalid', 'The asset cannot be available for use before it was acquired.');
+        }
+
+        $method = $in->method ?? $category->default_method;
+        $life = $in->lifeMonths ?? $category->default_life_months;
+        $rate = $in->decliningRateBp ?? $category->default_declining_rate_bp;
+        Estimates::assert($category->is_depreciable, $method, $life, $rate, $in->unitsTotal);
+
+        return [$available, $method, $life, $rate];
     }
 
     /**

@@ -36,6 +36,8 @@ describe('upload options', () => {
   it('asks for the date on opening balances and the account on bank lines', () => {
     expect(missingUploadOptions('opening_balances', {})).toEqual(['as_of']);
     expect(missingUploadOptions('opening_balances', { as_of: '2026-01-01' })).toEqual([]);
+    expect(missingUploadOptions('fixed_assets_opening', {})).toEqual(['as_of']);
+    expect(missingUploadOptions('fixed_assets_opening', { as_of: '2026-01-01' })).toEqual([]);
     expect(missingUploadOptions('bank_lines', {})).toEqual(['bank_account_id']);
     expect(missingUploadOptions('contacts', {})).toEqual([]);
   });

@@ -9,6 +9,7 @@ use App\Services\Imports\Kinds\AccountsKind;
 use App\Services\Imports\Kinds\BankLinesKind;
 use App\Services\Imports\Kinds\BudgetLinesKind;
 use App\Services\Imports\Kinds\ContactsKind;
+use App\Services\Imports\Kinds\FixedAssetsOpeningKind;
 use App\Services\Imports\Kinds\InvoicesKind;
 use App\Services\Imports\Kinds\OpeningBalancesKind;
 
@@ -22,6 +23,7 @@ final class ImportKinds
         'invoices' => InvoicesKind::class,
         'bank_lines' => BankLinesKind::class,
         'budget_lines' => BudgetLinesKind::class,
+        'fixed_assets_opening' => FixedAssetsOpeningKind::class,
     ];
 
     public function get(string $key): ImportKind

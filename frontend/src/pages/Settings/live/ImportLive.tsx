@@ -193,6 +193,11 @@ const ChooseStep: React.FC<{ onCreated: (i: ApiImport) => void }> = ({ onCreated
         })}
       </div>
 
+      {kind === 'fixed_assets_opening' && (
+        <Field label="Depreciation stated as of" hint="The go-live date the accumulated depreciation in the file is stated at. Months already depreciated are counted up to it.">
+          <input type="date" aria-label="As of date" className={cn(inputCls, 'max-w-48')} value={String(options.as_of ?? '')} onChange={(e) => setOption('as_of', e.target.value)} />
+        </Field>
+      )}
       {kind === 'opening_balances' && (
         <Field label="Balances as of" hint="The date the opening journal is posted on. It must fall in an open period.">
           <input type="date" aria-label="As of date" className={cn(inputCls, 'max-w-48')} value={String(options.as_of ?? '')} onChange={(e) => setOption('as_of', e.target.value)} />
