@@ -100,6 +100,12 @@ final class StatusMap
         'trial_not_active' => 409,
         'coupon_not_found' => 404,
         'coupon_already_applied' => 409,
+        // Support access and impersonation (plan Task 14).
+        'support_access_closed' => 403,
+        'impersonation_expired' => 401,
+        'impersonation_ticket_invalid' => 401,
+        'impersonation_forbidden' => 403,
+        'impersonation_cannot_sign' => 403,
     ];
 
     public static function status(string $code): int

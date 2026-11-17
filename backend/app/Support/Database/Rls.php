@@ -52,6 +52,8 @@ final class Rls
         'mail_log', 'announcements',
         // platform operations (plan Task 17): maintenance switch, per-tenant rate limits, Pennant flag storage; ledgerly_platform writes
         'platform_settings', 'tenant_rate_limits', 'features',
+        // impersonation sessions (plan Task 14); ledgerly_platform adds and ends them, the app role only through sysops
+        'impersonation_sessions',
     ];
 
     public static function enable(Connection $connection, string $table): void

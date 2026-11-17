@@ -75,10 +75,7 @@ final class CreateCompany
 
             (new CompanySettings)->forceFill(['tenant_id' => $actor->tenantId, 'company_id' => $company->id])->save();
 
-            $scoped = new Actor(
-                $actor->type, $actor->id, $actor->tenantId, $company->id, $actor->hasSigningGrant,
-                $actor->ip, $actor->userAgent, $actor->requestId, $actor->idempotencyKey,
-            );
+            $scoped = $actor->inCompany($company->id);
             $this->seedRoles->handle($scoped, $company->id);
             $this->assignRole->handle($scoped, new CompanyRoleInput((string) $actor->id, $company->id, 'Owner'), bootstrap: true);
 

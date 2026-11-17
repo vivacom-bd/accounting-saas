@@ -17891,6 +17891,59 @@
                 }
             }
         },
+        "/v1/auth/impersonate": {
+            "post": {
+                "operationId": "auth.impersonate",
+                "summary": "Exchanges the ticket for a tenant session as the user (204). Whoever this browser was signed in as is signed out\nfirst and the old session discarded, so an impersonation never mixes with another session; the session id is new,\nthe login is never remembered, and the session is pinned to the impersonation's tenant",
+                "tags": [
+                    "ImpersonationLogin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "ticket": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    }
+                                },
+                                "required": [
+                                    "ticket"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/auth/impersonation/end": {
+            "post": {
+                "operationId": "auth.impersonation.end",
+                "summary": "Ends the impersonation from the banner and signs the session out (204)",
+                "tags": [
+                    "ImpersonationLogin"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/companies/{company}/imports": {
             "get": {
                 "operationId": "imports.index",
@@ -40183,6 +40236,132 @@
                 }
             }
         },
+        "/v1/org/support-access": {
+            "get": {
+                "operationId": "org.support-access.show",
+                "tags": [
+                    "SupportAccess"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`SupportAccessResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SupportAccessResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "org.support-access.store",
+                "tags": [
+                    "SupportAccess"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "hours": {
+                                        "type": "integer",
+                                        "enum": [
+                                            "24",
+                                            "72",
+                                            "168"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "hours"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`SupportAccessResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SupportAccessResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/org/support-access/revoke": {
+            "post": {
+                "operationId": "org.support-access.revoke",
+                "tags": [
+                    "SupportAccess"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`SupportAccessResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SupportAccessResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/companies/{company}/tax-codes": {
             "get": {
                 "operationId": "tax-codes.index",
@@ -59178,6 +59357,27 @@
                         "additionalProperties": {
                             "type": "boolean"
                         }
+                    "impersonation": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "admin_name": {
+                                "type": "string"
+                            },
+                            "mode": {
+                                "type": "string"
+                            },
+                            "ends_at": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "admin_name",
+                            "mode",
+                            "ends_at"
+                        ]
                     }
                 },
                 "required": [
@@ -59188,6 +59388,7 @@
                     "signing_pin_set",
                     "tenants",
                     "features"
+                    "impersonation"
                 ],
                 "title": "SessionResource"
             },
@@ -59767,6 +59968,49 @@
                     }
                 },
                 "title": "SubmitInvoiceRequest"
+            },
+            "SupportAccessResource": {
+                "type": "object",
+                "properties": {
+                    "open": {
+                        "type": "boolean"
+                    },
+                    "grant": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "hours": {
+                                "type": "integer"
+                            },
+                            "expires_at": {
+                                "type": "string"
+                            },
+                            "granted_by": {
+                                "type": "string"
+                            },
+                            "created_at": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "hours",
+                            "expires_at",
+                            "granted_by",
+                            "created_at"
+                        ]
+                    }
+                },
+                "required": [
+                    "open",
+                    "grant"
+                ],
+                "title": "SupportAccessResource"
             },
             "TaxCodeRequest": {
                 "type": "object",

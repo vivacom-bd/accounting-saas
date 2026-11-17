@@ -18,6 +18,7 @@ const ADMIN_SYSOPS = [
     'admin_reset_two_factor' => 'uuid, uuid',
     'admin_search_companies' => 'text, integer',
     'admin_set_member_status' => 'uuid, uuid, text',
+    'admin_support_access_open' => 'uuid, timestamp with time zone',
     'admin_tenant_companies' => 'uuid',
     'admin_tenant_counts' => 'uuid[]',
     'admin_tenant_users' => 'uuid',
@@ -84,7 +85,7 @@ it('defines each admin function as platform-only SECURITY DEFINER with a fixed s
             // no PUBLIC entry ("=X/…") in the ACL
             ->and(preg_match('/(^|,)=/', $fn->acl))->toBe(0);
     }
-    $readers = array_filter($functions, fn ($f) => in_array($f->name, ['admin_tenant_counts', 'admin_tenant_companies', 'admin_tenant_users'], true));
+    $readers = array_filter($functions, fn ($f) => in_array($f->name, ['admin_tenant_counts', 'admin_tenant_companies', 'admin_tenant_users', 'admin_support_access_open'], true));
     expect(array_unique(array_column($readers, 'volatility')))->toBe(['s']);
 });
 
@@ -230,4 +231,121 @@ it('keeps tenant notes platform-only and append-only apart from the pin', functi
         ->and(sysopsSqlState(fn () => $platform->table('tenant_notes')->where('id', $note['id'])->delete()))->toBe('42501')
         ->and(sysopsSqlState(fn () => DB::connection('pgsql')->table('tenant_notes')->count()))->toBe('42501')
         ->and(sysopsSqlState(fn () => DB::connection('pgsql_report')->table('tenant_notes')->count()))->toBe('42501');
+});
+
+// --- impersonation (plan Task 14) ----------------------------------------------------------------------------------
+
+const IMPERSONATION_SYSOPS = [
+    'end_impersonation' => 'uuid, uuid, timestamp with time zone',
+    'end_tenant_impersonations' => 'timestamp with time zone',
+    'impersonation_by_ticket' => 'text, timestamp with time zone',
+    'impersonation_state' => 'uuid, uuid, timestamp with time zone',
+];
+
+/** A support member, an open grant (unless $override) and an unconsumed read session for $f's owner; returns its id. */
+function sysopsImpersonation(object $f, string $ticket, bool $override = false): string
+{
+    $owner = DB::connection('pgsql_owner');
+    $admin = (string) Str::uuid7();
+    $owner->table('admin_users')->insert(['id' => $admin, 'email' => 'imp-'.substr($admin, -6).'@ledgerly.test', 'name' => 'Sam Support', 'password' => 'x', 'role' => 'support']);
+    $grant = null;
+    if (! $override) {
+        $grant = (string) Str::uuid7();
+        app(TenantContext::class)->run($f->tenantId, fn () => DB::connection('pgsql')->table('support_access_grants')->insert(['id' => $grant, 'tenant_id' => $f->tenantId, 'granted_by' => $f->userId, 'hours' => 24, 'expires_at' => '2030-01-02 00:00:00+00', 'created_at' => '2030-01-01 00:00:00+00']));
+    }
+    $id = (string) Str::uuid7();
+    $owner->table('impersonation_sessions')->insert([
+        'id' => $id, 'admin_id' => $admin, 'tenant_id' => $f->tenantId, 'user_id' => $f->userId, 'mode' => 'read', 'reason' => 'r',
+        'grant_id' => $grant, 'owner_override' => $override, 'ticket_hash' => hash('sha256', $ticket),
+        'ticket_expires_at' => '2030-01-01 00:01:00+00', 'ends_at' => '2030-01-01 01:00:00+00', 'created_at' => '2030-01-01 00:00:00+00',
+    ]);
+
+    return $id;
+}
+
+it('defines the impersonation functions as app-only SECURITY DEFINER with a fixed search_path', function (): void {
+    $functions = DB::select(<<<'SQL'
+        SELECT p.proname AS name, oidvectortypes(p.proargtypes) AS args, p.prosecdef AS definer,
+               pg_get_userbyid(p.proowner) AS owner, array_to_string(p.proconfig, ',') AS config,
+               has_function_privilege('ledgerly_platform', p.oid, 'EXECUTE') AS platform_can,
+               has_function_privilege('ledgerly_app', p.oid, 'EXECUTE') AS app_can,
+               has_function_privilege('ledgerly_report', p.oid, 'EXECUTE') AS report_can,
+               coalesce(array_to_string(p.proacl, ','), '') AS acl
+        FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname = 'sysops' AND p.proname LIKE '%impersonation%' ORDER BY p.proname
+    SQL);
+
+    expect(array_combine(array_column($functions, 'name'), array_column($functions, 'args')))->toBe(IMPERSONATION_SYSOPS);
+    foreach ($functions as $fn) {
+        expect($fn->definer)->toBeTrue()
+            ->and($fn->owner)->toBe('ledgerly_sysops')
+            ->and($fn->config)->toBe('search_path=pg_catalog, pg_temp')
+            ->and($fn->app_can)->toBeTrue()
+            ->and($fn->platform_can)->toBeFalse()
+            ->and($fn->report_can)->toBeFalse()
+            ->and(preg_match('/(^|,)=/', $fn->acl))->toBe(0);
+    }
+});
+
+it('keeps impersonation sessions away from the app and report roles and append-only for the platform', function (): void {
+    $f = LedgerFixture::create(slug: 'alpha');
+    $id = sysopsImpersonation($f, 'ticket-a');
+    app(TenantContext::class)->clear();
+
+    expect(sysopsSqlState(fn () => DB::connection('pgsql')->table('impersonation_sessions')->count()))->toBe('42501')
+        ->and(sysopsSqlState(fn () => DB::connection('pgsql_report')->table('impersonation_sessions')->count()))->toBe('42501')
+        ->and(platformDb()->table('impersonation_sessions')->count())->toBe(1)
+        ->and(sysopsSqlState(fn () => platformDb()->table('impersonation_sessions')->where('id', $id)->update(['mode' => 'write'])))->toBe('42501')
+        ->and(sysopsSqlState(fn () => platformDb()->table('impersonation_sessions')->where('id', $id)->delete()))->toBe('42501')
+        ->and(sysopsSqlState(fn () => platformDb()->table('support_access_grants')->count()))->toBe('42501')
+        ->and(sysopsSqlState(fn () => platformDb()->select("SELECT * FROM sysops.impersonation_by_ticket(?, '2030-01-01 00:00:10+00')", [hash('sha256', 'ticket-a')])))->toBe('42501')
+        ->and(sysopsSqlState(fn () => DB::connection('pgsql')->select("SELECT * FROM sysops.admin_support_access_open(?, '2030-01-01 00:00:10+00')", [$f->tenantId])))->toBe('42501');
+    expect(platformDb()->select("SELECT * FROM sysops.admin_support_access_open(?, '2030-01-01 00:00:10+00')", [$f->tenantId]))->toHaveCount(1)
+        ->and(platformDb()->select("SELECT * FROM sysops.admin_support_access_open(?, '2030-01-02 00:00:10+00')", [$f->tenantId]))->toHaveCount(0);
+});
+
+it('exchanges a ticket once, only before it expires and only on a live basis', function (): void {
+    $f = LedgerFixture::create(slug: 'alpha');
+    $id = sysopsImpersonation($f, 'ticket-a');
+    app(TenantContext::class)->clear();
+    $app = DB::connection('pgsql');
+    $exchange = fn (string $ticket, string $at) => $app->select('SELECT * FROM sysops.impersonation_by_ticket(?, ?)', [hash('sha256', $ticket), $at]);
+
+    expect($exchange('ticket-a', '2030-01-01 00:01:00+00'))->toBe([])   // expired at exactly 60 s
+        ->and($exchange('ticket-b', '2030-01-01 00:00:10+00'))->toBe([]);
+    $rows = $exchange('ticket-a', '2030-01-01 00:00:10+00');
+    expect($rows)->toHaveCount(1)
+        ->and($rows[0]->id)->toBe($id)
+        ->and($rows[0]->tenant_id)->toBe($f->tenantId)
+        ->and($rows[0]->admin_name)->toBe('Sam Support')
+        ->and(array_keys((array) $rows[0]))->toBe(['id', 'tenant_id', 'user_id', 'admin_id', 'admin_name', 'mode', 'ends_at'])
+        ->and($exchange('ticket-a', '2030-01-01 00:00:20+00'))->toBe([]);
+    expect($app->select('SELECT * FROM sysops.impersonation_by_ticket(?, ?)', ['not-a-hash', '2030-01-01 00:00:10+00']))->toBe([]);
+
+    // Revoked grant: the live check turns false. Another tenant's id finds nothing.
+    $state = fn (string $at) => $app->selectOne('SELECT live FROM sysops.impersonation_state(?, ?, ?)', [$id, $f->tenantId, $at]);
+    expect($state('2030-01-01 00:30:00+00')->live)->toBeTrue()
+        ->and($state('2030-01-01 01:00:00+00')->live)->toBeFalse()
+        ->and($app->select('SELECT * FROM sysops.impersonation_state(?, ?, ?)', [$id, (string) Str::uuid7(), '2030-01-01 00:30:00+00']))->toBe([]);
+    app(TenantContext::class)->run($f->tenantId, fn () => DB::connection('pgsql')->table('support_access_grants')->update(['revoked_at' => '2030-01-01 00:20:00+00', 'revoked_by' => $f->userId]));
+    expect($state('2030-01-01 00:30:00+00')->live)->toBeFalse();
+});
+
+it('ends impersonation sessions only inside the caller\'s tenant', function (): void {
+    $a = LedgerFixture::create(slug: 'alpha');
+    $idA = sysopsImpersonation($a, 'ticket-a', override: true);
+    $b = LedgerFixture::create(slug: 'bravo');
+    $idB = sysopsImpersonation($b, 'ticket-b', override: true);
+    app(TenantContext::class)->clear();
+    $app = DB::connection('pgsql');
+
+    expect(sysopsSqlState(fn () => $app->select("SELECT sysops.end_tenant_impersonations('2030-01-01 00:00:10+00')")))->toBe('42501')
+        ->and($app->selectOne('SELECT sysops.end_impersonation(?, ?, ?) AS ok', [$idA, $b->tenantId, '2030-01-01 00:00:10+00'])->ok)->toBeFalse();
+
+    app(TenantContext::class)->set($a->tenantId);
+    expect($app->selectOne("SELECT sysops.end_tenant_impersonations('2030-01-01 00:00:10+00') AS n")->n)->toBe(1);
+    app(TenantContext::class)->clear();
+    expect(DB::connection('pgsql_owner')->table('impersonation_sessions')->where('id', $idB)->value('ended_at'))->toBeNull()
+        ->and(DB::connection('pgsql_owner')->table('impersonation_sessions')->where('id', $idA)->value('ended_at'))->not->toBeNull()
+        ->and($app->selectOne('SELECT sysops.end_impersonation(?, ?, ?) AS ok', [$idB, $b->tenantId, '2030-01-01 00:00:10+00'])->ok)->toBeTrue();
 });

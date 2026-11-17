@@ -126,7 +126,7 @@ final class RunRecurringSchedules
     /** The occurrence's transaction: run row, draft, schedule moved on. Null when the schedule is no longer due on $date. */
     private function createOccurrence(Actor $actor, RecurringSchedule $schedule, DateTimeImmutable $date): ?RecurringRun
     {
-        $actor = new Actor($actor->type, $actor->id, $actor->tenantId, $schedule->company_id, ip: $actor->ip, userAgent: $actor->userAgent, requestId: $actor->requestId);
+        $actor = new Actor($actor->type, $actor->id, $actor->tenantId, $schedule->company_id, ip: $actor->ip, userAgent: $actor->userAgent, requestId: $actor->requestId, auditContext: $actor->auditContext);
 
         return $this->uow->run($actor, function (LockSet $locks, AuditBuffer $audit, Outbox $outbox) use ($actor, $schedule, $date) {
             $current = $schedule::query()->find($schedule->id);

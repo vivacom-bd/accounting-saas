@@ -139,8 +139,10 @@ use App\Services\Tenancy\SpatiePermissionChecker;
 use App\Services\Tenancy\SpatieRoleChecker;
 use App\Services\Tenancy\TenantAwarePermissionRegistrar;
 use App\Services\UuidV7Generator;
+use App\Support\Audit\DetachedAudit;
 use App\Support\Idempotency\IdempotencyStore;
 use App\Support\Ops\TenantRateLimits;
+use App\Support\Impersonation\ReadOnlyConnections;
 use App\Support\Reports\LedgerVersion;
 use App\Support\Reports\Report;
 use App\Support\Tenancy\CompanyContext;
@@ -208,6 +210,14 @@ class AppServiceProvider extends ServiceProvider
             $connections = $app['config']->get('tenancy.connections');
 
             return new TenantContext($app->make(DatabaseManager::class), $connections);
+        });
+        // Read-only impersonation (plan Task 14): every tenant connection but the detached audit one (pgsql first), as a
+        // singleton, because the connections it flips outlive a request scope.
+        $this->app->singleton(ReadOnlyConnections::class, function ($app) {
+            /** @var list<string> $connections */
+            $connections = $app['config']->get('tenancy.connections');
+
+            return new ReadOnlyConnections($app->make(DatabaseManager::class), array_values(array_diff($connections, [DetachedAudit::CONNECTION])));
         });
 
         // The signing PIN is hashed with argon2id (ADR-0004), whatever the password hasher is.
@@ -326,6 +336,9 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(ConnectionEstablished::class, function (ConnectionEstablished $event): void {
             if ($this->app->resolved(TenantContext::class)) {
                 $this->app->make(TenantContext::class)->reapply($event->connection);
+            }
+            if ($this->app->resolved(ReadOnlyConnections::class)) {
+                $this->app->make(ReadOnlyConnections::class)->reapply($event->connection);
             }
         });
 

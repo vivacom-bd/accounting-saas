@@ -52,7 +52,7 @@ final class BulkApproveDocuments
         }
 
         // One batch is one request: the idempotency key belongs to it, not to each document's transaction.
-        $inner = new Actor($actor->type, $actor->id, $actor->tenantId, $actor->companyId, $actor->hasSigningGrant, $actor->ip, $actor->userAgent, $actor->requestId);
+        $inner = new Actor($actor->type, $actor->id, $actor->tenantId, $actor->companyId, $actor->hasSigningGrant, $actor->ip, $actor->userAgent, $actor->requestId, auditContext: $actor->auditContext);
 
         $ordered = $unique;
         uksort($ordered, strcmp(...));

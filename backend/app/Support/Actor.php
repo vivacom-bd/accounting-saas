@@ -10,6 +10,10 @@ namespace App\Support;
  */
 final readonly class Actor
 {
+    /**
+     * @param  array<string, string>  $auditContext  added to the context of every audit event this actor writes; an
+     *                                               impersonating admin carries {admin_id, impersonation_id} (T6)
+     */
     public function __construct(
         public ActorType $type,
         public ?string $id,
@@ -20,7 +24,17 @@ final readonly class Actor
         public ?string $userAgent = null,
         public ?string $requestId = null,
         public ?string $idempotencyKey = null,
+        public array $auditContext = [],
     ) {}
+
+    /** The same principal working in another company (nested Actions); keeps the signing grant and audit context. */
+    public function inCompany(?string $companyId): self
+    {
+        return new self(
+            $this->type, $this->id, $this->tenantId, $companyId, $this->hasSigningGrant,
+            $this->ip, $this->userAgent, $this->requestId, $this->idempotencyKey, $this->auditContext,
+        );
+    }
 
     public static function system(string $tenantId, ?string $companyId = null): self
     {

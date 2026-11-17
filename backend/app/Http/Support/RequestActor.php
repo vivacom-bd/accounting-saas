@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Http\Support;
 
 use App\Domain\Shared\DomainRuleViolation;
+use App\Http\Middleware\ApplyImpersonation;
 use App\Http\Middleware\RequireIdempotencyKey;
 use App\Models\Organisation\ApiClient;
 use App\Models\Platform\User;
 use App\Support\Actor;
 use App\Support\ActorType;
 use App\Support\Idempotency\IdempotencyScope;
+use App\Support\Impersonation\Impersonation;
+use App\Support\Impersonation\ImpersonationAudit;
 use App\Support\Signing\SigningGrants;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\Request;
@@ -42,6 +45,20 @@ final class RequestActor
         $user = call_user_func($request->getUserResolver());
         if (! $user instanceof User) {
             throw DomainRuleViolation::single('unauthenticated', 'Sign in to continue.');
+        }
+
+        // Staff impersonating the user (T6): act as the user, typed admin_impersonating, the admin and the
+        // impersonation in every audit event's context, and never a signing grant.
+        $impersonation = $request->attributes->get(ApplyImpersonation::ATTRIBUTE);
+        if ($impersonation instanceof Impersonation) {
+            if ($impersonation->userId !== $user->id || $impersonation->tenantId !== app(TenantContext::class)->require()) {
+                throw DomainRuleViolation::single('impersonation_expired', 'The support session has ended.');
+            }
+
+            return ImpersonationAudit::actor(
+                $impersonation, $companyId, $request->ip(), $request->userAgent(),
+                $request->header('X-Request-Id'), self::idempotencyKey($request),
+            );
         }
 
         // A signing grant is bound to the user and this session (ADR-0004); bearer tokens have none.

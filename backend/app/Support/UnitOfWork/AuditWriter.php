@@ -64,7 +64,7 @@ final class AuditWriter
                 'subject_id' => $event['subject_id'],
                 'before' => $event['before'],
                 'after' => $event['after'],
-                'context' => $event['context'],
+                'context' => self::context($event['context'], $actor),
                 'ip' => $actor->ip,
                 'user_agent' => $actor->userAgent,
                 'request_id' => $actor->requestId,
@@ -92,6 +92,16 @@ final class AuditWriter
         }
 
         $db->update('UPDATE audit_chain_heads SET last_id = ?, last_hash = ? WHERE tenant_id = ?', [$lastId, $prevHash, $tenantId]);
+    }
+
+    /** The actor's own audit context (an impersonating admin's ids, T6) wins over an event key of the same name. */
+    private static function context(mixed $context, Actor $actor): mixed
+    {
+        if ($actor->auditContext === []) {
+            return $context;
+        }
+
+        return [...(is_array($context) ? $context : []), ...$actor->auditContext];
     }
 
     private static function json(mixed $value): ?string

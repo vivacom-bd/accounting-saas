@@ -37,6 +37,9 @@ final class SetSigningPin
 
     public function handle(Actor $actor, SetSigningPinInput $in): void
     {
+        if ($actor->type === ActorType::AdminImpersonating) {
+            throw DomainRuleViolation::single('impersonation_cannot_sign', 'Support staff cannot set or use a signing PIN.');
+        }
         if ($actor->type !== ActorType::User || $actor->id === null) {
             throw DomainRuleViolation::single('forbidden', 'Only a person can have a signing PIN.');
         }

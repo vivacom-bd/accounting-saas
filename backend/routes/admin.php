@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\Plans\PlansController;
 use App\Http\Controllers\Admin\Staff\StaffController;
 use App\Http\Controllers\Admin\Support\AnnouncementsController;
 use App\Http\Controllers\Admin\Support\SupportController;
+use App\Http\Controllers\Admin\Support\ImpersonationsController;
 use App\Http\Controllers\Admin\Tenants\ProvisionTenantController;
 use App\Http\Controllers\Admin\Tenants\ResendOwnerInvitationController;
 use App\Http\Controllers\Admin\Tenants\TenantMembersController;
@@ -111,6 +112,13 @@ Route::middleware('admin.auth')->group(function (): void {
         Route::post('compliance/gdpr-requests', [ComplianceController::class, 'gdprStore'])->name('compliance.gdpr.store');
         Route::patch('compliance/gdpr-requests/{id}', [ComplianceController::class, 'gdprUpdate'])->name('compliance.gdpr.update');
     });
+    // Impersonation (Task 14): consented, time-boxed; write mode needs a second staff member's approval
+    Route::middleware('admin.can:impersonate.read')->group(function (): void {
+        Route::get('impersonations', [ImpersonationsController::class, 'index'])->name('impersonations.index');
+        Route::post('impersonations', [ImpersonationsController::class, 'store'])->name('impersonations.store');
+        Route::post('impersonations/{id}/end', [ImpersonationsController::class, 'end'])->name('impersonations.end');
+    });
+    Route::post('impersonations/write-requests', [ImpersonationsController::class, 'requestWrite'])->middleware('admin.can:impersonate.write.request')->name('impersonations.write-requests.store');
 
     Route::middleware('admin.can:tenants.lifecycle')->group(function (): void {
         Route::post('tenants/{tenant}/lifecycle', [TenantsController::class, 'lifecycle'])->name('tenants.lifecycle');

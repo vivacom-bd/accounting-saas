@@ -28,4 +28,10 @@ final class OrganisationPolicy
     {
         return $principal instanceof User && $this->context->isOrgAdmin($principal);
     }
+
+    /** Support access (plan Task 14): owners and admins, people only. The Action also refuses staff impersonating one. */
+    public function manageSupportAccess(Authenticatable $principal): bool
+    {
+        return $principal instanceof User && $this->context->isOrgAdmin($principal);
+    }
 }

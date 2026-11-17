@@ -41,6 +41,10 @@ final class VerifySigningPin
     /** @return DateTimeImmutable when the grant expires */
     public function handle(Actor $actor, VerifySigningPinInput $in): DateTimeImmutable
     {
+        // T6: staff impersonating a user never hold a signing grant, so nothing that needs a PIN can happen.
+        if ($actor->type === ActorType::AdminImpersonating) {
+            throw DomainRuleViolation::single('impersonation_cannot_sign', 'Support staff cannot sign.');
+        }
         if ($actor->type !== ActorType::User || $actor->id === null) {
             throw DomainRuleViolation::single('forbidden', 'Only a person can sign.');
         }
