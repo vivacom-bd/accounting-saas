@@ -5,6 +5,9 @@ declare(strict_types=1);
 use App\Http\Controllers\Admin\Auth\AdminLoginController;
 use App\Http\Controllers\Admin\Auth\AdminSessionController;
 use App\Http\Controllers\Admin\Auth\AdminTwoFactorController;
+use App\Http\Controllers\Admin\Plans\AddonsController;
+use App\Http\Controllers\Admin\Plans\CouponsController;
+use App\Http\Controllers\Admin\Plans\PlansController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -22,4 +25,19 @@ Route::post('auth/two-factor', [AdminTwoFactorController::class, 'verify'])->mid
 
 Route::middleware('admin.auth')->group(function (): void {
     Route::get('session', [AdminSessionController::class, 'show'])->name('session');
+
+    // Plan catalogue (Task 9)
+    Route::middleware('admin.can:plans.manage')->group(function (): void {
+        Route::get('plans', [PlansController::class, 'index'])->name('plans.index');
+        Route::post('plans', [PlansController::class, 'store'])->name('plans.store');
+        Route::post('plans/{plan}/versions', [PlansController::class, 'publish'])->name('plans.versions.store');
+        Route::post('plans/{plan}/archive', [PlansController::class, 'archive'])->name('plans.archive');
+        Route::get('addons', [AddonsController::class, 'index'])->name('addons.index');
+        Route::put('addons/{code}', [AddonsController::class, 'upsert'])->name('addons.upsert');
+    });
+    Route::middleware('admin.can:coupons.manage')->group(function (): void {
+        Route::get('coupons', [CouponsController::class, 'index'])->name('coupons.index');
+        Route::post('coupons', [CouponsController::class, 'store'])->name('coupons.store');
+        Route::post('coupons/{coupon}/archive', [CouponsController::class, 'archive'])->name('coupons.archive');
+    });
 });

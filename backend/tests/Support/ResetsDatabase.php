@@ -22,9 +22,10 @@ trait ResetsDatabase
         if (! self::$databaseMigrated) {
             $this->artisan('migrate:fresh', ['--database' => 'pgsql_owner']);
             self::$databaseMigrated = true;
-
-            return;
         }
+
+        // Also after the first migrate: migrations load some platform reference data (the plan catalogue) that tests
+        // build for themselves; currencies, chart templates and menu items stay.
 
         $owner = DB::connection('pgsql_owner');
         $tables = array_map(

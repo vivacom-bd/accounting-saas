@@ -64,6 +64,10 @@ final class StatusMap
         'admin_two_factor_required' => 401,
         'two_factor_already_confirmed' => 409,
         'two_factor_not_started' => 409,
+        // Plan catalogue (plan Task 9).
+        'plan_code_taken' => 409,
+        'plan_archived' => 409,
+        'coupon_code_taken' => 409,
     ];
 
     public static function status(string $code): int
