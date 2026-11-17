@@ -22,8 +22,9 @@ use App\Domain\Shared\DomainRuleViolation;
  * Then the group level: posted consolidation entries dated up to the end are added as adjustments. A line on a profit and
  * loss account dated before the run belongs to retained earnings by now, not to this run's result.
  *
- * Eliminations (plan 3c.29c) and acquisition accounting with non-controlling interests (3c.29d) add their own cells and
- * proposed entries; this step proposes none, so the reserve here is the group's whole reserve before any split.
+ * Intercompany eliminations and the net-investment reclassification (plan 3c.29c, see Intercompany) are proposed entries of
+ * the run, shown as cells now and posted when the run is approved. Acquisition accounting with non-controlling interests
+ * (3c.29d) adds its own; until then the reserve here is the group's whole reserve before any split.
  */
 final class ConsolidationCalculator
 {
@@ -53,6 +54,14 @@ final class ConsolidationCalculator
             }
             $cells[] = ['source' => 'entry', 'member_id' => $line['member_id'], 'account_id' => $account, 'net' => $line['net'], 'entry_id' => $line['entry_id']];
         }
+        // Intercompany eliminations and the net-investment reclassification of this run (D16.7): proposed entries, posted
+        // when the run is approved, shown in the worksheet now.
+        $ic = (new Intercompany)->run($in, $trAccount);
+        foreach ($ic['proposed'] as $p) {
+            foreach ($p['lines'] as $l) {
+                $cells[] = ['source' => $p['kind'], 'member_id' => $l['member_id'], 'account_id' => $l['account_id'], 'net' => $l['net'], 'entry_id' => null];
+            }
+        }
         foreach ($cells as $c) {
             $consolidated[$c['account_id']] = ($consolidated[$c['account_id']] ?? 0) + $c['net'];
         }
@@ -64,9 +73,9 @@ final class ConsolidationCalculator
             }
         }
 
-        return new RunResult($local, $translated, $cells, $this->nonZero($consolidated), $states, [], [
+        return new RunResult($local, $translated, $cells, $this->nonZero($consolidated), $states, $ic['proposed'], [
             'profit' => $profit, 'translation_difference' => $trMove,
-        ]);
+        ], $ic['matches']);
     }
 
     /**

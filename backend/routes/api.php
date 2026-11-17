@@ -159,6 +159,8 @@ Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent'])->
         Route::put('groups/{group}/accounts/{groupAccount}', [ConsolidationGroupController::class, 'updateAccount'])->whereUuid(['group', 'groupAccount'])->name('consolidation.accounts.update');
         Route::get('members/{member}/mapping', [ConsolidationGroupController::class, 'mapping'])->whereUuid('member')->name('consolidation.members.mapping');
         Route::put('members/{member}/mapping', [ConsolidationGroupController::class, 'map'])->whereUuid('member')->name('consolidation.members.map');
+        Route::put('members/{member}/intercompany', [ConsolidationGroupController::class, 'setIntercompany'])->whereUuid('member')->name('consolidation.members.intercompany');
+        Route::get('members/{member}/intercompany-contacts', [ConsolidationGroupController::class, 'intercompanyContacts'])->whereUuid('member')->name('consolidation.members.intercompany-contacts');
         Route::get('members/{member}/opening', [ConsolidationGroupController::class, 'opening'])->whereUuid('member')->name('consolidation.members.opening');
         Route::put('members/{member}/opening', [ConsolidationGroupController::class, 'setOpening'])->whereUuid('member')->name('consolidation.members.opening.set');
         Route::get('groups/{group}/unmapped', [ConsolidationGroupController::class, 'unmapped'])->whereUuid('group')->name('consolidation.groups.unmapped');
@@ -167,6 +169,8 @@ Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent'])->
         Route::post('groups/{group}/runs', [ConsolidationRunController::class, 'store'])->whereUuid('group')->name('consolidation.runs.store');
         Route::get('runs/{run}', [ConsolidationRunController::class, 'show'])->whereUuid('run')->name('consolidation.runs.show');
         Route::get('runs/{run}/worksheet', [ConsolidationRunController::class, 'worksheet'])->whereUuid('run')->name('consolidation.runs.worksheet');
+        Route::get('runs/{run}/intercompany', [ConsolidationRunController::class, 'intercompany'])->whereUuid('run')->name('consolidation.runs.intercompany');
+        Route::post('runs/{run}/intercompany/{match}/accept', [ConsolidationRunController::class, 'acceptDifference'])->whereUuid(['run', 'match'])->name('consolidation.runs.intercompany.accept');
         foreach (['approve', 'void', 'reverse'] as $verb) {
             Route::post("runs/{run}/{$verb}", [ConsolidationRunController::class, $verb])->whereUuid('run')->name("consolidation.runs.{$verb}");
         }

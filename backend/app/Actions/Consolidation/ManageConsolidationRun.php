@@ -12,6 +12,7 @@ use App\Domain\Organisation\ConsolidationPermissions;
 use App\Domain\Shared\DomainRuleViolation;
 use App\Models\Consolidation\ConsolidationEntry;
 use App\Models\Consolidation\ConsolidationGroup;
+use App\Models\Consolidation\ConsolidationIcMatch;
 use App\Models\Consolidation\ConsolidationMemberOpening;
 use App\Models\Consolidation\ConsolidationRun;
 use App\Models\Consolidation\ConsolidationRunLine;
@@ -69,7 +70,7 @@ final class ManageConsolidationRun
             $run->forceFill([
                 'id' => $this->ids->next(), 'tenant_id' => $actor->tenantId, 'group_id' => $groupId, 'period_from' => $from, 'period_to' => $to,
                 'currency' => $prepared->input->currency, 'status' => 'computed', 'warnings' => $prepared->warnings,
-                'summary' => $result->summary + ['members' => count($prepared->members)], 'created_by' => $actor->id,
+                'summary' => $result->summary + ['members' => count($prepared->members), 'ic_tolerance' => $prepared->input->icTolerance], 'created_by' => $actor->id,
             ])->save();
 
             foreach ($prepared->members as $memberId => $m) {
@@ -91,13 +92,24 @@ final class ManageConsolidationRun
                 $this->one($actor, $run->id, 'adjustment', $cell['member_id'], $cell['account_id'], $cell['net'], $cell['source'], $cell['entry_id']);
             }
             $this->line($actor, $run->id, 'consolidated', null, $result->consolidated);
+            foreach ($result->matches as $m) {
+                $match = new ConsolidationIcMatch;
+                $match->forceFill([
+                    'id' => $this->ids->next(), 'tenant_id' => $actor->tenantId, 'run_id' => $run->id, 'member_a_id' => $m['member_a'], 'member_b_id' => $m['member_b'],
+                    'ic_class' => $m['class'], 'side_a' => $m['side_a'], 'side_b' => $m['side_b'], 'difference' => $m['difference'], 'matched' => $m['matched'],
+                    'cause' => $m['cause'], 'exceeds_tolerance' => $m['exceeds_tolerance'], 'detail' => $m['detail'],
+                ])->save();
+            }
 
             foreach ($result->proposed as $p) {
                 $lines = array_map(fn (array $l): array => ['account_id' => $l['account_id'], 'member_id' => $l['member_id'], 'net' => $l['net']], $p['lines']);
                 $this->entries->insert($actor, $locks, $audit, new EntryDraftInput($groupId, $p['kind'], $to, $lines, $p['memo'], $p['member_id'], $run->id));
             }
             $run->refresh();
-            $audit->add('consolidation_run.computed', $run, after: $run, context: ['warnings' => count($prepared->warnings), 'entries' => count($result->proposed)]);
+            $audit->add('consolidation_run.computed', $run, after: $run, context: [
+                'warnings' => count($prepared->warnings), 'entries' => count($result->proposed),
+                'ic_differences_over_tolerance' => count(array_filter($result->matches, fn (array $m): bool => $m['exceeds_tolerance'])),
+            ]);
 
             return $run;
         });
@@ -131,6 +143,10 @@ final class ManageConsolidationRun
                 throw DomainRuleViolation::single('period_already_consolidated', 'An approved run already covers part of this period.');
             }
             $this->checks->assertApprovable($run);
+            $open = ConsolidationIcMatch::query()->where('run_id', $run->id)->where('exceeds_tolerance', true)->whereNull('accepted_by')->count();
+            if ($open > 0) {
+                throw DomainRuleViolation::single('ic_difference_unaccepted', "{$open} intercompany difference(s) exceed the group's tolerance; a second person must accept each with a reason before the run is approved.");
+            }
 
             // Every entry is locked (level 2, by id) before the first number is taken (level 3).
             $entries = ConsolidationEntry::query()->where('run_id', $run->id)->where('status', 'draft')->orderBy('id')->get()
@@ -149,6 +165,41 @@ final class ManageConsolidationRun
             $audit->add('consolidation_run.approved', $run, before: $before, after: $run, context: ['entries' => $entries->count()]);
 
             return $run;
+        });
+    }
+
+    /**
+     * A second person accepts an intercompany difference above the group's tolerance, with a reason, so it no longer blocks
+     * approval (D16.7). The difference itself is not eliminated: it stays in the consolidated figures.
+     */
+    public function acceptDifference(Actor $actor, string $runId, string $matchId, string $reason): ConsolidationIcMatch
+    {
+        return $this->uow->run($actor, function (LockSet $locks, AuditBuffer $audit, Outbox $outbox) use ($actor, $runId, $matchId, $reason) {
+            $seen = ConsolidationRun::query()->findOrFail($runId);
+            $this->access->require($actor, ConsolidationPermissions::APPROVE, $seen->group_id);
+            $locks->document(ConsolidationGroup::query()->findOrFail($seen->group_id));
+            $run = $locks->document($seen);
+            $match = ConsolidationIcMatch::query()->where('run_id', $run->id)->findOrFail($matchId);
+            if ($run->status !== 'computed') {
+                throw DomainRuleViolation::single('run_not_computed', "A difference on a {$run->status} run cannot be accepted.");
+            }
+            if ($run->created_by !== null && $run->created_by === $actor->id) {
+                throw DomainRuleViolation::single('self_approval_forbidden', 'A second person must accept a difference on a run you computed.');
+            }
+            if (! $match->exceeds_tolerance) {
+                throw DomainRuleViolation::single('ic_difference_within_tolerance', 'This difference is within the group\'s tolerance and needs no acceptance.');
+            }
+            if ($match->accepted_by !== null) {
+                throw DomainRuleViolation::single('ic_difference_accepted', 'This difference is already accepted.');
+            }
+            if (trim($reason) === '') {
+                throw DomainRuleViolation::single('reason_required', 'Give a reason for accepting the difference.');
+            }
+            $before = $match->attributesToArray();
+            $match->forceFill(['accepted_by' => $actor->id, 'accepted_at' => $this->clock->now(), 'reason' => $reason])->save();
+            $audit->add('consolidation_ic_match.accepted', $match, before: $before, after: $match, context: ['run_id' => $run->id, 'difference' => $match->difference]);
+
+            return $match;
         });
     }
 

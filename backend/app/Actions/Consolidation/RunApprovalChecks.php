@@ -6,6 +6,7 @@ namespace App\Actions\Consolidation;
 
 use App\Domain\Consolidation\ConsolidationCalculator;
 use App\Domain\Shared\DomainRuleViolation;
+use App\Models\Consolidation\ConsolidationIcMatch;
 use App\Models\Consolidation\ConsolidationRun;
 use App\Models\Consolidation\ConsolidationRunLine;
 use App\Services\Consolidation\RunInputBuilder;
@@ -13,7 +14,8 @@ use App\Services\Consolidation\RunInputBuilder;
 /**
  * What must hold when a second person approves a run, beyond the ledger-version staleness check: the figures are worked
  * out again from the books and the group's entries as they are now, and must equal the ones the approver is looking at.
- * (Mapping, rate and entry changes do not move a ledger version, so this catches them.)
+ * (Mapping, rate, entry and intercompany changes do not move a ledger version, so this catches them; the eliminations and
+ * the matching report are compared too.)
  */
 final class RunApprovalChecks
 {
@@ -38,6 +40,20 @@ final class RunApprovalChecks
         }
         foreach ($result->consolidated as $account => $amount) {
             $fresh["consolidated||{$account}"] = $amount;
+        }
+        foreach (ConsolidationRunLine::query()->where('run_id', $run->id)->where('kind', 'adjustment')->whereIn('source', ['elimination', 'net_investment'])->get() as $l) {
+            $stored["{$l->source}|{$l->member_id}|{$l->group_account_id}"] = ($stored["{$l->source}|{$l->member_id}|{$l->group_account_id}"] ?? 0) + $l->amount;
+        }
+        foreach ($result->cells as $c) {
+            if (in_array($c['source'], ['elimination', 'net_investment'], true)) {
+                $fresh["{$c['source']}|{$c['member_id']}|{$c['account_id']}"] = ($fresh["{$c['source']}|{$c['member_id']}|{$c['account_id']}"] ?? 0) + $c['net'];
+            }
+        }
+        foreach (ConsolidationIcMatch::query()->where('run_id', $run->id)->get() as $m) {
+            $stored["ic|{$m->member_a_id}|{$m->member_b_id}|{$m->ic_class}"] = "{$m->side_a}|{$m->side_b}|{$m->exceeds_tolerance}";
+        }
+        foreach ($result->matches as $m) {
+            $fresh["ic|{$m['member_a']}|{$m['member_b']}|{$m['class']}"] = "{$m['side_a']}|{$m['side_b']}|{$m['exceeds_tolerance']}";
         }
         ksort($stored);
         ksort($fresh);

@@ -16,6 +16,7 @@ final readonly class RunInput
      * @param  array<string, AccountDef>  $accounts  group account id → type and role
      * @param  list<MemberInput>  $members
      * @param  list<EntryLine>  $entryLines  posted standing entry lines dated up to $to (net = debit − credit)
+     * @param  int  $icTolerance  the largest intercompany difference that does not block approval, minor units of $currency (D16.7)
      */
     public function __construct(
         public string $currency,
@@ -25,6 +26,7 @@ final readonly class RunInput
         public array $accounts,
         public array $members,
         public array $entryLines = [],
+        public int $icTolerance = 0,
     ) {}
 
     public function roleAccount(string $role): ?string

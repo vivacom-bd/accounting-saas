@@ -86,6 +86,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/companies/{company}/accounts/{account}/monetary-class": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Says whether an asset or liability holds a monetary item, revalued at the closing rate (IAS 21.16); null returns to the default */
+        put: operations["accounts.monetary-class"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/companies/{company}/accounts/{account}/dimension-rules": {
         parameters: {
             query?: never;
@@ -1600,6 +1617,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/consolidation/members/{member}/intercompany": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Flags mapped accounts of the member intercompany and links its contacts to the members they stand for (D16.7);
+         *     answers with the member's mapping, flags included
+         */
+        put: operations["consolidation.members.intercompany"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/members/{member}/intercompany-contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The member company's contacts that stand for other members (D16.7) */
+        get: operations["consolidation.members.intercompany-contacts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/consolidation/members/{member}/opening": {
         parameters: {
             query?: never;
@@ -1699,6 +1753,40 @@ export interface paths {
         get: operations["consolidation.runs.worksheet"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/runs/{run}/intercompany": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The intercompany matching report of the run (D16.7), in the presentation currency after translation */
+        get: operations["consolidation.runs.intercompany"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/runs/{run}/intercompany/{match}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A second person accepts an intercompany difference above the group's tolerance, with a reason; it is not eliminated */
+        post: operations["consolidation.runs.intercompany.accept"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6348,6 +6436,15 @@ export interface components {
             }[];
         };
         /**
+         * AccountMonetaryClassRequest
+         * @description PUT /accounts/{account}/monetary-class: `{"class": "monetary" | "non_monetary" | null, "version": 3}`; null returns to the subtype default.
+         */
+        AccountMonetaryClassRequest: {
+            /** @enum {string|null} */
+            class: "monetary" | "non_monetary" | null;
+            version: number;
+        };
+        /**
          * AccountRequest
          * @description Create (POST) and replace (PUT, with the `version` it was based on) an account.
          */
@@ -6397,6 +6494,10 @@ export interface components {
              * @enum {string|null}
              */
             balance_sheet_default: "current" | "non_current" | null;
+            /** @description The company's own answer for an asset or liability (the `fx:*` tag): monetary, non_monetary, or null when the account follows the default. */
+            monetary_class: string | null;
+            /** @description Whether the default rules treat the account as a monetary item, revalued at the closing rate (IAS 21.16); null for equity, income and expense. */
+            monetary_default: boolean | null;
             version: number;
             /** @description dimension id → required|optional|forbidden */
             dimension_rules?: {
@@ -7578,12 +7679,70 @@ export interface components {
                 [key: string]: boolean;
             };
         };
+        /** ConsolidationIcContactResource */
+        ConsolidationIcContactResource: {
+            id: string;
+            member_id: string;
+            contact_id: string;
+            counterparty_member_id: string;
+        };
+        /** ConsolidationIcMatchResource */
+        ConsolidationIcMatchResource: {
+            id: string;
+            member_a_id: string;
+            member_b_id: string;
+            /** @description balance | loan | income_expense | dividend */
+            ic_class: string;
+            side_a: {
+                amount: number;
+                currency: string;
+            };
+            side_b: {
+                amount: number;
+                currency: string;
+            };
+            difference: {
+                amount: number;
+                currency: string;
+            };
+            matched: {
+                amount: number;
+                currency: string;
+            };
+            /** @description fx (the amounts agree in every transaction currency), timing (they do not), missing_counterpart, or null when matched */
+            cause: string | null;
+            /** @description both sides added per transaction currency, minor units of that currency */
+            transaction_currencies: {
+                [key: string]: number;
+            };
+            exceeds_tolerance: boolean;
+            accepted_by: string | null;
+            accepted_at: string | null;
+            reason: string | null;
+        };
+        /** ConsolidationIcReportResource */
+        ConsolidationIcReportResource: {
+            run_id: string;
+            currency: string;
+            ic_tolerance: {
+                amount: number;
+                currency: string;
+            };
+            awaiting_acceptance: number;
+            matches: components["schemas"]["ConsolidationIcMatchResource"][];
+        };
         /** ConsolidationMapResource */
         ConsolidationMapResource: {
             id: string;
             member_id: string;
             account_id: string;
             group_account_id: string;
+            /** @description Intercompany class of the account (balance, loan, income_expense, dividend), null when it is not intercompany (D16.7). */
+            ic_class: string | null;
+            /** @description The member the whole account is with; null = taken from each line's contact. */
+            counterparty_member_id: string | null;
+            /** @description A loan designated part of the net investment in a foreign operation (IAS 21.32). */
+            net_investment: boolean;
         };
         /** ConsolidationMemberResource */
         ConsolidationMemberResource: {
@@ -8638,6 +8797,29 @@ export interface components {
             save_mapping?: boolean | null;
             opening_balance?: number | null;
             closing_balance?: number | null;
+        };
+        /**
+         * IntercompanyRequest
+         * @description PUT /consolidation/members/{member}/intercompany (D16.7): flags mapped member accounts intercompany, and links the member
+         *     company's contacts to the members they stand for. `ic_class` null clears an account's flag; `counterparty_member_id`
+         *     null on a contact removes its link. An account without a counterparty takes it from each line's contact.
+         */
+        IntercompanyRequest: {
+            accounts: {
+                /** Format: uuid */
+                account_id: string;
+                /** @enum {string|null} */
+                ic_class: "balance" | "loan" | "income_expense" | "dividend" | null;
+                /** Format: uuid */
+                counterparty_member_id?: string | null;
+                net_investment?: boolean;
+            }[];
+            contacts: {
+                /** Format: uuid */
+                contact_id: string;
+                /** Format: uuid */
+                counterparty_member_id: string | null;
+            }[];
         };
         /** InvitationPreviewResource */
         InvitationPreviewResource: {
@@ -10907,6 +11089,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AccountBalanceSheetClassRequest"];
+            };
+        };
+        responses: {
+            /** @description `AccountResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AccountResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "accounts.monetary-class": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The account ID */
+                account: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountMonetaryClassRequest"];
             };
         };
         responses: {
@@ -14731,6 +14948,67 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "consolidation.members.intercompany": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The member ID */
+                member: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntercompanyRequest"];
+            };
+        };
+        responses: {
+            /** @description Array of `ConsolidationMapResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationMapResource"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "consolidation.members.intercompany-contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The member ID */
+                member: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `ConsolidationIcContactResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationIcContactResource"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
     "consolidation.members.opening": {
         parameters: {
             query?: never;
@@ -14982,6 +15260,68 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "consolidation.runs.intercompany": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The run ID */
+                run: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ConsolidationIcReportResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationIcReportResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "consolidation.runs.intercompany.accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The run ID */
+                run: string;
+                match: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description `ConsolidationIcReportResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationIcReportResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "consolidation.runs.approve": {

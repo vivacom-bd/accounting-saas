@@ -625,6 +625,87 @@
                 }
             }
         },
+        "/v1/companies/{company}/accounts/{account}/monetary-class": {
+            "put": {
+                "operationId": "accounts.monetary-class",
+                "summary": "Says whether an asset or liability holds a monetary item, revalued at the closing rate (IAS 21.16); null returns to the default",
+                "tags": [
+                    "Account"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "account",
+                        "in": "path",
+                        "required": true,
+                        "description": "The account ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AccountMonetaryClassRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`AccountResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/AccountResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "dimension_rules"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/companies/{company}/accounts/{account}/dimension-rules": {
             "put": {
                 "operationId": "accounts.dimension-rules",
@@ -9041,6 +9122,123 @@
                 }
             }
         },
+        "/v1/consolidation/members/{member}/intercompany": {
+            "put": {
+                "operationId": "consolidation.members.intercompany",
+                "summary": "Flags mapped accounts of the member intercompany and links its contacts to the members they stand for (D16.7);\nanswers with the member's mapping, flags included",
+                "tags": [
+                    "ConsolidationGroup"
+                ],
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/IntercompanyRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Array of `ConsolidationMapResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ConsolidationMapResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/members/{member}/intercompany-contacts": {
+            "get": {
+                "operationId": "consolidation.members.intercompany-contacts",
+                "summary": "The member company's contacts that stand for other members (D16.7)",
+                "tags": [
+                    "ConsolidationGroup"
+                ],
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `ConsolidationIcContactResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ConsolidationIcContactResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/consolidation/members/{member}/opening": {
             "get": {
                 "operationId": "consolidation.members.opening",
@@ -9531,6 +9729,125 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/runs/{run}/intercompany": {
+            "get": {
+                "operationId": "consolidation.runs.intercompany",
+                "summary": "The intercompany matching report of the run (D16.7), in the presentation currency after translation",
+                "tags": [
+                    "ConsolidationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "run",
+                        "in": "path",
+                        "required": true,
+                        "description": "The run ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationIcReportResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ConsolidationIcReportResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/runs/{run}/intercompany/{match}/accept": {
+            "post": {
+                "operationId": "consolidation.runs.intercompany.accept",
+                "summary": "A second person accepts an intercompany difference above the group's tolerance, with a reason; it is not eliminated",
+                "tags": [
+                    "ConsolidationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "run",
+                        "in": "path",
+                        "required": true,
+                        "description": "The run ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "match",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReasonRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationIcReportResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ConsolidationIcReportResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -43476,6 +43793,32 @@
                 ],
                 "title": "AccountDimensionRulesRequest"
             },
+            "AccountMonetaryClassRequest": {
+                "type": "object",
+                "description": "PUT /accounts/{account}/monetary-class: `{\"class\": \"monetary\" | \"non_monetary\" | null, \"version\": 3}`; null returns to the subtype default.",
+                "properties": {
+                    "class": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "monetary",
+                            "non_monetary",
+                            null
+                        ]
+                    },
+                    "version": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "class",
+                    "version"
+                ],
+                "title": "AccountMonetaryClassRequest"
+            },
             "AccountRequest": {
                 "type": "object",
                 "description": "Create (POST) and replace (PUT, with the `version` it was based on) an account.",
@@ -43683,6 +44026,20 @@
                             null
                         ]
                     },
+                    "monetary_class": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The company's own answer for an asset or liability (the `fx:*` tag): monetary, non_monetary, or null when the account follows the default."
+                    },
+                    "monetary_default": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ],
+                        "description": "Whether the default rules treat the account as a monetary item, revalued at the closing rate (IAS 21.16); null for equity, income and expense."
+                    },
                     "version": {
                         "type": "integer"
                     },
@@ -43719,6 +44076,8 @@
                     "description",
                     "balance_sheet_class",
                     "balance_sheet_default",
+                    "monetary_class",
+                    "monetary_default",
                     "version",
                     "can"
                 ],
@@ -48580,6 +48939,204 @@
                 ],
                 "title": "ConsolidationGroupResource"
             },
+            "ConsolidationIcContactResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "member_id": {
+                        "type": "string"
+                    },
+                    "contact_id": {
+                        "type": "string"
+                    },
+                    "counterparty_member_id": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "member_id",
+                    "contact_id",
+                    "counterparty_member_id"
+                ],
+                "title": "ConsolidationIcContactResource"
+            },
+            "ConsolidationIcMatchResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "member_a_id": {
+                        "type": "string"
+                    },
+                    "member_b_id": {
+                        "type": "string"
+                    },
+                    "ic_class": {
+                        "type": "string",
+                        "description": "balance | loan | income_expense | dividend"
+                    },
+                    "side_a": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
+                    "side_b": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
+                    "difference": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
+                    "matched": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
+                    "cause": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "fx (the amounts agree in every transaction currency), timing (they do not), missing_counterpart, or null when matched"
+                    },
+                    "transaction_currencies": {
+                        "type": "object",
+                        "description": "both sides added per transaction currency, minor units of that currency",
+                        "additionalProperties": {
+                            "type": "integer"
+                        }
+                    },
+                    "exceeds_tolerance": {
+                        "type": "boolean"
+                    },
+                    "accepted_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "accepted_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "reason": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "member_a_id",
+                    "member_b_id",
+                    "ic_class",
+                    "side_a",
+                    "side_b",
+                    "difference",
+                    "matched",
+                    "cause",
+                    "transaction_currencies",
+                    "exceeds_tolerance",
+                    "accepted_by",
+                    "accepted_at",
+                    "reason"
+                ],
+                "title": "ConsolidationIcMatchResource"
+            },
+            "ConsolidationIcReportResource": {
+                "type": "object",
+                "properties": {
+                    "run_id": {
+                        "type": "string"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "ic_tolerance": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
+                    "awaiting_acceptance": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "matches": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ConsolidationIcMatchResource"
+                        }
+                    }
+                },
+                "required": [
+                    "run_id",
+                    "currency",
+                    "ic_tolerance",
+                    "awaiting_acceptance",
+                    "matches"
+                ],
+                "title": "ConsolidationIcReportResource"
+            },
             "ConsolidationMapResource": {
                 "type": "object",
                 "properties": {
@@ -48594,13 +49151,34 @@
                     },
                     "group_account_id": {
                         "type": "string"
+                    },
+                    "ic_class": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Intercompany class of the account (balance, loan, income_expense, dividend), null when it is not intercompany (D16.7)."
+                    },
+                    "counterparty_member_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The member the whole account is with; null = taken from each line's contact."
+                    },
+                    "net_investment": {
+                        "type": "boolean",
+                        "description": "A loan designated part of the net investment in a foreign operation (IAS 21.32)."
                     }
                 },
                 "required": [
                     "id",
                     "member_id",
                     "account_id",
-                    "group_account_id"
+                    "group_account_id",
+                    "ic_class",
+                    "counterparty_member_id",
+                    "net_investment"
                 ],
                 "title": "ConsolidationMapResource"
             },
@@ -52718,6 +53296,81 @@
                     "file"
                 ],
                 "title": "ImportStatementRequest"
+            },
+            "IntercompanyRequest": {
+                "type": "object",
+                "description": "PUT /consolidation/members/{member}/intercompany (D16.7): flags mapped member accounts intercompany, and links the member\ncompany's contacts to the members they stand for. `ic_class` null clears an account's flag; `counterparty_member_id`\nnull on a contact removes its link. An account without a counterparty takes it from each line's contact.",
+                "properties": {
+                    "accounts": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "account_id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                "ic_class": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "enum": [
+                                        "balance",
+                                        "loan",
+                                        "income_expense",
+                                        "dividend",
+                                        null
+                                    ]
+                                },
+                                "counterparty_member_id": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "format": "uuid"
+                                },
+                                "net_investment": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": [
+                                "account_id",
+                                "ic_class"
+                            ]
+                        },
+                        "maxItems": 1000
+                    },
+                    "contacts": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "contact_id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                "counterparty_member_id": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "format": "uuid"
+                                }
+                            },
+                            "required": [
+                                "contact_id",
+                                "counterparty_member_id"
+                            ]
+                        },
+                        "maxItems": 1000
+                    }
+                },
+                "required": [
+                    "accounts",
+                    "contacts"
+                ],
+                "title": "IntercompanyRequest"
             },
             "InvitationPreviewResource": {
                 "type": "object",

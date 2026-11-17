@@ -11,18 +11,23 @@ use App\Domain\Consolidation\RunInput;
 use App\Domain\Shared\DomainRuleViolation;
 use App\Domain\Shared\Violation;
 use App\Models\Consolidation\ConsolidationAccountMap;
+use App\Models\Consolidation\ConsolidationEntry;
 use App\Models\Consolidation\ConsolidationEntryLine;
 use App\Models\Consolidation\ConsolidationGroup;
 use App\Models\Consolidation\ConsolidationGroupAccount;
+use App\Models\Consolidation\ConsolidationIcContact;
 use App\Models\Consolidation\ConsolidationMember;
 use App\Models\Consolidation\ConsolidationMemberOpening;
 use App\Models\Consolidation\ConsolidationRateOverride;
 use App\Models\Consolidation\ConsolidationRun;
 use App\Models\Consolidation\ConsolidationRunMember;
 use App\Models\Fiscal\FiscalPeriod;
+use App\Models\Ledger\Account;
 use App\Models\Organisation\Company;
+use App\Models\Organisation\CompanySettings;
 use App\Models\Platform\Currency;
 use App\Queries\Consolidation\EquityMovements;
+use App\Queries\Consolidation\IntercompanyLines;
 use App\Queries\Consolidation\PeriodAverageRate;
 use App\Queries\Consolidation\UnmappedBalances;
 use App\Queries\Fx\FindExchangeRate;
@@ -56,6 +61,7 @@ final class RunInputBuilder
         private readonly LedgerVersion $versions,
         private readonly UnmappedBalances $unmapped,
         private readonly TenantContext $tenant,
+        private readonly IntercompanyLines $icLines,
     ) {}
 
     public function prepare(string $groupId, string $from, string $to): PreparedRun
@@ -188,7 +194,8 @@ final class RunInputBuilder
                 'ledger_version' => $this->versions->current($tenantId, $company->id),
                 'closing_rate' => $closing, 'average_rate' => $average, 'rate_detail' => $detail, 'opening_id' => $openingId,
             ];
-            $members[] = new MemberInput($member->id, $member->isParent(), $currency, $scale, $closing, $average, $bs, $pl, $moves, $opening);
+            [$ic, $ni] = $this->intercompany($member->id, $company, $defs, $windowFrom, $to, $foreign ? fn (string $day): ?string => $this->dayRate($rateSource, $currency, $pres, $day, $missingRates) : null, $blockers);
+            $members[] = new MemberInput($member->id, $member->isParent(), $currency, $scale, $closing, $average, $bs, $pl, $moves, $opening, $ic, $ni);
 
             foreach (FiscalPeriod::query()->where('company_id', $company->id)->where('kind', 'regular')
                 ->where('ends_on', '>=', $windowFrom)->where('starts_on', '<=', $to)->where('status', '<>', 'closed')->orderBy('starts_on')->get() as $p) {
@@ -207,8 +214,12 @@ final class RunInputBuilder
         }
 
         $lines = [];
+        // Standing entries only: a run's eliminations are worked out again by every run from the balances and the window's
+        // results, so earlier ones (and their reversals) are not carried (D16.7).
         $entryLines = ConsolidationEntryLine::query()->join('consolidation_entries as e', 'e.id', '=', 'consolidation_entry_lines.entry_id')
             ->where('e.group_id', $groupId)->whereIn('e.status', ['posted', 'reversed'])->where('e.entry_date', '<=', $to)
+            ->where('e.kind', '<>', 'elimination')
+            ->where(fn ($q) => $q->whereNull('e.reverses_entry_id')->orWhereNotIn('e.reverses_entry_id', ConsolidationEntry::query()->where('group_id', $groupId)->where('kind', 'elimination')->select('id')))
             ->orderBy('e.entry_date')->orderBy('e.number')->orderBy('consolidation_entry_lines.line_no')
             ->get(['consolidation_entry_lines.*', 'e.entry_date as e_date', 'e.id as e_id']);
         foreach ($entryLines as $l) {
@@ -218,7 +229,121 @@ final class RunInputBuilder
             ];
         }
 
-        return new PreparedRun(new RunInput($pres, $groupScale, $from, $to, $defs, $members, $lines), $meta, $warnings);
+        return new PreparedRun(new RunInput($pres, $groupScale, $from, $to, $defs, $members, $lines, $group->ic_tolerance), $meta, $warnings);
+    }
+
+    /**
+     * A member's intragroup items (D16.7): every line on an account the group flags intercompany whose counterparty is a
+     * member (the account's own counterparty, else the member the line's contact stands for), summed per class,
+     * counterparty and group account. Balance sheet accounts at the end, profit and loss over the window, equity (a
+     * dividend paid) per day with that day's rate. Also, for loans designated part of the net investment, the exchange
+     * difference the member booked in profit or loss over the window, on the group account of its unrealised FX account.
+     *
+     * @param  array<string, array{type: string, role: string|null}>  $defs
+     * @param  (callable(string): ?string)|null  $dayRate  null for a member in the presentation currency
+     * @param  list<Violation>  $blockers
+     * @return array{0: list<array{class: string, counterparty: string, account_id: string, net: int, currencies: array<string, int>, moves: list<array{net: int, rate: string|null}>}>, 1: list<array{account_id: string, net: int}>}
+     */
+    private function intercompany(string $memberId, Company $company, array $defs, string $windowFrom, string $to, ?callable $dayRate, array &$blockers): array
+    {
+        $maps = ConsolidationAccountMap::query()->where('member_id', $memberId)->whereNotNull('ic_class')->get();
+        if ($maps->isEmpty()) {
+            return [[], []];
+        }
+        $contacts = ConsolidationIcContact::query()->where('member_id', $memberId)->pluck('counterparty_member_id', 'contact_id')->all();
+        $byType = ['bs' => [], 'pl' => [], 'eq' => []];
+        foreach ($maps as $map) {
+            $type = $defs[$map->group_account_id]['type'] ?? 'asset';
+            $byType[$type === 'equity' ? 'eq' : (GroupRoles::isProfitAndLoss($type) ? 'pl' : 'bs')][] = $map->account_id;
+        }
+        $rows = [
+            ...($this->icLines)($company->id, $byType['bs'], null, $to),
+            ...($this->icLines)($company->id, $byType['pl'], $windowFrom, $to),
+            ...($this->icLines)($company->id, $byType['eq'], $windowFrom, $to, true),
+        ];
+        $byAccount = [];
+        $loans = [];
+        foreach ($maps as $map) {
+            $byAccount[$map->account_id] = $map;
+            if ($map->net_investment) {
+                $loans[] = $map->account_id;
+            }
+        }
+        $slices = [];
+        foreach ($rows as $r) {
+            $map = $byAccount[$r['account_id']] ?? null;
+            if ($map === null) {
+                continue;
+            }
+            $counterparty = $map->counterparty_member_id ?? ($r['contact_id'] === null ? null : ($contacts[$r['contact_id']] ?? null));
+            if ($counterparty === null || ($r['net'] === 0 && $r['fc'] === 0)) {
+                continue;
+            }
+            $key = "{$map->ic_class}|{$counterparty}|{$map->group_account_id}";
+            $slices[$key] ??= ['class' => (string) $map->ic_class, 'counterparty' => (string) $counterparty, 'account_id' => $map->group_account_id, 'net' => 0, 'currencies' => [], 'moves' => []];
+            $slices[$key]['net'] += $r['net'];
+            $fc = $r['currency'] === $company->base_currency ? $r['net'] : $r['fc'];
+            $slices[$key]['currencies'][$r['currency']] = ($slices[$key]['currencies'][$r['currency']] ?? 0) + $fc;
+            if ($r['day'] !== null) {
+                $slices[$key]['moves'][$r['day']] ??= ['net' => 0, 'rate' => $dayRate === null ? null : $dayRate($r['day'])];
+                $slices[$key]['moves'][$r['day']]['net'] += $r['net'];
+            }
+        }
+        $ic = [];
+        foreach ($slices as $slice) {
+            ksort($slice['moves']);
+            ksort($slice['currencies']);
+            $ic[] = [...$slice, 'moves' => array_values($slice['moves'])];
+        }
+
+        $ni = [];
+        $moved = array_sum($this->icLines->revaluation($company->id, $loans, $windowFrom, $to));
+        if ($moved !== 0) {
+            $target = $this->unrealisedFxGroupAccount($memberId, $company->id, $moved < 0);
+            if ($target === null) {
+                $blockers[] = new Violation('net_investment_account_unmapped', "Company {$company->name}: the unrealised FX account in its settings has no group account, so the exchange difference on its net-investment loan cannot move to the translation reserve.");
+            } else {
+                $ni[] = ['account_id' => $target, 'net' => -$moved];
+            }
+        }
+
+        return [$ic, $ni];
+    }
+
+    /** The group account of the company's unrealised FX account (its loss account for a loss, when it has one). */
+    private function unrealisedFxGroupAccount(string $memberId, string $companyId, bool $loss): ?string
+    {
+        $raw = CompanySettings::query()->where('company_id', $companyId)->first()?->getAttribute('posting_accounts');
+        /** @var array<string, mixed> $settings */
+        $settings = is_string($raw) ? (json_decode($raw, true) ?: []) : (is_array($raw) ? $raw : []);
+        $refs = $loss ? [$settings['fx_unrealised_loss'] ?? null, $settings['fx_unrealised'] ?? null] : [$settings['fx_unrealised'] ?? null];
+        foreach ($refs as $ref) {
+            if (! is_string($ref) || $ref === '') {
+                continue;
+            }
+            $account = Account::query()->where('company_id', $companyId)->where(fn ($q) => $q->where('code', $ref)->when(
+                preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $ref) === 1,
+                fn ($q2) => $q2->orWhere('id', $ref),
+            ))->first();
+            if ($account !== null) {
+                $group = ConsolidationAccountMap::query()->where('member_id', $memberId)->where('account_id', $account->id)->value('group_account_id');
+
+                return is_string($group) ? $group : null;
+            }
+        }
+
+        return null;
+    }
+
+    /** @param array<string, Violation> $missingRates */
+    private function dayRate(string $rateSource, string $currency, string $pres, string $day, array &$missingRates): ?string
+    {
+        $q = $this->rates->find($rateSource, $currency, $pres, $day);
+        if ($q === null) {
+            $missingRates["{$currency}@{$day}"] = new Violation('fx_rate_missing', "No {$currency}/{$pres} rate on or before {$day}.");
+        }
+
+        return $q?->rate;
     }
 
     /**

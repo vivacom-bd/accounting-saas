@@ -14,6 +14,7 @@ use App\Http\Requests\Consolidation\PeriodRangeRequest;
 use App\Http\Requests\Consolidation\RateOverrideRequest;
 use App\Http\Requests\Consolidation\ReasonRequest;
 use App\Http\Resources\ConsolidationEntryResource;
+use App\Http\Resources\ConsolidationIcReportResource;
 use App\Http\Resources\ConsolidationRateResource;
 use App\Http\Resources\ConsolidationRunResource;
 use App\Http\Resources\ConsolidationWorksheetResource;
@@ -65,6 +66,22 @@ final class ConsolidationRunController extends Controller
     public function worksheet(ConsolidationRun $run): ConsolidationWorksheetResource
     {
         return new ConsolidationWorksheetResource($run);
+    }
+
+    /** The intercompany matching report of the run (D16.7), in the presentation currency after translation. */
+    #[Authorize('view', 'run')]
+    public function intercompany(ConsolidationRun $run): ConsolidationIcReportResource
+    {
+        return new ConsolidationIcReportResource($run);
+    }
+
+    /** A second person accepts an intercompany difference above the group's tolerance, with a reason; it is not eliminated. */
+    #[Authorize('approve', 'run')]
+    public function acceptDifference(ReasonRequest $request, ConsolidationRun $run, string $match, ManageConsolidationRun $action): ConsolidationIcReportResource
+    {
+        $action->acceptDifference(RequestActor::user($request), $run->id, $match, $request->reason());
+
+        return new ConsolidationIcReportResource($run);
     }
 
     #[Authorize('approve', 'run')]

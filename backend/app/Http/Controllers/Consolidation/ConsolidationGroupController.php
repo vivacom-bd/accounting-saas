@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Consolidation;
 
 use App\Actions\Consolidation\ManageConsolidationGroup;
+use App\Actions\Consolidation\ManageIntercompany;
 use App\Actions\Consolidation\ManageMemberOpening;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Consolidation\GroupAccountRequest;
 use App\Http\Requests\Consolidation\GroupRequest;
+use App\Http\Requests\Consolidation\IntercompanyRequest;
 use App\Http\Requests\Consolidation\MappingRequest;
 use App\Http\Requests\Consolidation\MemberRequest;
 use App\Http\Requests\Consolidation\OpeningRequest;
@@ -16,6 +18,7 @@ use App\Http\Requests\Consolidation\OwnershipRequest;
 use App\Http\Requests\Consolidation\PeriodRangeRequest;
 use App\Http\Resources\ConsolidationGroupAccountResource;
 use App\Http\Resources\ConsolidationGroupResource;
+use App\Http\Resources\ConsolidationIcContactResource;
 use App\Http\Resources\ConsolidationMapResource;
 use App\Http\Resources\ConsolidationOpeningResource;
 use App\Http\Resources\UnmappedBalanceResource;
@@ -23,6 +26,7 @@ use App\Http\Support\RequestActor;
 use App\Models\Consolidation\ConsolidationAccountMap;
 use App\Models\Consolidation\ConsolidationGroup;
 use App\Models\Consolidation\ConsolidationGroupAccount;
+use App\Models\Consolidation\ConsolidationIcContact;
 use App\Models\Consolidation\ConsolidationMember;
 use App\Models\Consolidation\ConsolidationMemberOpening;
 use App\Queries\Consolidation\UnmappedBalances;
@@ -121,6 +125,25 @@ final class ConsolidationGroupController extends Controller
     public function map(MappingRequest $request, ConsolidationMember $member, ManageConsolidationGroup $action): AnonymousResourceCollection
     {
         return ConsolidationMapResource::collection($action->mapAccounts(RequestActor::user($request), $member->id, $request->pairs()));
+    }
+
+    /**
+     * Flags mapped accounts of the member intercompany and links its contacts to the members they stand for (D16.7);
+     * answers with the member's mapping, flags included.
+     */
+    #[Authorize('manage', 'member')]
+    public function setIntercompany(IntercompanyRequest $request, ConsolidationMember $member, ManageIntercompany $action): AnonymousResourceCollection
+    {
+        $action->set(RequestActor::user($request), $member->id, $request->accounts(), $request->contacts());
+
+        return $this->mapping($member);
+    }
+
+    /** The member company's contacts that stand for other members (D16.7). */
+    #[Authorize('view', 'member')]
+    public function intercompanyContacts(ConsolidationMember $member): AnonymousResourceCollection
+    {
+        return ConsolidationIcContactResource::collection(ConsolidationIcContact::query()->where('member_id', $member->id)->orderBy('contact_id')->get());
     }
 
     /** The opening translated equity of a subsidiary held before the group's first run; 404 when none was entered. */

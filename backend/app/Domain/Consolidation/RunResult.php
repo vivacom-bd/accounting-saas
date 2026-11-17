@@ -14,6 +14,10 @@ namespace App\Domain\Consolidation;
  *
  * @phpstan-type Cell array{source: string, member_id: string|null, account_id: string, net: int, entry_id: string|null}
  * @phpstan-type State array{local: array<string, int>, translated: array<string, int>, tr: int}
+ * `matches` is the intercompany matching report (D16.7): one row per pair of members and class.
+ *
+ * @phpstan-import-type IcMatch from Intercompany
+ *
  * @phpstan-type Proposed array{kind: string, member_id: string|null, memo: string, lines: list<array{account_id: string, member_id: string|null, net: int}>}
  */
 final readonly class RunResult
@@ -26,6 +30,7 @@ final readonly class RunResult
      * @param  array<string, State>  $states  closing state per member, the opening of the next run
      * @param  list<Proposed>  $proposed  entries the run asks to post when approved
      * @param  array<string, int>  $summary
+     * @param  list<IcMatch>  $matches
      */
     public function __construct(
         public array $local,
@@ -35,6 +40,7 @@ final readonly class RunResult
         public array $states,
         public array $proposed,
         public array $summary,
+        public array $matches = [],
     ) {}
 
     public function isBalanced(): bool

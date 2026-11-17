@@ -17,9 +17,14 @@ namespace App\Domain\Consolidation;
  *    presentation currency, which needs none.
  *  - `opening`: for a member translated into another currency, its equity at the start of the window, local and translated
  *    (from the previous run, or at the acquisition date and rate), and the translation reserve then.
+ *  - `intercompany`: its intragroup items by class, counterparty member and group account (D16.7, see Intercompany), local.
+ *  - `netInvestment`: per group account, the exchange difference in profit or loss over the window on its loans designated
+ *    part of the net investment in a foreign operation (local, net = debit − credit of the profit or loss side).
  *
  * @phpstan-type Opening array{local: array<string, int>, translated: array<string, int>, tr: int}
  * @phpstan-type EquityMovement array{account_id: string, date: string, net: int, rate: string|null}
+ *
+ * @phpstan-import-type IcSlice from Intercompany
  */
 final readonly class MemberInput
 {
@@ -28,6 +33,8 @@ final readonly class MemberInput
      * @param  array<string, int>  $pl
      * @param  list<EquityMovement>  $equityMovements
      * @param  Opening|null  $opening
+     * @param  list<IcSlice>  $intercompany
+     * @param  list<array{account_id: string, net: int}>  $netInvestment
      */
     public function __construct(
         public string $id,
@@ -40,5 +47,7 @@ final readonly class MemberInput
         public array $pl,
         public array $equityMovements = [],
         public ?array $opening = null,
+        public array $intercompany = [],
+        public array $netInvestment = [],
     ) {}
 }

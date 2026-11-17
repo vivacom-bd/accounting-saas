@@ -86,3 +86,100 @@ it('balances every translated column and the consolidated worksheet on random le
         $from = $to->modify('+1 day');
     }
 })->with(range(1, 25));
+
+/*
+ * Plan 3c.29c: the same over random intragroup trade. Members sell to each other, the buyer sometimes booking a different
+ * amount (or nothing), in a random transaction currency; some members carry an exchange difference on a net-investment
+ * loan. Whatever the figures: every elimination entry balances on its own, eliminates exactly the matched amount from each
+ * side, never more than either side holds, and the consolidated worksheet still sums to zero.
+ */
+it('keeps the worksheet balanced and every elimination balanced and bounded on random intragroup trade', function (int $seed): void {
+    mt_srand($seed);
+    $accounts = [
+        'cash' => ['type' => 'asset', 'role' => null], 'icr' => ['type' => 'asset', 'role' => null], 'icp' => ['type' => 'liability', 'role' => null],
+        're' => ['type' => 'equity', 'role' => 'retained_earnings'], 'tr' => ['type' => 'equity', 'role' => 'translation_reserve'],
+        'icrev' => ['type' => 'income', 'role' => null], 'icexp' => ['type' => 'expense', 'role' => null], 'fx' => ['type' => 'income', 'role' => null],
+    ];
+    $rate = fn (): string => sprintf('%d.%08d', mt_rand(0, 3), mt_rand(1, 99999999));
+    $currencies = [['USD', 2], ['KES', 2], ['JPY', 0], ['KWD', 3]];
+    $members = [];
+    for ($i = 0; $i < 4; $i++) {
+        [$ccy, $scale] = $i === 0 ? ['USD', 2] : $currencies[mt_rand(0, 3)];
+        $members["M{$i}"] = ['ccy' => $ccy, 'scale' => $scale, 'bs' => ['cash' => 0], 'ic' => [], 'opening' => ['local' => ['re' => 0], 'translated' => ['re' => 0], 'tr' => 0]];
+    }
+    $ids = array_keys($members);
+
+    $from = new DateTimeImmutable('2026-01-01');
+    for ($run = 0; $run < 3; $run++) {
+        $to = $from->modify('last day of this month');
+        $pl = array_fill_keys($ids, []);
+        $icPl = array_fill_keys($ids, []);
+        $ni = array_fill_keys($ids, []);
+        for ($k = mt_rand(1, 8); $k > 0; $k--) {
+            [$seller, $buyer] = [$ids[mt_rand(0, 3)], $ids[mt_rand(0, 3)]];
+            if ($seller === $buyer) {
+                continue;
+            }
+            $amount = mt_rand(1, 3_000_000);
+            $booked = [$amount, $amount, $amount - mt_rand(0, 500), 0][mt_rand(0, 3)];
+            $txCcy = $currencies[mt_rand(0, 3)][0];
+            foreach ([[$seller, $buyer, 'icr', 'icrev', $amount], [$buyer, $seller, 'icp', 'icexp', -$booked]] as [$me, $other, $bsAcc, $plAcc, $net]) {
+                if ($net === 0) {
+                    continue;
+                }
+                $key = "{$other}|{$bsAcc}";
+                $members[$me]['bs'][$bsAcc] = ($members[$me]['bs'][$bsAcc] ?? 0) + $net;
+                $pl[$me][$plAcc] = ($pl[$me][$plAcc] ?? 0) - $net;
+                $members[$me]['ic'][$key] ??= ['net' => 0, 'ccy' => []];
+                $members[$me]['ic'][$key]['net'] += $net;
+                $members[$me]['ic'][$key]['ccy'][$txCcy] = ($members[$me]['ic'][$key]['ccy'][$txCcy] ?? 0) + $net;
+                $icPl[$me][] = ['class' => 'income_expense', 'counterparty' => $other, 'account_id' => $plAcc, 'net' => -$net, 'currencies' => [$txCcy => -$net], 'moves' => []];
+            }
+        }
+        foreach ($ids as $id) {
+            if (mt_rand(0, 2) === 0) {
+                $fx = mt_rand(-200_000, 200_000);
+                $pl[$id]['fx'] = ($pl[$id]['fx'] ?? 0) + $fx;
+                $ni[$id][] = ['account_id' => 'fx', 'net' => $fx];
+            }
+        }
+
+        $inputs = [];
+        foreach ($members as $id => $m) {
+            $slices = $icPl[$id];
+            foreach ($m['ic'] as $key => $v) {
+                [$other, $acc] = explode('|', $key);
+                $slices[] = ['class' => 'balance', 'counterparty' => $other, 'account_id' => $acc, 'net' => $v['net'], 'currencies' => $v['ccy'], 'moves' => []];
+            }
+            // Cash takes whatever balances the member's books, so its retained earnings is exactly the opening one (no
+            // equity movement in the window).
+            $bs = $m['bs'];
+            $bs['cash'] -= array_sum($bs) + array_sum($pl[$id]) + $m['opening']['local']['re'];
+            $inputs[] = new MemberInput($id, $id === 'M0', $m['ccy'], $m['scale'], $rate(), $rate(), array_filter($bs), array_filter($pl[$id]), [], $m['ccy'] === 'USD' ? null : $m['opening'], $slices, $ni[$id]);
+            $members[$id]['bs'] = $bs;
+        }
+
+        $result = (new ConsolidationCalculator)->run(new RunInput('USD', 2, $from->format('Y-m-d'), $to->format('Y-m-d'), $accounts, $inputs, [], mt_rand(0, 1000)));
+
+        expect($result->isBalanced())->toBeTrue("seed {$seed} run {$run}: worksheet does not balance");
+        foreach ($result->proposed as $p) {
+            expect(array_sum(array_column($p['lines'], 'net')))->toBe(0, "seed {$seed} run {$run}: a {$p['kind']} entry does not balance");
+        }
+        $eliminations = array_values(array_filter($result->proposed, fn (array $p): bool => $p['kind'] === 'elimination'));
+        $withMatch = array_values(array_filter($result->matches, fn (array $m): bool => $m['matched'] > 0));
+        expect(count($eliminations))->toBe(count($withMatch));
+        foreach ($withMatch as $i => $m) {
+            expect($m['difference'])->toBe($m['side_a'] + $m['side_b'])
+                ->and($m['matched'])->toBeLessThanOrEqual(min(abs($m['side_a']), abs($m['side_b'])));
+            foreach (['a' => $m['side_a'], 'b' => $m['side_b']] as $side => $amount) {
+                $taken = array_sum(array_map(fn (array $l): int => $l['net'], array_filter($eliminations[$i]['lines'], fn (array $l): bool => $l['member_id'] === $m["member_{$side}"])));
+                expect($taken)->toBe(-($amount <=> 0) * $m['matched'], "seed {$seed} run {$run}: side {$side} eliminated {$taken}, matched {$m['matched']}");
+            }
+        }
+
+        foreach ($ids as $id) {
+            $members[$id]['opening'] = $result->states[$id];
+        }
+        $from = $to->modify('+1 day');
+    }
+})->with(range(1, 25));
