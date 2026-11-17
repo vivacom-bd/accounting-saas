@@ -10,6 +10,7 @@ use App\Http\Middleware\Admin\UsePlatformConnection;
 use App\Http\Middleware\Admin\ValidateAdminCsrfToken;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureTenantWritable;
+use App\Http\Middleware\MeterApiCall;
 use App\Http\Middleware\RequireConfirmedPassword;
 use App\Http\Middleware\RequireIdempotencyKey;
 use App\Http\Middleware\ResolveCompany;
@@ -52,7 +53,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // auth:sanctum loads the (RLS-protected) API client.
         // SPA requests from SANCTUM_STATEFUL_DOMAINS get session cookies and CSRF (13 §7).
         $middleware->statefulApi();
-        $middleware->api(prepend: [AssignRequestId::class, SetTenantFromToken::class]);
+        $middleware->api(prepend: [AssignRequestId::class, SetTenantFromToken::class], append: [MeterApiCall::class]);
         $middleware->prependToPriorityList(before: AuthenticatesRequests::class, prepend: SetTenantFromToken::class);
         // Route-model binding reads RLS tables, so tenant and company resolve first; the idempotency
         // claim needs the tenant and must precede Authorize, which sorts after SubstituteBindings.

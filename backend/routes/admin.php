@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\Auth\AdminLoginController;
 use App\Http\Controllers\Admin\Auth\AdminPasswordSetController;
 use App\Http\Controllers\Admin\Auth\AdminSessionController;
 use App\Http\Controllers\Admin\Auth\AdminTwoFactorController;
+use App\Http\Controllers\Admin\Billing\EntitlementOverridesController;
 use App\Http\Controllers\Admin\Plans\AddonsController;
 use App\Http\Controllers\Admin\Plans\CouponsController;
 use App\Http\Controllers\Admin\Plans\PlansController;
@@ -68,6 +69,12 @@ Route::middleware('admin.auth')->group(function (): void {
         Route::post('plans/{plan}/versions', [PlansController::class, 'publish'])->name('plans.versions.store');
         Route::post('plans/{plan}/archive', [PlansController::class, 'archive'])->name('plans.archive');
         Route::put('addons/{code}', [AddonsController::class, 'upsert'])->name('addons.upsert');
+    });
+    // Entitlement overrides of a tenant (Task 10)
+    Route::get('tenants/{tenant}/overrides', [EntitlementOverridesController::class, 'index'])->whereUuid('tenant')->middleware('admin.can:billing.view')->name('tenants.overrides.index');
+    Route::middleware('admin.can:billing.manage')->group(function (): void {
+        Route::put('tenants/{tenant}/overrides/{key}', [EntitlementOverridesController::class, 'put'])->whereUuid('tenant')->name('tenants.overrides.put');
+        Route::delete('tenants/{tenant}/overrides/{key}', [EntitlementOverridesController::class, 'destroy'])->whereUuid('tenant')->name('tenants.overrides.destroy');
     });
     Route::middleware('admin.can:coupons.manage')->group(function (): void {
         Route::post('coupons', [CouponsController::class, 'store'])->name('coupons.store');

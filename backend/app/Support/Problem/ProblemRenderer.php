@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support\Problem;
 
+use App\Domain\Billing\PlanLimitReached;
 use App\Domain\Shared\DomainRuleViolation;
 use App\Domain\Shared\Violation;
 use App\Domain\Signing\SigningLocked;
@@ -21,6 +22,9 @@ final class ProblemRenderer
         $body = self::base($e->errorCode, $status, $e->getMessage(), $request);
         if ($e->violations !== []) {
             $body['violations'] = array_map(fn (Violation $v) => $v->toArray(), $e->violations);
+        }
+        if ($e instanceof PlanLimitReached) {
+            $body['meta'] = $e->meta;
         }
         if ($e instanceof VersionConflict) {
             $body['server_version'] = $e->serverVersion;

@@ -11,6 +11,7 @@ use App\Domain\Organisation\ApiTokenAbilities;
 use App\Domain\Shared\DomainRuleViolation;
 use App\Models\Organisation\ApiClient;
 use App\Models\Organisation\Company;
+use App\Services\Billing\Entitlements;
 use App\Support\Actor;
 use App\Support\UnitOfWork\AuditBuffer;
 use App\Support\UnitOfWork\LockSet;
@@ -26,7 +27,7 @@ use Laravel\Sanctum\NewAccessToken;
  */
 final class ManageApiClient
 {
-    public function __construct(private readonly UnitOfWork $uow, private readonly IdGenerator $ids, private readonly Clock $clock) {}
+    public function __construct(private readonly UnitOfWork $uow, private readonly IdGenerator $ids, private readonly Clock $clock, private readonly Entitlements $entitlements) {}
 
     /** @return array{ApiClient, NewAccessToken} */
     public function create(Actor $actor, ApiClientInput $in): array
@@ -34,6 +35,7 @@ final class ManageApiClient
         return $this->uow->run($actor, function (LockSet $locks, AuditBuffer $audit, Outbox $outbox) use ($actor, $in) {
             OrganisationAdmin::require($actor, 'Only organisation owners and admins can manage API clients.');
             $this->validate($in);
+            $this->entitlements->assertCanAddOne($actor->tenantId, 'api_clients', fn (): int => ApiClient::query()->whereNull('revoked_at')->count());
 
             $client = new ApiClient;
             $client->forceFill([

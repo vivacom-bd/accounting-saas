@@ -15,6 +15,7 @@ use App\Contracts\HtmlToPdf;
 use App\Contracts\IdGenerator;
 use App\Contracts\PermissionChecker;
 use App\Contracts\RoleChecker;
+use App\Contracts\UsageMeter;
 use App\Contracts\VirusScanner;
 use App\Http\Support\CompanyBindings;
 use App\Models\Audit\AuditEvent;
@@ -123,6 +124,7 @@ use App\Policies\Webhooks\WebhookEndpointPolicy;
 use App\Policies\Workflow\ApprovalRequestPolicy;
 use App\Policies\Workflow\ApprovalWorkflowPolicy;
 use App\Queries\Practice\PracticeOverview;
+use App\Services\Billing\SysopsUsageMeter;
 use App\Services\Documents\BrowsershotHtmlToPdf;
 use App\Services\Files\ClamdScanner;
 use App\Services\Files\LocalAttachmentStore;
@@ -172,6 +174,7 @@ class AppServiceProvider extends ServiceProvider
         Cashier::ignoreRoutes();
 
         $this->app->singleton(Clock::class, SystemClock::class);
+        $this->app->singleton(UsageMeter::class, SysopsUsageMeter::class);
         $this->app->singleton(IdGenerator::class, UuidV7Generator::class);
         $this->app->singleton(PermissionChecker::class, SpatiePermissionChecker::class);
         $this->app->singleton(RoleChecker::class, SpatieRoleChecker::class);

@@ -50,6 +50,7 @@ final class StatusMap
         'sign_in_required' => 409,
         'membership_disabled' => 403,
         'entitlement_exceeded' => 402,
+        'plan_limit_reached' => 402,
         'rate_limited' => 429,
         'fx_provider_unavailable' => 502,
         'upload_too_large' => 413,

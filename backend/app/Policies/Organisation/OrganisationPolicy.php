@@ -18,6 +18,12 @@ final class OrganisationPolicy
         return $principal instanceof User && $this->context->orgRole($principal) !== null;
     }
 
+    /** Plan and usage meters: owners and admins, people only. */
+    public function viewBilling(Authenticatable $principal): bool
+    {
+        return $principal instanceof User && $this->context->isOrgAdmin($principal);
+    }
+
     public function update(Authenticatable $principal): bool
     {
         return $principal instanceof User && $this->context->isOrgAdmin($principal);

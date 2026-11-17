@@ -7,6 +7,7 @@ use App\Services\Notifications\NotificationPlanner;
 use App\Support\Outbox\EInvoiceOutboxHandler;
 use App\Support\Outbox\KpiOutboxHandler;
 use App\Support\Outbox\NotificationOutboxHandler;
+use App\Support\Outbox\UsageOutboxHandler;
 use App\Support\Outbox\WebhookOutboxHandler;
 use App\Support\Webhooks\WebhookEvents;
 
@@ -26,5 +27,7 @@ return [
         array_fill_keys(NotificationPlanner::TYPES, [NotificationOutboxHandler::class]),
         // E-invoicing (plan 3c.27): a posted sales invoice or credit note is queued for the tax authority after commit, never during posting.
         ['invoice.posted' => [EInvoiceOutboxHandler::class]],
+        // Usage metering (plan Task 10): journal lines per month, counted after commit and once per message.
+        array_fill_keys(UsageOutboxHandler::TYPES, [UsageOutboxHandler::class]),
     ),
 ];

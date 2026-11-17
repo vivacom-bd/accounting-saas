@@ -11,6 +11,8 @@ use App\Models\Organisation\Company;
 use App\Models\Organisation\Invitation;
 use App\Models\Platform\TenantUser;
 use App\Models\Platform\User;
+use App\Notifications\InvitationNotification;
+use App\Services\Billing\Entitlements;
 use App\Support\Actor;
 use App\Support\UnitOfWork\AuditBuffer;
 use App\Support\UnitOfWork\LockSet;
@@ -30,6 +32,9 @@ final class InviteMember
     public function __construct(
         private readonly UnitOfWork $uow,
         private readonly IssueInvitation $issue,
+        private readonly IdGenerator $ids,
+        private readonly Clock $clock,
+        private readonly Entitlements $entitlements,
     ) {}
 
     public function handle(Actor $actor, InviteMemberInput $in): Invitation
@@ -47,6 +52,36 @@ final class InviteMember
                 throw DomainRuleViolation::single('already_member', 'This person is already in the organisation.');
             }
 
+            $now = $this->clock->now();
+            $replaced = Invitation::query()->whereRaw('lower(email) = ?', [$email])
+                ->whereNull('accepted_at')->whereNull('revoked_at')->get();
+            foreach ($replaced as $old) {
+                $old->forceFill(['revoked_at' => $now])->save();
+                $audit->add('invitation.revoked', $old, context: ['reason' => 'replaced']);
+            }
+
+            // Seats are active members plus open invitations; the invitation this one replaces was revoked above.
+            $this->entitlements->assertCanAddOne($actor->tenantId, 'users', fn (): int => $this->entitlements->userSeats());
+
+            $token = Str::random(48);
+            $invitation = new Invitation;
+            $invitation->forceFill([
+                'id' => $this->ids->next(),
+                'tenant_id' => $actor->tenantId,
+                'email' => $email,
+                'role' => $in->role,
+                'company_role' => $in->companyRole,
+                'company_ids' => $in->companyIds === [] ? null : array_values(array_unique($in->companyIds)),
+                'invited_by' => $actor->id,
+                'token_hash' => hash('sha256', $token),
+                'expires_at' => $now->modify('+'.self::VALID_DAYS.' days'),
+            ])->save();
+
+            $audit->add('invitation.created', $invitation, after: [
+                'email' => $email, 'role' => $in->role, 'company_role' => $in->companyRole, 'company_ids' => $invitation->company_ids,
+            ]);
+
+            $organisation = (string) Tenant::query()->whereKey($actor->tenantId)->value('name');
             $inviter = (string) User::query()->whereKey($actor->id)->value('name');
 
             $invitation = $this->issue->handle(
