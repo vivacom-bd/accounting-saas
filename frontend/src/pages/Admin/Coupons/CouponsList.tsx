@@ -10,7 +10,7 @@ import { Coupon } from '@/types/admin';
 import { toast } from 'sonner';
 import { Plus, Search, Percent, Briefcase, Copy } from 'lucide-react';
 
-export const CouponsList: React.FC = () => {
+export const MockCouponsList: React.FC = () => {
   const { coupons, createCoupon } = useAdminStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);

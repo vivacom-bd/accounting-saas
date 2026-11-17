@@ -50,6 +50,8 @@ export interface AdminNavItem {
   ability?: string;
   /** Not built against the API yet: shown in mock mode only. */
   mockOnly?: boolean;
+  /** Has no mock page: shown in live mode only. */
+  liveOnly?: boolean;
 }
 export interface AdminNavSection {
   title: string;
@@ -86,6 +88,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
     title: 'Governance',
     items: [
       { label: 'Staff and security', to: '/admin/staff', ability: 'staff.manage' },
+      { label: 'Audit log', to: '/admin/audit', ability: 'audit.view', liveOnly: true },
       { label: 'Compliance and GDPR', to: '/admin/compliance', ability: 'compliance.manage' },
     ],
   },

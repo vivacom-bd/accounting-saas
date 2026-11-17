@@ -52,6 +52,11 @@ describe('navigation by ability', () => {
     expect(visibleAdminNav([]).map((s) => s.title)).toEqual(['Platform']);
   });
 
+  it('opens the audit log only with audit.view', () => {
+    expect(labels(['tenants.view'])).not.toContain('Audit log');
+    expect(labels(['tenants.view', 'audit.view'])).toContain('Audit log');
+  });
+
   it('shows everything an owner holds and hides the mock-only partners page in live mode', () => {
     const all = ['tenants.view', 'plans.view', 'billing.view', 'growth.manage', 'ops.view', 'staff.manage', 'compliance.manage'];
     const l = labels(all);

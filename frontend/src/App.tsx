@@ -116,16 +116,24 @@ import { AdminDashboard } from './pages/Admin/Overview/AdminDashboard';
 import { TenantsList } from './pages/Admin/Tenants/TenantsList';
 import { TenantDetail } from './pages/Admin/Tenants/TenantDetail';
 import { OrgSettings } from './pages/Org/OrgSettings';
-import { PlansList } from './pages/Admin/Plans/PlansList';
-import { CouponsList } from './pages/Admin/Coupons/CouponsList';
+import { MockPlansList } from './pages/Admin/Plans/PlansList';
+import { LivePlansList } from './pages/Admin/Plans/LivePlansList';
+import { MockCouponsList } from './pages/Admin/Coupons/CouponsList';
+import { LiveCouponsList } from './pages/Admin/Coupons/LiveCouponsList';
 import { BillingOps } from './pages/Admin/Billing/BillingOps';
 import { GrowthTrials } from './pages/Admin/Growth/GrowthTrials';
 import { PartnersList } from './pages/Admin/Partners/PartnersList';
 import { SupportCenter } from './pages/Admin/Support/SupportCenter';
 import { PlatformOps } from './pages/Admin/Ops/PlatformOps';
 import { FeatureFlags } from './pages/Admin/Flags/FeatureFlags';
-import { StaffSecurity } from './pages/Admin/Staff/StaffSecurity';
+import { MockStaffSecurity } from './pages/Admin/Staff/StaffSecurity';
+import { LiveStaffSecurity } from './pages/Admin/Staff/LiveStaffSecurity';
+import { LiveAuditLog } from './pages/Admin/Staff/LiveAuditLog';
 import { ComplianceCenter } from './pages/Admin/Compliance/ComplianceCenter';
+
+const PlansList = selectByMode({ mock: MockPlansList, live: LivePlansList });
+const CouponsList = selectByMode({ mock: MockCouponsList, live: LiveCouponsList });
+const StaffSecurity = selectByMode({ mock: MockStaffSecurity, live: LiveStaffSecurity });
 
 const useGuardSync = selectByMode<(slug: string | undefined) => { unknownCompany: boolean }>({
   mock: () => ({ unknownCompany: false }),
@@ -237,6 +245,7 @@ export default function App() {
           <Route path="ops" element={<PlatformOps />} />
           <Route path="flags" element={<FeatureFlags />} />
           <Route path="staff" element={<StaffSecurity />} />
+          {IS_LIVE && <Route path="audit" element={<LiveAuditLog />} />}
           <Route path="compliance" element={<ComplianceCenter />} />
         </Route>
 
