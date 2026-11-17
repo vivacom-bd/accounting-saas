@@ -12,6 +12,7 @@ use App\Domain\Organisation\ConsolidationPermissions;
 use App\Domain\Shared\DomainRuleViolation;
 use App\Models\Consolidation\ConsolidationEntry;
 use App\Models\Consolidation\ConsolidationGroup;
+use App\Models\Consolidation\ConsolidationMemberOpening;
 use App\Models\Consolidation\ConsolidationRun;
 use App\Models\Consolidation\ConsolidationRunLine;
 use App\Models\Consolidation\ConsolidationRunMember;
@@ -77,7 +78,7 @@ final class ManageConsolidationRun
                     'id' => $this->ids->next(), 'tenant_id' => $actor->tenantId, 'run_id' => $run->id, 'member_id' => $memberId, 'company_id' => $m['company_id'],
                     'currency' => $m['currency'], 'window_from' => $m['window_from'],
                     'ledger_version' => $m['ledger_version'], 'closing_rate' => $m['closing_rate'], 'average_rate' => $m['average_rate'],
-                    'rate_detail' => $m['rate_detail'], 'state' => $result->states[$memberId] ?? [],
+                    'rate_detail' => $m['rate_detail'] + ($m['opening_id'] === null ? [] : ['equity' => ['source' => 'entered_opening', 'opening_id' => $m['opening_id']]]), 'state' => $result->states[$memberId] ?? [],
                 ])->save();
             }
             foreach ($result->local as $memberId => $rows) {
@@ -109,6 +110,11 @@ final class ManageConsolidationRun
             $seen = ConsolidationRun::query()->findOrFail($runId);
             $this->access->require($actor, ConsolidationPermissions::APPROVE, $seen->group_id);
             $locks->document(ConsolidationGroup::query()->findOrFail($seen->group_id));
+            // The entered openings the run stands on (rank 79) lock before the run itself (80); approval locks them for good.
+            $openingIds = ConsolidationRunMember::query()->where('run_id', $seen->id)->get()
+                ->map(fn (ConsolidationRunMember $m): ?string => isset($m->rate_detail['equity']['opening_id']) && is_string($m->rate_detail['equity']['opening_id']) ? $m->rate_detail['equity']['opening_id'] : null)
+                ->filter()->sort()->values();
+            $openings = $openingIds->map(fn (string $id): ConsolidationMemberOpening => $locks->document(ConsolidationMemberOpening::query()->findOrFail($id)));
             $run = $locks->document($seen);
             if ($run->status !== 'computed') {
                 throw DomainRuleViolation::single('run_not_computed', "A {$run->status} run cannot be approved.");
@@ -131,6 +137,11 @@ final class ManageConsolidationRun
                 ->map(fn (ConsolidationEntry $e): ConsolidationEntry => $locks->document($e));
             foreach ($entries as $entry) {
                 $this->entries->post($actor, $locks, $audit, $entry);
+            }
+            foreach ($openings as $opening) {
+                $was = $opening->attributesToArray();
+                $opening->forceFill(['locked_by_run_id' => $run->id, 'locked_at' => $this->clock->now(), 'lock_version' => $opening->lock_version + 1])->save();
+                $audit->add('consolidation_opening.locked', $opening, before: $was, after: $opening, context: ['run_id' => $run->id]);
             }
             $before = $run->attributesToArray();
             $run->forceFill(['status' => 'approved', 'approved_by' => $actor->id, 'approved_at' => $this->clock->now(), 'lock_version' => $run->lock_version + 1])->save();

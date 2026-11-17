@@ -8949,6 +8949,115 @@
                 }
             }
         },
+        "/v1/consolidation/members/{member}/opening": {
+            "get": {
+                "operationId": "consolidation.members.opening",
+                "summary": "The opening translated equity of a subsidiary held before the group's first run; 404 when none was entered",
+                "tags": [
+                    "ConsolidationGroup"
+                ],
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationOpeningResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ConsolidationOpeningResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "consolidation.members.opening.set",
+                "summary": "Enters or corrects the opening translated equity of a foreign subsidiary held before the group's first run, from the\nlast consolidation done elsewhere. The first run starts the day after `as_of`. Locked once a run using it is approved",
+                "tags": [
+                    "ConsolidationGroup"
+                ],
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OpeningRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationOpeningResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ConsolidationOpeningResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/consolidation/groups/{group}/unmapped": {
             "get": {
                 "operationId": "consolidation.groups.unmapped",
@@ -47673,6 +47782,123 @@
                 ],
                 "title": "ConsolidationMemberResource"
             },
+            "ConsolidationOpeningResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "member_id": {
+                        "type": "string"
+                    },
+                    "as_of": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "equity": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "group_account_id": {
+                                    "type": "string"
+                                },
+                                "amount": {
+                                    "type": "object",
+                                    "properties": {
+                                        "amount": {
+                                            "type": "integer"
+                                        },
+                                        "currency": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "amount",
+                                        "currency"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "group_account_id",
+                                "amount"
+                            ]
+                        }
+                    },
+                    "translation_reserve": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
+                    "reason": {
+                        "type": "string"
+                    },
+                    "locked": {
+                        "type": "boolean"
+                    },
+                    "locked_by_run_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "locked_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "updated_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "version": {
+                        "type": "integer"
+                    },
+                    "can": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "member_id",
+                    "as_of",
+                    "equity",
+                    "translation_reserve",
+                    "reason",
+                    "locked",
+                    "locked_by_run_id",
+                    "locked_at",
+                    "created_by",
+                    "updated_by",
+                    "version",
+                    "can"
+                ],
+                "title": "ConsolidationOpeningResource"
+            },
             "ConsolidationRateResource": {
                 "type": "object",
                 "properties": {
@@ -53635,6 +53861,61 @@
                     "meta"
                 ],
                 "title": "OpenCommitmentsResource"
+            },
+            "OpeningRequest": {
+                "type": "object",
+                "description": "Opening translated equity of a subsidiary held before the group's first run: as of the last consolidation done\nelsewhere, the equity per group equity account at historical rates and the translation reserve, in minor units of the\npresentation currency, net (debit positive, credit negative).",
+                "properties": {
+                    "as_of": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "translation_reserve": {
+                        "type": "integer",
+                        "description": "The translation reserve at `as_of`, net: a credit (a gain so far) is negative."
+                    },
+                    "reason": {
+                        "type": "string",
+                        "maxLength": 500
+                    },
+                    "equity": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "group_account_id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                "amount": {
+                                    "type": "integer",
+                                    "description": "Net, minor units of the presentation currency; equity is normally a credit, so negative."
+                                }
+                            },
+                            "required": [
+                                "group_account_id",
+                                "amount"
+                            ]
+                        },
+                        "maxItems": 200,
+                        "uniqueItems": true
+                    },
+                    "version": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "The opening's `version`, when changing an existing one.",
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "as_of",
+                    "translation_reserve",
+                    "reason",
+                    "equity"
+                ],
+                "title": "OpeningRequest"
             },
             "OwnershipRequest": {
                 "type": "object",

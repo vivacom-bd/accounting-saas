@@ -34,7 +34,7 @@ final class LockSet
         'journals' => 10, 'payment_runs' => 15, 'settlements' => 20, 'write_off_recoveries' => 24, 'fund_transfers' => 25, 'write_offs' => 26, 'invoices' => 30,
         'purchase_requisitions' => 32, 'purchase_order_revisions' => 33, 'purchase_orders' => 34, 'goods_receipts' => 36,
         'bank_accounts' => 40, 'bank_reconciliations' => 42, 'bank_statement_lines' => 45, 'fx_revaluations' => 50, 'provision_runs' => 55, 'depreciation_runs' => 60, 'asset_transactions' => 62, 'asset_categories' => 68, 'fixed_assets' => 70,
-        'consolidation_groups' => 78, 'consolidation_runs' => 80, 'consolidation_entries' => 82,
+        'consolidation_groups' => 78, 'consolidation_member_openings' => 79, 'consolidation_runs' => 80, 'consolidation_entries' => 82,
     ];
 
     private int $level = 0;

@@ -89,6 +89,13 @@ final class ConsolidationFixture
         return $id;
     }
 
+    /** Another fiscal year for a company, for books that start before 2026. */
+    public function fiscalYear(string $key, string $start, string $name): void
+    {
+        $id = $this->companies[$key]['id'];
+        app(CreateFiscalYear::class)->handle(Actor::system($this->f->tenantId, $id), new CreateFiscalYearInput($id, new DateTimeImmutable($start), $name));
+    }
+
     private function chart(string $key, bool $existing): void
     {
         $company = $this->companies[$key]['id'];

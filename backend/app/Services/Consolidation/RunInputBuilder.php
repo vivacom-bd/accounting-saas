@@ -15,10 +15,12 @@ use App\Models\Consolidation\ConsolidationEntryLine;
 use App\Models\Consolidation\ConsolidationGroup;
 use App\Models\Consolidation\ConsolidationGroupAccount;
 use App\Models\Consolidation\ConsolidationMember;
+use App\Models\Consolidation\ConsolidationMemberOpening;
 use App\Models\Consolidation\ConsolidationRateOverride;
 use App\Models\Consolidation\ConsolidationRun;
 use App\Models\Consolidation\ConsolidationRunMember;
 use App\Models\Fiscal\FiscalPeriod;
+use App\Models\Organisation\Company;
 use App\Models\Platform\Currency;
 use App\Queries\Consolidation\EquityMovements;
 use App\Queries\Consolidation\PeriodAverageRate;
@@ -160,10 +162,15 @@ final class RunInputBuilder
             }
 
             $opening = null;
+            $openingId = null;
             if ($foreign) {
                 if ($isNew) {
-                    if ($acquired === null || $acquired < Dates::before($from)) {
-                        $blockers[] = new Violation('consolidation_opening_missing', "Company {$company->name} keeps its books in {$currency} and was acquired on {$acquired}, before this first run: its equity has no historical rates. Start the first run on ".($acquired === null ? 'its acquisition' : Dates::after($acquired)).'.');
+                    $entered = ConsolidationMemberOpening::query()->where('member_id', $member->id)->first();
+                    if ($entered !== null) {
+                        $opening = $this->entered($entered, $member->id, $company, $maps, $defs, $reAccount, $from, $blockers);
+                        $openingId = $entered->id;
+                    } elseif ($acquired === null || $acquired < Dates::before($from)) {
+                        $blockers[] = new Violation('consolidation_opening_missing', "Company {$company->name} keeps its books in {$currency} and was acquired on {$acquired}, before this first run: its equity has no historical rates. Start the first run on ".($acquired === null ? 'its acquisition' : Dates::after($acquired)).', or enter its opening translated equity from the last consolidation done before.');
                     } else {
                         $opening = $this->baseline($group, $member->id, $company->id, $maps, $defs, $reAccount, $acquired, $currency, $scale, $groupScale, $missingRates, $blockers);
                     }
@@ -179,7 +186,7 @@ final class RunInputBuilder
             $meta[$member->id] = [
                 'company_id' => $company->id, 'currency' => $currency, 'window_from' => $windowFrom,
                 'ledger_version' => $this->versions->current($tenantId, $company->id),
-                'closing_rate' => $closing, 'average_rate' => $average, 'rate_detail' => $detail,
+                'closing_rate' => $closing, 'average_rate' => $average, 'rate_detail' => $detail, 'opening_id' => $openingId,
             ];
             $members[] = new MemberInput($member->id, $member->isParent(), $currency, $scale, $closing, $average, $bs, $pl, $moves, $opening);
 
@@ -258,6 +265,73 @@ final class RunInputBuilder
     }
 
     /**
+     * The opening the accountant entered for a subsidiary held before the first run: equity at historical rates and the
+     * reserve as entered, against the books' own equity at its date. It must be dated the day before the run starts, and
+     * cover exactly the equity accounts the books held then (an account with a balance and no amount, or the reverse, blocks).
+     *
+     * @param  array<string, string>  $maps
+     * @param  array<string, array{type: string, role: string|null}>  $defs
+     * @param  list<Violation>  $blockers
+     * @return array{local: array<string, int>, translated: array<string, int>, tr: int}|null
+     */
+    private function entered(ConsolidationMemberOpening $opening, string $memberId, Company $company, array $maps, array $defs, ?string $reAccount, string $from, array &$blockers): ?array
+    {
+        $asOf = $opening->as_of->format('Y-m-d');
+        if ($asOf !== Dates::before($from)) {
+            $blockers[] = new Violation('consolidation_opening_date', "The opening translated equity of {$company->name} is as of {$asOf}: the first run starts on ".Dates::after($asOf).'.');
+
+            return null;
+        }
+        $local = array_filter($this->equityAt($opening->group_id, $memberId, $company->id, $maps, $defs, $reAccount, $asOf, $blockers), fn (int $v): bool => $v !== 0);
+        $translated = [];
+        foreach ($opening->equity as $acc => $v) {
+            $translated[(string) $acc] = (int) $v;
+        }
+        $missing = array_keys(array_diff_key($local, $translated));
+        $extra = array_keys(array_diff_key($translated, $local));
+        if ($missing !== [] || $extra !== []) {
+            $codes = fn (array $ids): string => ConsolidationGroupAccount::query()->whereIn('id', $ids)->orderBy('code')->pluck('code')->implode(', ');
+            $blockers[] = new Violation('consolidation_opening_incomplete', "The opening translated equity of {$company->name} does not match its books at {$asOf}: "
+                .($missing !== [] ? 'no amount for '.$codes($missing).' (which has a balance)' : '').($missing !== [] && $extra !== [] ? '; ' : '')
+                .($extra !== [] ? 'an amount for '.$codes($extra).' (which has none)' : '').'.');
+
+            return null;
+        }
+
+        return ['local' => $local, 'translated' => $translated, 'tr' => $opening->translation_reserve];
+    }
+
+    /**
+     * A member's own equity per group account at the close of $date, closing journals left out; retained earnings is the
+     * balancing figure, so it holds every result up to then. An unmapped account with a balance then blocks.
+     *
+     * @param  array<string, string>  $maps
+     * @param  array<string, array{type: string, role: string|null}>  $defs
+     * @param  list<Violation>  $blockers
+     * @return array<string, int>
+     */
+    private function equityAt(string $groupId, string $memberId, string $companyId, array $maps, array $defs, ?string $reAccount, string $date, array &$blockers): array
+    {
+        foreach (($this->unmapped)($groupId, null, $date) as $u) {
+            if ($u->memberId === $memberId) {
+                $blockers[] = new Violation('unmapped_account', "Account {$u->code} {$u->name} of company {$u->companyId} had a balance on {$date} and has no group account.");
+            }
+        }
+        [$bs] = $this->figures($companyId, $maps, $defs, $reAccount, null, $date);
+        $local = [];
+        if ($reAccount !== null) {
+            $local[$reAccount] = -array_sum($bs);
+        }
+        foreach ($bs as $acc => $v) {
+            if (($defs[$acc]['type'] ?? '') === 'equity') {
+                $local[$acc] = $v;
+            }
+        }
+
+        return $local;
+    }
+
+    /**
      * A foreign subsidiary's equity at the close of its acquisition day, local and at that day's rate: its historical
      * starting point (D16.4). Retained earnings at acquisition is the balancing figure, pre-acquisition results included.
      *
@@ -275,22 +349,8 @@ final class RunInputBuilder
 
             return null;
         }
-        foreach (($this->unmapped)($group->id, null, $date) as $u) {
-            if ($u->memberId === $memberId) {
-                $blockers[] = new Violation('unmapped_account', "Account {$u->code} {$u->name} of company {$u->companyId} had a balance at acquisition and has no group account.");
-            }
-        }
-        [$bs] = $this->figures($companyId, $maps, $defs, $reAccount, null, $date);
-        $local = [];
+        $local = $this->equityAt($group->id, $memberId, $companyId, $maps, $defs, $reAccount, $date, $blockers);
         $translated = [];
-        if ($reAccount !== null) {
-            $local[$reAccount] = -array_sum($bs);
-        }
-        foreach ($bs as $acc => $v) {
-            if (($defs[$acc]['type'] ?? '') === 'equity') {
-                $local[$acc] = $v;
-            }
-        }
         foreach ($local as $acc => $v) {
             $translated[$acc] = Rounding::translate($v, $quote->rate, $scale, $groupScale);
         }

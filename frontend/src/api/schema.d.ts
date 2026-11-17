@@ -1599,6 +1599,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/consolidation/members/{member}/opening": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The opening translated equity of a subsidiary held before the group's first run; 404 when none was entered */
+        get: operations["consolidation.members.opening"];
+        /**
+         * Enters or corrects the opening translated equity of a foreign subsidiary held before the group's first run, from the
+         *     last consolidation done elsewhere. The first run starts the day after `as_of`. Locked once a run using it is approved
+         */
+        put: operations["consolidation.members.opening.set"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/consolidation/groups/{group}/unmapped": {
         parameters: {
             query?: never;
@@ -7570,6 +7591,33 @@ export interface components {
             status: string;
             ownership: string[];
         };
+        /** ConsolidationOpeningResource */
+        ConsolidationOpeningResource: {
+            id: string;
+            member_id: string;
+            as_of: string | null;
+            equity: {
+                group_account_id: string;
+                amount: {
+                    amount: number;
+                    currency: string;
+                };
+            }[];
+            translation_reserve: {
+                amount: number;
+                currency: string;
+            };
+            reason: string;
+            locked: boolean;
+            locked_by_run_id: string | null;
+            locked_at: string | null;
+            created_by: string | null;
+            updated_by: string | null;
+            version: number;
+            can: {
+                [key: string]: boolean;
+            };
+        };
         /** ConsolidationRateResource */
         ConsolidationRateResource: {
             id: string;
@@ -9092,6 +9140,27 @@ export interface components {
                     currency: string;
                 };
             };
+        };
+        /**
+         * OpeningRequest
+         * @description Opening translated equity of a subsidiary held before the group's first run: as of the last consolidation done
+         *     elsewhere, the equity per group equity account at historical rates and the translation reserve, in minor units of the
+         *     presentation currency, net (debit positive, credit negative).
+         */
+        OpeningRequest: {
+            /** Format: date */
+            as_of: string;
+            /** @description The translation reserve at `as_of`, net: a credit (a gain so far) is negative. */
+            translation_reserve: number;
+            reason: string;
+            equity: {
+                /** Format: uuid */
+                group_account_id: string;
+                /** @description Net, minor units of the presentation currency; equity is normally a credit, so negative. */
+                amount: number;
+            }[];
+            /** @description The opening's `version`, when changing an existing one. */
+            version?: number | null;
         };
         /**
          * OwnershipRequest
@@ -14596,6 +14665,67 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["ConsolidationMapResource"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "consolidation.members.opening": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The member ID */
+                member: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ConsolidationOpeningResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationOpeningResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "consolidation.members.opening.set": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The member ID */
+                member: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpeningRequest"];
+            };
+        };
+        responses: {
+            /** @description `ConsolidationOpeningResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationOpeningResource"];
                     };
                 };
             };

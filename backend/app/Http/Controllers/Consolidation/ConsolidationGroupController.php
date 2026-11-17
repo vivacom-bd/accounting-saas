@@ -5,22 +5,26 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Consolidation;
 
 use App\Actions\Consolidation\ManageConsolidationGroup;
+use App\Actions\Consolidation\ManageMemberOpening;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Consolidation\GroupAccountRequest;
 use App\Http\Requests\Consolidation\GroupRequest;
 use App\Http\Requests\Consolidation\MappingRequest;
 use App\Http\Requests\Consolidation\MemberRequest;
+use App\Http\Requests\Consolidation\OpeningRequest;
 use App\Http\Requests\Consolidation\OwnershipRequest;
 use App\Http\Requests\Consolidation\PeriodRangeRequest;
 use App\Http\Resources\ConsolidationGroupAccountResource;
 use App\Http\Resources\ConsolidationGroupResource;
 use App\Http\Resources\ConsolidationMapResource;
+use App\Http\Resources\ConsolidationOpeningResource;
 use App\Http\Resources\UnmappedBalanceResource;
 use App\Http\Support\RequestActor;
 use App\Models\Consolidation\ConsolidationAccountMap;
 use App\Models\Consolidation\ConsolidationGroup;
 use App\Models\Consolidation\ConsolidationGroupAccount;
 use App\Models\Consolidation\ConsolidationMember;
+use App\Models\Consolidation\ConsolidationMemberOpening;
 use App\Queries\Consolidation\UnmappedBalances;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -119,11 +123,37 @@ final class ConsolidationGroupController extends Controller
         return ConsolidationMapResource::collection($action->mapAccounts(RequestActor::user($request), $member->id, $request->pairs()));
     }
 
+    /** The opening translated equity of a subsidiary held before the group's first run; 404 when none was entered. */
+    #[Authorize('view', 'member')]
+    public function opening(ConsolidationMember $member): ConsolidationOpeningResource
+    {
+        return $this->openingResource(ConsolidationMemberOpening::query()->where('member_id', $member->id)->firstOrFail());
+    }
+
+    /**
+     * Enters or corrects the opening translated equity of a foreign subsidiary held before the group's first run, from the
+     * last consolidation done elsewhere. The first run starts the day after `as_of`. Locked once a run using it is approved.
+     */
+    #[Authorize('manage', 'member')]
+    public function setOpening(OpeningRequest $request, ConsolidationMember $member, ManageMemberOpening $action): ConsolidationOpeningResource
+    {
+        $v = $request->validated();
+
+        return $this->openingResource($action->set(RequestActor::user($request), $member->id, (string) $v['as_of'], $request->equity(), (int) $v['translation_reserve'], (string) $v['reason'], isset($v['version']) ? (int) $v['version'] : null));
+    }
+
     /** Accounts with a balance or movement and no mapping; any of them blocks a run. */
     #[Authorize('view', 'group')]
     public function unmapped(PeriodRangeRequest $request, ConsolidationGroup $group, UnmappedBalances $unmapped): AnonymousResourceCollection
     {
         return UnmappedBalanceResource::collection($unmapped($group->id, $request->from(), $request->to()));
+    }
+
+    private function openingResource(ConsolidationMemberOpening $opening): ConsolidationOpeningResource
+    {
+        $opening->setAttribute('currency', ConsolidationGroup::query()->whereKey($opening->group_id)->value('presentation_currency'));
+
+        return new ConsolidationOpeningResource($opening);
     }
 
     private function fresh(string $id): ConsolidationGroup

@@ -28,6 +28,7 @@ use App\Models\Budgets\Budget;
 use App\Models\Consolidation\ConsolidationEntry;
 use App\Models\Consolidation\ConsolidationGroup;
 use App\Models\Consolidation\ConsolidationMember;
+use App\Models\Consolidation\ConsolidationMemberOpening;
 use App\Models\Consolidation\ConsolidationRun;
 use App\Models\EInvoicing\CompanyEInvoicing;
 use App\Models\Files\Attachment;
@@ -225,6 +226,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ConsolidationMember::class, ConsolidationPolicy::class);
         Gate::policy(ConsolidationRun::class, ConsolidationPolicy::class);
         Gate::policy(ConsolidationEntry::class, ConsolidationPolicy::class);
+        Gate::policy(ConsolidationMemberOpening::class, ConsolidationPolicy::class);
         Gate::policy(PracticeOverview::class, PracticePolicy::class);
         Gate::policy(Invitation::class, InvitationPolicy::class);
         Gate::policy(ApiClient::class, ApiClientPolicy::class);

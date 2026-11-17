@@ -169,3 +169,17 @@ it('takes the period average as the mean of the rate in force on each day of the
     expect(Rounding::dailyMean([['rate' => '1.10', 'days' => 90], ['rate' => '1.20', 'days' => 1]]))->toBe('1.10109890')
         ->and(Rounding::dailyMean([['rate' => '0.0077', 'days' => 31]]))->toBe('0.00770000');
 });
+
+it('starts from an opening entered by the accountant and continues the reserve from the opening reserve', function (): void {
+    // Opening as of 31 Dec 2025, from the consolidation done before Ledgerly, in USD at historical rates: capital −800,000,
+    // retained earnings −50,000, translation reserve +2,000 (a debit). The books then held capital KES −100,000,000 and
+    // retained earnings −6,000,000. No activity in the quarter; the closing rate is 0.0075.
+    $opening = ['local' => ['cap' => -100000000, 're' => -6000000], 'translated' => ['cap' => -800000, 're' => -50000], 'tr' => 2000];
+    $r = runOf(usdParent(), kes(['cash' => 106000000, 'cap' => -100000000], [], [], $opening));
+
+    // Cash 106,000,000 × 0.0075 = 795,000. Cumulative reserve = −(795,000 − 800,000 − 50,000) = 55,000;
+    // the quarter's difference is 55,000 − 2,000 = 53,000.
+    expect($r->translated['K'])->toBe(['cash' => 795000, 'cap' => -800000, 're' => -50000, 'tr' => 55000])
+        ->and($r->states['K']['tr'])->toBe(55000)
+        ->and($r->summary['translation_difference'])->toBe(53000);
+});
