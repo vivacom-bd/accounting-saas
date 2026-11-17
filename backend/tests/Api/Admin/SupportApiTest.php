@@ -94,6 +94,16 @@ it('search_finds_by_email_company_and_invoice_number', function (): void {
         ->and($byEmail)->toHaveKeys(['tenants', 'users', 'companies', 'invoices'])
         ->and($byEmail['invoices'])->toBe([]);
 
+    $inv = fn (string $number, ?string $stripeId) => [
+        'id' => (string) Str::uuid7(), 'tenant_id' => $acme['id'], 'stripe_id' => $stripeId, 'source' => $stripeId === null ? 'offline' : 'stripe', 'number' => $number, 'status' => 'paid',
+        'currency' => 'USD', 'total' => 1000, 'created_at' => now(), 'updated_at' => now(),
+    ];
+    supDb()->table('stripe_invoices')->insert([$inv('INV-2026-0042', 'in_abc123'), $inv('INV-2026-0043', null)]);
+    $byNumber = $this->getJson('/api/admin/search?q=INV-2026-0042')->assertOk()->json('invoices');
+    expect(array_column($byNumber, 'number'))->toBe(['INV-2026-0042'])
+        ->and($byNumber[0]['tenant_id'])->toBe($acme['id']);
+    expect(array_column($this->getJson('/api/admin/search?q=in_abc')->assertOk()->json('invoices'), 'stripe_id'))->toBe(['in_abc123']);
+
     $byTenant = $this->getJson('/api/admin/search?q=acme-tra')->assertOk()->json();
     expect(array_column($byTenant['tenants'], 'id'))->toBe([$acme['id']]);
 

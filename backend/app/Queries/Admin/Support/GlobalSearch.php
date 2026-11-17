@@ -34,6 +34,11 @@ final class GlobalSearch
 
         $companies = $db->select('SELECT * FROM sysops.admin_search_companies(?, ?)', [$q, self::LIMIT]);
 
+        $invoices = $db->table('stripe_invoices')
+            ->where(fn ($w) => $w->where('number', 'ilike', "%{$escaped}%")->orWhere('stripe_id', 'ilike', "%{$escaped}%"))
+            ->orderBy('number')->orderBy('id')->limit(self::LIMIT)
+            ->get(['id', 'tenant_id', 'number', 'stripe_id', 'status', 'currency', 'total']);
+
         return [
             'tenants' => array_values($tenants->map(fn (object $t): array => [
                 'id' => $t->id, 'name' => $t->name, 'slug' => $t->slug, 'status' => $t->lifecycle, 'country' => $t->country,
@@ -43,8 +48,10 @@ final class GlobalSearch
                 'tenant_ids' => $memberships->get($u->id, collect())->pluck('tenant_id')->values()->all(),
             ])->all()),
             'companies' => array_values(array_map(fn (object $c): array => (array) $c, $companies)),
-            // TODO(Task 12): search stripe_invoices by number and Stripe id once that table exists. Not probed at runtime.
-            'invoices' => [],
+            'invoices' => array_values($invoices->map(fn (object $i): array => [
+                'id' => $i->id, 'tenant_id' => $i->tenant_id, 'number' => $i->number, 'stripe_id' => $i->stripe_id,
+                'status' => $i->status, 'currency' => $i->currency, 'total' => (int) $i->total,
+            ])->all()),
         ];
     }
 }

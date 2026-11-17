@@ -295,3 +295,18 @@ it('the_webhook_route_sits_outside_the_tenant_api_and_is_throttled', function ()
         ->and($route->gatherMiddleware())->toContain('throttle:120,1')
         ->and($route->gatherMiddleware())->not->toContain('api');
 });
+
+it('keeps answering the webhook during platform maintenance', function (): void {
+    DB::connection('pgsql_platform')->table('platform_settings')->updateOrInsert(
+        ['key' => 'maintenance'],
+        ['value' => json_encode(['enabled' => true, 'message' => 'Upgrading', 'ends_at' => null]), 'updated_at' => now()],
+    );
+    app(\App\Support\Ops\MaintenanceState::class)->forget();
+    stripeTenant('active', 'active');
+
+    $request = Request::create('/api/stripe/webhook', 'POST');
+    $response = app(\App\Http\Middleware\PlatformMaintenance::class)->handle($request, fn () => response('through'));
+    expect($response->getContent())->toBe('through');
+
+    stripeSend(stripeEvent('invoice_paid'))->assertOk();
+});

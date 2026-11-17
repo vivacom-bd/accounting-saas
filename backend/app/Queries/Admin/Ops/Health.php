@@ -42,9 +42,15 @@ final class Health
             'outbox_backlog' => $this->outbox(),
             'scheduler_last_beat' => $this->beat(self::HEARTBEAT_KEY, self::HEARTBEAT_STALE_SECONDS, 'down'),
             'audit_seal_last_run' => $this->beat(self::SEAL_KEY, self::SEAL_STALE_SECONDS, 'unknown'),
-            // Task 15's mail_log is not merged yet: unknown, not zero.
-            'mail_failures_24h' => null,
+            // mail_log records only mail that was sent (Laravel has no failed-mail event), so this counts sent mail.
+            'mail_sent_24h' => $this->mailSent(),
         ];
+    }
+
+    private function mailSent(): ?int
+    {
+        return $this->probe(fn (): int => AdminTransaction::connection()->table('mail_log')
+            ->where('status', 'sent')->where('sent_at', '>=', $this->clock->now()->modify('-24 hours'))->count());
     }
 
     /** "ok" only when the tenant app role and the platform role both answer. */

@@ -21,6 +21,7 @@ final class PlatformMaintenance
     public const array EXEMPT = [
         'api/v1/auth/*', 'api/v1/me', 'api/v1/session', 'api/v1/session/*',
         'api/v1/announcements', 'api/v1/announcements/*', 'api/v1/public/*', 'api/v1/webhooks/*',
+        'api/stripe/webhook',
     ];
 
     public function __construct(private readonly MaintenanceState $state) {}

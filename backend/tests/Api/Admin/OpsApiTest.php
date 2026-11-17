@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
 use Laravel\Pennant\Feature;
 use Tests\Support\LedgerFixture;
 
@@ -226,7 +227,7 @@ it('shows the current organisation its flags in the session payload', function (
     Feature::flushCache();
 
     opsAsPerson($this, $a->userId)->withSession(['current_tenant_id' => $a->tenantId])->getJson('/api/v1/me')->assertOk()
-        ->assertJsonPath('data.features', ['beta-reports' => true, 'new-dashboard' => false]);
+        ->assertJsonPath('data.features', ['beta-reports' => true, 'new-dashboard' => false])->assertJsonPath('data.impersonation', null);
 
     opsAsPerson($this, $b->userId)->withSession(['current_tenant_id' => $b->tenantId])->getJson('/api/v1/me')->assertOk()
         ->assertJsonPath('data.features', ['beta-reports' => false, 'new-dashboard' => false]);
@@ -239,7 +240,7 @@ it('health_reports_failed_jobs', function (): void {
         ->and($health['queue']['failed'])->toBe(0)
         ->and($health['outbox_backlog']['pending'])->toBe(0)
         ->and($health['outbox_backlog']['oldest_at'])->toBeNull()
-        ->and($health['mail_failures_24h'])->toBeNull();
+        ->and($health['mail_sent_24h'])->toBe(0);
 
     foreach ([1, 2] as $n) {
         DB::connection('pgsql_owner')->table('failed_jobs')->insert(['uuid' => (string) Str::uuid(), 'connection' => 'redis', 'queue' => 'mail', 'payload' => '{}', 'exception' => "boom {$n}", 'failed_at' => now()]);
@@ -254,6 +255,14 @@ it('health_reports_failed_jobs', function (): void {
         ->and($health['queue']['pending'])->toBeInt()
         ->and($health['outbox_backlog']['pending'])->toBe(1)
         ->and(strtotime((string) $health['outbox_backlog']['oldest_at']))->toBe(strtotime('2026-11-01 09:00:00+00'));
+});
+
+it('counts mail sent in the last 24 hours in the health payload', function (): void {
+    $this->asAdmin(AdminRole::Engineer);
+    $row = fn (string $at) => ['id' => (string) Str::uuid7(), 'to_hash' => str_repeat('a', 64), 'to_masked' => 'a***@x.test', 'subject' => 's', 'status' => 'sent', 'sent_at' => $at];
+    DB::connection('pgsql_owner')->table('mail_log')->insert([$row(app(Clock::class)->now()->modify('-2 hours')->format('Y-m-d H:i:sP')), $row(app(Clock::class)->now()->modify('-23 hours')->format('Y-m-d H:i:sP')), $row(app(Clock::class)->now()->modify('-30 hours')->format('Y-m-d H:i:sP'))]);
+
+    expect($this->getJson('/api/admin/ops/health')->assertOk()->json('data.mail_sent_24h'))->toBe(2);
 });
 
 it('reports the scheduler heartbeat and the last audit seal run', function (): void {
