@@ -57,6 +57,8 @@ final class AdminServiceProvider extends ServiceProvider
         RateLimiter::for('admin-two-factor', fn (Request $request) => Limit::perMinute(5)
             ->by('admin-2fa:'.(string) $request->session()->get(AdminSession::PENDING_ID, '').'|'.$request->ip()));
 
+        RateLimiter::for('admin-set-password', fn (Request $request) => Limit::perMinute(5)->by('admin-set-password:'.$request->ip()));
+
         // T9: the admin API gets its own document later (Task 20); it is never part of the tenant one.
         Scramble::configure()->routes(fn (Route $route): bool => str_starts_with($route->uri(), 'api/')
             && $route->uri() !== 'api/admin' && ! str_starts_with($route->uri(), 'api/admin/'));

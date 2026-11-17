@@ -68,6 +68,10 @@ final class StatusMap
         'approval_self_decision' => 403,
         'approval_not_pending' => 409,
         'approval_required' => 409,
+        // Staff and security (plan Task 8).
+        'last_owner' => 409,
+        'admin_ip_self_lockout' => 422,
+        'invalid_token' => 422,
     ];
 
     public static function status(string $code): int

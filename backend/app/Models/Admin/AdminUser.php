@@ -27,6 +27,8 @@ use Illuminate\Database\Eloquent\Builder;
  * @property DateTimeImmutable|null $two_factor_confirmed_at
  * @property list<string> $ip_allowlist
  * @property bool $is_active
+ * @property string|null $password_set_token_hash
+ * @property DateTimeImmutable|null $password_set_expires_at
  * @property DateTimeImmutable|null $last_login_at
  * @property DateTimeImmutable|null $created_at
  * @property DateTimeImmutable|null $updated_at
@@ -40,7 +42,7 @@ class AdminUser extends BaseModel implements AuthenticatableContract
     protected $table = 'admin_users';
 
     /** @var list<string> */
-    protected $hidden = ['password', 'two_factor_secret', 'two_factor_recovery_codes'];
+    protected $hidden = ['password', 'two_factor_secret', 'two_factor_recovery_codes', 'password_set_token_hash'];
 
     /** No "remember me" for staff: there is no remember_token column. */
     public function getRememberTokenName(): string
@@ -70,6 +72,7 @@ class AdminUser extends BaseModel implements AuthenticatableContract
             'two_factor_confirmed_at' => 'immutable_datetime',
             'ip_allowlist' => PgInetArray::class,
             'is_active' => 'boolean',
+            'password_set_expires_at' => 'immutable_datetime',
             'last_login_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
