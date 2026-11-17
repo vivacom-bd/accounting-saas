@@ -9,5 +9,6 @@ enum ActorType: string
     case User = 'user';
     case ApiClient = 'api_client';
     case System = 'system';
+    case Admin = 'admin';
     case AdminImpersonating = 'admin_impersonating';
 }

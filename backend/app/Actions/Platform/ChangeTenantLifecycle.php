@@ -11,6 +11,7 @@ use App\Domain\Platform\TenantLifecycle;
 use App\Domain\Shared\DomainRuleViolation;
 use App\Notifications\TenantLifecycleChanged;
 use App\Support\Actor;
+use App\Support\ActorType;
 use App\Support\Admin\AdminActor;
 use App\Support\Admin\AdminAuditWriter;
 use App\Support\Admin\AdminTransaction;
@@ -89,7 +90,7 @@ final class ChangeTenantLifecycle
                 'from_status' => $from->value,
                 'to_status' => $to->value,
                 'reason' => $reason,
-                'actor_type' => $by instanceof AdminActor ? 'admin' : $by->type->value,
+                'actor_type' => $by instanceof AdminActor ? ActorType::Admin->value : $by->type->value,
                 'actor_id' => $by->id,
                 'occurred_at' => $stamp,
             ]);

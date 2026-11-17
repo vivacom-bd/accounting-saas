@@ -21,6 +21,7 @@ final class AdminPermissions
         'billing.view' => ['owner', 'finance', 'readonly'],
         'billing.manage' => ['owner', 'finance'],
         'billing.refund.request' => ['owner', 'finance'],
+        'plans.view' => self::ALL,
         'plans.manage' => ['owner', 'finance'],
         'coupons.manage' => ['owner', 'finance', 'sales'],
         'impersonate.read' => ['owner', 'support'],

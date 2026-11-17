@@ -14,6 +14,7 @@ const ADMIN_ABILITY_ROLES = [
     'billing.view' => ['owner', 'finance', 'readonly'],
     'billing.manage' => ['owner', 'finance'],
     'billing.refund.request' => ['owner', 'finance'],
+    'plans.view' => ['owner', 'finance', 'sales', 'support', 'engineer', 'readonly'],
     'plans.manage' => ['owner', 'finance'],
     'coupons.manage' => ['owner', 'finance', 'sales'],
     'impersonate.read' => ['owner', 'support'],
@@ -51,6 +52,6 @@ it('denies an unknown ability to every role', function (): void {
 });
 
 it('lists the abilities a role holds', function (): void {
-    expect(AdminPermissions::abilitiesFor(AdminRole::Readonly))->toBe(['tenants.view', 'billing.view', 'audit.view'])
+    expect(AdminPermissions::abilitiesFor(AdminRole::Readonly))->toBe(['tenants.view', 'billing.view', 'plans.view', 'audit.view'])
         ->and(AdminPermissions::abilitiesFor(AdminRole::Owner))->toHaveCount(count(ADMIN_ABILITY_ROLES));
 });

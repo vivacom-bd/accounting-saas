@@ -34,16 +34,20 @@ it('requires a signed-in admin and the right ability', function (): void {
     $this->getJson('/api/admin/plans')->assertStatus(401);
 
     $this->asAdmin(AdminRole::Sales);
-    $this->getJson('/api/admin/plans')->assertStatus(403)->assertJsonPath('code', 'forbidden');
-    $this->postJson('/api/admin/plans', planBody())->assertStatus(403);
+    $this->getJson('/api/admin/plans')->assertOk();
+    $this->postJson('/api/admin/plans', planBody())->assertStatus(403)->assertJsonPath('code', 'forbidden');
     $this->getJson('/api/admin/coupons')->assertOk();
 });
 
-it('lets support see neither plans nor coupons', function (): void {
+it('lets support list the catalogue but not change it', function (): void {
     $this->asAdmin(AdminRole::Support);
 
-    $this->getJson('/api/admin/plans')->assertStatus(403);
-    $this->getJson('/api/admin/coupons')->assertStatus(403);
+    $this->getJson('/api/admin/plans')->assertOk();
+    $this->getJson('/api/admin/addons')->assertOk();
+    $this->getJson('/api/admin/coupons')->assertOk();
+    $this->postJson('/api/admin/plans', planBody())->assertStatus(403)->assertJsonPath('code', 'forbidden');
+    $this->putJson('/api/admin/addons/extra', [])->assertStatus(403);
+    $this->postJson('/api/admin/coupons', [])->assertStatus(403);
 });
 
 it('creates, lists and versions a plan', function (): void {
