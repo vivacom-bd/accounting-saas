@@ -7,8 +7,8 @@ namespace App\Actions\FixedAssets;
 use App\Actions\FixedAssets\Inputs\FixedAssetInput;
 use App\Actions\Ledger\SetupGuard;
 use App\Contracts\IdGenerator;
+use App\Domain\FixedAssets\DepreciationCalendar;
 use App\Domain\FixedAssets\Estimates;
-use App\Domain\FixedAssets\Months;
 use App\Domain\Shared\DomainRuleViolation;
 use App\Models\FixedAssets\AssetCategory;
 use App\Models\FixedAssets\FixedAsset;
@@ -16,6 +16,7 @@ use App\Models\Ledger\Dimension;
 use App\Models\Ledger\DimensionValue;
 use App\Services\FixedAssets\AssetLedger;
 use App\Services\FixedAssets\CapitalisationSource;
+use App\Services\FixedAssets\DepreciationCalendarLoader;
 use App\Services\FixedAssets\MovementSpec;
 use App\Support\Actor;
 use App\Support\UnitOfWork\AuditBuffer;
@@ -38,6 +39,7 @@ final class CreateFixedAsset
         private readonly SetupGuard $guard,
         private readonly AssetLedger $ledger,
         private readonly CapitalisationSource $sources,
+        private readonly DepreciationCalendarLoader $calendars,
     ) {}
 
     public function handle(Actor $actor, FixedAssetInput $in): FixedAsset
@@ -87,7 +89,7 @@ final class CreateFixedAsset
             $rate = $in->decliningRateBp ?? $category->default_declining_rate_bp;
             Estimates::assert($category->is_depreciable, $method, $life, $rate, $in->unitsTotal);
 
-            [$accumulated, $through, $months] = $opening ? $this->openingFigures($in, $cost, $available, $life) : [0, null, 0];
+            [$accumulated, $through, $months] = $opening ? $this->openingFigures($in, $cost, $available, $life, $this->calendars->forCompany($in->companyId)) : [0, null, 0];
 
             $number = $locks->sequence($in->companyId, 'doc:fixed_asset:all', 'FA-');
             $asset = new FixedAsset;
@@ -128,15 +130,15 @@ final class CreateFixedAsset
      *
      * @return array{0: int, 1: string|null, 2: int}
      */
-    private function openingFigures(FixedAssetInput $in, int $cost, string $available, ?int $life): array
+    private function openingFigures(FixedAssetInput $in, int $cost, string $available, ?int $life, DepreciationCalendar $calendar): array
     {
         $asOf = (string) $in->openingAsOf;
         $accumulated = $in->openingAccumulated;
         if ($accumulated < 0 || $accumulated > $cost - $in->residual) {
             throw DomainRuleViolation::single('asset_opening_accumulated_invalid', 'Accumulated depreciation cannot be negative or more than the cost less the residual value.');
         }
-        $through = Months::isMonthEnd($asOf) ? $asOf : Months::endOfPrevious($asOf);
-        $months = Months::index($through) - Months::index($available) + 1;
+        $through = $calendar->isPeriodEnd($asOf) ? $asOf : $calendar->endOfPrevious($asOf);
+        $months = count($calendar->endsBetween($available, $through));
         if ($months <= 0) {
             if ($accumulated > 0) {
                 throw DomainRuleViolation::single('asset_opening_dates_inconsistent', 'Accumulated depreciation is stated, but the asset was not available for use before that date.');

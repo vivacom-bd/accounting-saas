@@ -12,6 +12,7 @@ use App\Domain\Shared\DomainRuleViolation;
 use App\Domain\Workflow\DocumentStatus;
 use App\Models\FixedAssets\DepreciationRun;
 use App\Models\FixedAssets\DepreciationRunLine;
+use App\Services\FixedAssets\DepreciationCalendarLoader;
 use App\Services\FixedAssets\DepreciationPlanner;
 use App\Support\Actor;
 use App\Support\UnitOfWork\AuditBuffer;
@@ -32,6 +33,7 @@ final class CreateDepreciationRun
         private readonly IdGenerator $ids,
         private readonly SetupGuard $guard,
         private readonly DepreciationPlanner $planner,
+        private readonly DepreciationCalendarLoader $calendars,
     ) {}
 
     public function handle(Actor $actor, DepreciationRunInput $in): DepreciationRun
@@ -63,6 +65,7 @@ final class CreateDepreciationRun
                 throw DomainRuleViolation::single('nothing_to_depreciate', 'No asset has depreciation due up to the end of this period.');
             }
 
+            $calendar = $this->calendars->forCompany($in->companyId);
             $run = new DepreciationRun;
             $run->forceFill([
                 'id' => $this->ids->next(), 'tenant_id' => $actor->tenantId, 'company_id' => $in->companyId, 'status' => DocumentStatus::Draft,
@@ -80,7 +83,7 @@ final class CreateDepreciationRun
                 (new DepreciationRunLine)->forceFill([
                     'id' => $this->ids->next(), 'tenant_id' => $actor->tenantId, 'company_id' => $in->companyId, 'depreciation_run_id' => $run->id,
                     'line_no' => ++$no, 'asset_id' => $line['asset']->id, 'amount' => $charge->amount, 'months' => count($charge->months),
-                    'units' => $charge->units, 'detail' => ['schedule' => $charge->schedule, 'catch_up_months' => $charge->catchUpMonths($period->ends_on->format('Y-m-d'))],
+                    'units' => $charge->units, 'detail' => ['schedule' => $charge->schedule, 'catch_up_months' => $charge->catchUpMonths($period->ends_on->format('Y-m-d'), $calendar)],
                 ])->save();
             }
             $run->refresh()->load('lines');

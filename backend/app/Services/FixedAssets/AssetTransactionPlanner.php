@@ -8,7 +8,7 @@ use App\Domain\FixedAssets\AssetEvents;
 use App\Domain\FixedAssets\AssetOutcome;
 use App\Domain\FixedAssets\AssetState;
 use App\Domain\FixedAssets\DepreciationCalculator;
-use App\Domain\FixedAssets\Months;
+use App\Domain\FixedAssets\DepreciationCalendar;
 use App\Domain\Ledger\ControlType;
 use App\Domain\Shared\DomainRuleViolation;
 use App\Models\FixedAssets\AssetCategory;
@@ -24,6 +24,8 @@ use App\Models\Ledger\Account;
  */
 final class AssetTransactionPlanner
 {
+    public function __construct(private readonly DepreciationCalendarLoader $calendars) {}
+
     /**
      * @param  array<string, int>  $inputs  asset id → impairment or reversal amount, or the revalued amount; for a disposal the single asset id → 0
      * @param  array<string, mixed>  $params  disposal: proceeds, proceeds_account_id, transfer_reserve
@@ -39,6 +41,7 @@ final class AssetTransactionPlanner
             throw DomainRuleViolation::single('not_found', 'An asset does not exist.');
         }
         $categories = AssetCategory::query()->where('company_id', $companyId)->get()->keyBy('id');
+        $calendar = $this->calendars->forCompany($companyId);
 
         if ($kind === 'revaluation') {
             $category = $categories->get((string) $categoryId) ?? throw DomainRuleViolation::single('not_found', 'The category does not exist.');
@@ -62,7 +65,7 @@ final class AssetTransactionPlanner
             if ($state->disposed) {
                 throw DomainRuleViolation::single('asset_disposed', "{$asset->number} has been disposed of.");
             }
-            $this->assertDepreciationCurrent($asset, $state, $txDate, $kind === 'disposal');
+            $this->assertDepreciationCurrent($asset, $state, $txDate, $kind === 'disposal', $calendar);
             $input = $inputs[$asset->id];
             $outcome = match ($kind) {
                 'disposal' => AssetEvents::disposal($state, (int) ($params['proceeds'] ?? 0), (bool) ($params['transfer_reserve'] ?? false))
@@ -87,16 +90,16 @@ final class AssetTransactionPlanner
         return $out;
     }
 
-    private function assertDepreciationCurrent(FixedAsset $asset, AssetState $state, string $txDate, bool $disposal): void
+    private function assertDepreciationCurrent(FixedAsset $asset, AssetState $state, string $txDate, bool $disposal, DepreciationCalendar $calendar): void
     {
-        $priorMonthEnd = Months::endOfPrevious($txDate);
-        if (DepreciationCalculator::monthsDue($state, $priorMonthEnd) !== []) {
+        $priorMonthEnd = $calendar->endOfPrevious($txDate);
+        if (DepreciationCalculator::monthsDue($state, $priorMonthEnd, $calendar) !== []) {
             throw DomainRuleViolation::single(
                 'depreciation_not_current',
                 "Run depreciation up to {$priorMonthEnd} for {$asset->number} before this: its carrying amount is out of date.",
             );
         }
-        if ($disposal && $state->depreciatedThrough !== null && Months::index($state->depreciatedThrough) >= Months::index($txDate)) {
+        if ($disposal && $state->depreciatedThrough !== null && $state->depreciatedThrough >= $calendar->startOf($txDate)) {
             throw DomainRuleViolation::single(
                 'depreciation_in_disposal_month',
                 "{$asset->number} has been depreciated through {$state->depreciatedThrough}. No charge is made in the month of disposal: reverse the depreciation run for that month first.",

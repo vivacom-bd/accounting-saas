@@ -24,23 +24,23 @@ use App\Domain\Shared\DomainRuleViolation;
 final class DepreciationCalculator
 {
     /**
-     * The month ends still to be charged up to the month of $periodEnd. Empty when nothing is due.
+     * The period ends still to be charged up to the period of $periodEnd: one per fiscal period, each counting as one month of life
+     * (plan 3c.15d). Without a calendar the periods are calendar months. Empty when nothing is due.
      *
      * @return list<string>
      */
-    public static function monthsDue(AssetState $s, string $periodEnd): array
+    public static function monthsDue(AssetState $s, string $periodEnd, ?DepreciationCalendar $calendar = null): array
     {
         if ($s->disposed || ! $s->depreciable || $s->carrying() <= $s->residual) {
             return [];
         }
-        $first = $s->depreciatedThrough !== null ? Months::index($s->depreciatedThrough) + 1 : Months::index($s->availableFrom);
-        $last = Months::index($periodEnd);
-        $out = [];
-        for ($i = $first; $i <= $last; $i++) {
-            $out[] = Months::endOfIndex($i);
-        }
+        $calendar ??= DepreciationCalendar::calendarMonths();
+        $through = $s->depreciatedThrough;
 
-        return $out;
+        return array_values(array_filter(
+            $calendar->endsBetween($through ?? $s->availableFrom, $periodEnd),
+            static fn (string $end): bool => $through === null || $end > $through,
+        ));
     }
 
     /**

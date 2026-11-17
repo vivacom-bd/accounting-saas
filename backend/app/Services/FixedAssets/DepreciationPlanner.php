@@ -13,12 +13,15 @@ use App\Models\FixedAssets\FixedAsset;
 /** Works out a period's depreciation for every active asset of a company from the register as it stands now. */
 final class DepreciationPlanner
 {
+    public function __construct(private readonly DepreciationCalendarLoader $calendars) {}
+
     /**
      * @param  array<string, int>  $units  asset id → units used in the run (units of production)
      */
     public function plan(string $companyId, string $periodEnd, array $units): DepreciationPlan
     {
         $categories = AssetCategory::query()->where('company_id', $companyId)->get()->keyBy('id');
+        $calendar = $this->calendars->forCompany($companyId);
         $lines = [];
         $pending = [];
         $total = 0;
@@ -26,7 +29,7 @@ final class DepreciationPlanner
         foreach ($assets as $asset) {
             $category = $categories->get($asset->category_id) ?? throw DomainRuleViolation::single('not_found', 'The asset category does not exist.');
             $state = $asset->state($category);
-            $months = DepreciationCalculator::monthsDue($state, $periodEnd);
+            $months = DepreciationCalculator::monthsDue($state, $periodEnd, $calendar);
             if ($months === []) {
                 continue;
             }

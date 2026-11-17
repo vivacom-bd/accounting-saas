@@ -27,9 +27,11 @@ final readonly class DepreciationCharge
         public ?int $newCounterfactualCarrying,
     ) {}
 
-    /** Months charged beyond the one the period itself accounts for: the catch-up shown in the preview. */
-    public function catchUpMonths(string $periodEnd): int
+    /** Periods charged beyond the one the run's own period accounts for (those ending before it starts): the catch-up shown in the preview. */
+    public function catchUpMonths(string $periodEnd, ?DepreciationCalendar $calendar = null): int
     {
-        return count(array_filter($this->months, static fn (string $m): bool => $m < Months::startOf($periodEnd)));
+        $start = ($calendar ?? DepreciationCalendar::calendarMonths())->startOf($periodEnd);
+
+        return count(array_filter($this->months, static fn (string $m): bool => $m < $start));
     }
 }
