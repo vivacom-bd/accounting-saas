@@ -14,6 +14,19 @@ use Illuminate\Support\Facades\DB;
  */
 final class TamperAudit
 {
+    /** The same for the platform admin chain (no tenant context; the table has no RLS). */
+    public static function admin(Closure $edit): void
+    {
+        /** @var Connection $owner */
+        $owner = DB::connection('pgsql_owner');
+        $owner->statement('ALTER TABLE admin_audit_events DISABLE TRIGGER USER');
+        try {
+            $edit($owner);
+        } finally {
+            $owner->statement('ALTER TABLE admin_audit_events ENABLE TRIGGER USER');
+        }
+    }
+
     public static function as(string $tenantId, Closure $edit): void
     {
         /** @var Connection $owner */

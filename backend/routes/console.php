@@ -30,3 +30,5 @@ Schedule::command('approvals:remind')->hourly()->onOneServer();
 Schedule::command('dunning:run')->dailyAt('06:00')->timezone('UTC')->onOneServer();
 // Scheduled report deliveries (plan 3c.23): every hour, each company's own timezone and hour decide what is due; one run per schedule and date, unique in the database.
 Schedule::command('reports:run-schedules')->hourly()->onOneServer();
+// Platform admin audit chain: recompute it every night; a broken link exits non-zero (plan T10).
+Schedule::command('admin-audit:verify')->dailyAt('03:30')->timezone('UTC')->onOneServer();
