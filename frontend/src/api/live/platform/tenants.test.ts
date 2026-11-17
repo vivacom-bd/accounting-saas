@@ -94,17 +94,31 @@ describe('tenants api', () => {
 });
 
 describe('impersonation support', () => {
-  it('is hidden when the endpoint does not exist (404) and offered when the route answers anything else', async () => {
-    const missing = setup([json(404, { title: 'Not found', status: 404, code: 'not_found' })]);
-    expect(await missing.api.impersonationAvailable('t1')).toBe(false);
-    const present = setup([json(405, { title: 'Method not allowed', status: 405, code: 'method_not_allowed' })]);
-    expect(await present.api.impersonationAvailable('t1')).toBe(true);
+  it('is always available now that the routes exist', async () => {
+    const { api } = setup([]);
+    expect(await api.impersonationAvailable('t1')).toBe(true);
+  });
+
+  it('lists sessions for a tenant', async () => {
+    const { api, apiCalls } = setup([json(200, { data: [] })]);
+    await api.listImpersonations('t1');
+    expect(apiCalls()[0].url).toBe('/api/admin/impersonations?tenant=t1');
+  });
+
+  it('requests write mode and ends a session', async () => {
+    const { api, apiCalls } = setup([json(201, { data: { id: 'a1' } }), json(200, { data: { id: 's1' } })]);
+    await api.requestImpersonationWrite('t1', { user_id: 'u1', reason: 'r' });
+    await api.endImpersonation('s1');
+    expect(apiCalls()[0].url).toBe('/api/admin/impersonations/write-requests');
+    expect(JSON.parse(String(apiCalls()[0].init.body))).toEqual({ tenant_id: 't1', user_id: 'u1', reason: 'r' });
+    expect(apiCalls()[1].url).toBe('/api/admin/impersonations/s1/end');
   });
 
   it('starts a session and returns the url to open', async () => {
     const { api, apiCalls } = setup([json(201, { session_id: 's1', ticket: 'tk', url: 'https://app.test/impersonate?ticket=tk' })]);
     const out = await api.startImpersonation('t1', { user_id: 'u1', mode: 'read', reason: 'Ticket 1' });
-    expect(apiCalls()[0].url).toBe('/api/admin/tenants/t1/impersonations');
+    expect(apiCalls()[0].url).toBe('/api/admin/impersonations');
+    expect(JSON.parse(String(apiCalls()[0].init.body))).toMatchObject({ tenant_id: 't1', user_id: 'u1', mode: 'read' });
     expect(hdr(apiCalls()[0], 'Idempotency-Key')).toBeTruthy();
     expect(out.url).toBe('https://app.test/impersonate?ticket=tk');
   });

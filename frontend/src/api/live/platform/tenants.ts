@@ -154,22 +154,23 @@ export function createTenantsApi(http: AdminHttpClient) {
       await c.delete(`${T}/overrides/{key}`, { path: { tenant: id, key } });
     },
 
-    /**
-     * Impersonation (plan Task 14) is not on every build. A route that exists answers a GET with 405 (or 200/403); one that
-     * does not answers 404, and the button is hidden.
-     */
-    async impersonationAvailable(id: string): Promise<boolean> {
-      try {
-        await c.get(`${T}/impersonations`, at(id));
-        return true;
-      } catch (e) {
-        return e instanceof ApiError && e.status !== 404;
-      }
+    /** Impersonation (plan Task 14) is on the build: the sessions log, start, write-mode request and end. */
+    async impersonationAvailable(_id: string): Promise<boolean> {
+      return true;
+    },
+    async listImpersonations(tenantId: string): Promise<unknown[]> {
+      return data<unknown[]>(await c.get('/impersonations', { query: { tenant: tenantId } }));
     },
     async startImpersonation(id: string, body: ImpersonationBody, intent?: Intent): Promise<ImpersonationStart> {
-      const res = (await c.post(`${T}/impersonations`, act(id, body, intent))) as Record<string, unknown>;
+      const res = (await c.post('/impersonations', { body: { tenant_id: id, ...body }, intent })) as Record<string, unknown>;
       const r = ((res.data as Record<string, unknown> | undefined) ?? res) as { session_id?: string; ticket?: string; url: string };
       return { sessionId: r.session_id, ticket: r.ticket, url: r.url };
+    },
+    async requestImpersonationWrite(id: string, body: { user_id: string; reason: string }, intent?: Intent): Promise<unknown> {
+      return data<unknown>(await c.post('/impersonations/write-requests', { body: { tenant_id: id, ...body }, intent }));
+    },
+    async endImpersonation(sessionId: string, intent?: Intent): Promise<unknown> {
+      return data<unknown>(await c.post('/impersonations/{id}/end', { path: { id: sessionId }, intent }));
     },
   };
 }

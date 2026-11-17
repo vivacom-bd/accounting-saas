@@ -1,7 +1,7 @@
 /**
  * Impersonate a tenant user (plan Task 14, consent G4). Reason is required; write mode needs an approved request id;
  * the Owner override skips the tenant's support-access grant and is flagged in the audit. The returned URL opens in a new
- * tab. The endpoint may not exist on every build: the caller hides the button when `impersonationAvailable` says no.
+ * tab. The endpoint exists on every build.
  */
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';

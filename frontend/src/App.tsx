@@ -233,20 +233,21 @@ export default function App() {
 
         {/* Platform Admin Back-Office Console (/admin/*) */}
         <Route path="/admin" element={<RequireAdminAuth />}>
-          <Route index element={<AdminDashboard />} />
+          {IS_LIVE ? <Route index element={<Navigate to="/admin/tenants" replace />} /> : <Route index element={<AdminDashboard />} />}
           <Route path="tenants" element={<TenantsList />} />
           <Route path="tenants/:id" element={<TenantDetail />} />
           <Route path="plans" element={<PlansList />} />
           <Route path="coupons" element={<CouponsList />} />
-          <Route path="billing" element={<BillingOps />} />
-          <Route path="growth" element={<GrowthTrials />} />
-          <Route path="partners" element={<PartnersList />} />
-          <Route path="support" element={<SupportCenter />} />
-          <Route path="ops" element={<PlatformOps />} />
-          <Route path="flags" element={<FeatureFlags />} />
+          {!IS_LIVE && <Route path="billing" element={<BillingOps />} />}
+          {!IS_LIVE && <Route path="growth" element={<GrowthTrials />} />}
+          {!IS_LIVE && <Route path="partners" element={<PartnersList />} />}
+          {!IS_LIVE && <Route path="support" element={<SupportCenter />} />}
+          {!IS_LIVE && <Route path="ops" element={<PlatformOps />} />}
+          {!IS_LIVE && <Route path="flags" element={<FeatureFlags />} />}
           <Route path="staff" element={<StaffSecurity />} />
           {IS_LIVE && <Route path="audit" element={<LiveAuditLog />} />}
-          <Route path="compliance" element={<ComplianceCenter />} />
+          {!IS_LIVE && <Route path="compliance" element={<ComplianceCenter />} />}
+          {IS_LIVE && <Route path="*" element={<Navigate to="/admin/tenants" replace />} />}
         </Route>
 
         {/* Main Tenant Application */}
