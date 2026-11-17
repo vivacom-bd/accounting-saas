@@ -11,8 +11,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * Opening translated equity of a subsidiary held before the group's first run (D16.4). Amounts are net (debit minus
- * credit) in minor units of the presentation currency. `locked` is true once a run using it was approved; it never
- * changes after that.
+ * credit) in minor units of the presentation currency. `locked` is true while an approved run stands on it; it never
+ * changes then, and unlocks only when that run is reversed.
  *
  * @mixin ConsolidationMemberOpening
  */

@@ -51,6 +51,26 @@ it('lets an opening change until a run using it is approved, then refuses every 
         ->and(fn () => DB::table('consolidation_member_openings')->where('id', $opening->id)->delete())->toThrow(QueryException::class, 'never deleted');
 });
 
+it('allows only one change to a locked opening: unlocking it, once its run is reversed', function (): void {
+    [$c, $opening] = openedGroup();
+    $runs = app(ManageConsolidationRun::class);
+    $run = $runs->create($c->actor(), $c->group->id, '2026-01-01', '2026-01-31');
+    $computedId = $run->id;
+    $table = fn () => DB::table('consolidation_member_openings')->where('id', $opening->id);
+
+    // Locking needs an approved run.
+    expect(fn () => $table()->update(['locked_by_run_id' => $computedId, 'locked_at' => now()]))->toThrow(QueryException::class, 'approved run');
+
+    $runs->approve($c->person(), $run->id);
+    DB::table('consolidation_runs')->where('id', $run->id)->update(['status' => 'reversed', 'reversed_at' => now(), 'reason' => 'test']);
+
+    // Unlocking together with another change is still refused; the bare unlock is allowed.
+    expect(fn () => $table()->update(['locked_by_run_id' => null, 'locked_at' => null, 'translation_reserve' => 5]))->toThrow(QueryException::class, 'is locked')
+        ->and(fn () => $table()->update(['reason' => 'x']))->toThrow(QueryException::class, 'is locked')
+        ->and($table()->update(['locked_by_run_id' => null, 'locked_at' => null, 'lock_version' => 9]))->toBe(1)
+        ->and($table()->update(['reason' => 'Editable again']))->toBe(1);
+});
+
 it('isolates openings between tenants', function (): void {
     [$c, $opening] = openedGroup();
     $tenantA = $c->f->tenantId;

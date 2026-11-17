@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Actions\Consolidation\ManageConsolidationRun;
 use App\Actions\Consolidation\ManageMemberOpening;
 use App\Domain\Shared\DomainRuleViolation;
+use App\Models\Audit\AuditEvent;
 use App\Models\Consolidation\ConsolidationMemberOpening;
 use App\Models\Consolidation\ConsolidationRunLine;
 use App\Models\Platform\User;
@@ -86,6 +87,29 @@ it('runs from the entered opening, continues the reserve from it, and locks it w
     $runs->approve($checker, $run->id);
 
     expect($opening->fresh()->locked_by_run_id)->toBe($run->id)
+        ->and(fn () => enterOpening($c))->toThrow(DomainRuleViolation::class, 'locked');
+});
+
+it('unlocks the opening when the run that locked it is reversed, and locks it again on the next approval', function (): void {
+    [$c, $checker] = heldGroup();
+    $opening = enterOpening($c);
+    $runs = app(ManageConsolidationRun::class);
+    $first = $runs->create($c->actor(), $c->group->id, '2026-01-01', '2026-03-31');
+    $runs->approve($checker, $first->id);
+
+    $runs->reverse($checker, $first->id, 'Opening reserve was wrong');
+
+    expect($opening->fresh()->locked_by_run_id)->toBeNull()->and($opening->fresh()->locked_at)->toBeNull()
+        ->and(AuditEvent::query()->where('action', 'consolidation_opening.unlocked')->where('subject_id', $opening->id)->firstOrFail()->context['run_id'] ?? null)->toBe($first->id);
+
+    // Editable again; the next approved run locks the corrected opening.
+    $corrected = app(ManageMemberOpening::class)->set($c->actor(), $c->members['K']->id, '2025-12-31',
+        [$c->groupAccounts['3000'] => -800000, $c->groupAccounts['G3000'] => -50000], 3000, 'Reserve corrected');
+    $second = $runs->create($c->actor(), $c->group->id, '2026-01-01', '2026-03-31');
+    $runs->approve($checker, $second->id);
+
+    expect($corrected->fresh()->translation_reserve)->toBe(3000)
+        ->and($corrected->fresh()->locked_by_run_id)->toBe($second->id)
         ->and(fn () => enterOpening($c))->toThrow(DomainRuleViolation::class, 'locked');
 });
 

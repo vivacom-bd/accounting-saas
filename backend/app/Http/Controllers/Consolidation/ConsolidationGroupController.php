@@ -132,7 +132,7 @@ final class ConsolidationGroupController extends Controller
 
     /**
      * Enters or corrects the opening translated equity of a foreign subsidiary held before the group's first run, from the
-     * last consolidation done elsewhere. The first run starts the day after `as_of`. Locked once a run using it is approved.
+     * last consolidation done elsewhere. The first run starts the day after `as_of`. Locked while an approved run stands on it; reversing that run unlocks it.
      */
     #[Authorize('manage', 'member')]
     public function setOpening(OpeningRequest $request, ConsolidationMember $member, ManageMemberOpening $action): ConsolidationOpeningResource

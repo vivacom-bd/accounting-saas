@@ -25,7 +25,7 @@ use App\Support\UnitOfWork\UnitOfWork;
  * decision 2026-11-17). The accountant enters, from the last consolidation done elsewhere and as of its date, the equity
  * per group equity account at historical rates and the translation reserve, in the presentation currency, with a reason.
  * The first run then starts the day after that date. Editable until a run using it is approved, then locked (also by a
- * trigger). Whether it covers the books at its date is checked when a run reads it, since the books may still move.
+ * trigger) until that run is reversed. Whether it covers the books at its date is checked when a run reads it, since the books may still move.
  *
  * Lock order (13 §8): the group (rank 78), then the opening (79).
  */

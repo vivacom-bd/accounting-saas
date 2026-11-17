@@ -138,13 +138,14 @@ final class ManageConsolidationRun
             foreach ($entries as $entry) {
                 $this->entries->post($actor, $locks, $audit, $entry);
             }
+            $before = $run->attributesToArray();
+            $run->forceFill(['status' => 'approved', 'approved_by' => $actor->id, 'approved_at' => $this->clock->now(), 'lock_version' => $run->lock_version + 1])->save();
+            // After the run is approved: the trigger lets an opening lock only to an approved run.
             foreach ($openings as $opening) {
                 $was = $opening->attributesToArray();
                 $opening->forceFill(['locked_by_run_id' => $run->id, 'locked_at' => $this->clock->now(), 'lock_version' => $opening->lock_version + 1])->save();
                 $audit->add('consolidation_opening.locked', $opening, before: $was, after: $opening, context: ['run_id' => $run->id]);
             }
-            $before = $run->attributesToArray();
-            $run->forceFill(['status' => 'approved', 'approved_by' => $actor->id, 'approved_at' => $this->clock->now(), 'lock_version' => $run->lock_version + 1])->save();
             $audit->add('consolidation_run.approved', $run, before: $before, after: $run, context: ['entries' => $entries->count()]);
 
             return $run;
@@ -180,6 +181,9 @@ final class ManageConsolidationRun
             $seen = ConsolidationRun::query()->findOrFail($runId);
             $this->access->require($actor, ConsolidationPermissions::APPROVE, $seen->group_id);
             $locks->document(ConsolidationGroup::query()->findOrFail($seen->group_id));
+            // Openings this run locked (rank 79) lock before the run (80); they unlock once it is reversed.
+            $openings = ConsolidationMemberOpening::query()->where('locked_by_run_id', $seen->id)->orderBy('id')->get()
+                ->map(fn (ConsolidationMemberOpening $o): ConsolidationMemberOpening => $locks->document($o));
             $run = $locks->document($seen);
             if ($run->status !== 'approved') {
                 throw DomainRuleViolation::single('run_not_approved', "A {$run->status} run cannot be reversed.");
@@ -195,9 +199,25 @@ final class ManageConsolidationRun
             $before = $run->attributesToArray();
             $run->forceFill(['status' => 'reversed', 'reversed_by' => $actor->id, 'reversed_at' => $this->clock->now(), 'reason' => $reason, 'lock_version' => $run->lock_version + 1])->save();
             $audit->add('consolidation_run.reversed', $run, before: $before, after: $run, context: ['reason' => $reason]);
+            foreach ($openings as $opening) {
+                if ($this->usedByAnotherApprovedRun($opening, $run->id)) {
+                    continue;
+                }
+                $was = $opening->attributesToArray();
+                $opening->forceFill(['locked_by_run_id' => null, 'locked_at' => null, 'lock_version' => $opening->lock_version + 1])->save();
+                $audit->add('consolidation_opening.unlocked', $opening, before: $was, after: $opening, context: ['run_id' => $run->id]);
+            }
 
             return $run;
         });
+    }
+
+    /** Whether an approved run other than $runId starts from this opening (in practice none: later runs start from the previous run). */
+    private function usedByAnotherApprovedRun(ConsolidationMemberOpening $opening, string $runId): bool
+    {
+        return ConsolidationRunMember::query()->where('member_id', $opening->member_id)->where('run_id', '<>', $runId)
+            ->whereIn('run_id', ConsolidationRun::query()->where('group_id', $opening->group_id)->where('status', 'approved')->select('id'))
+            ->get()->contains(fn (ConsolidationRunMember $m): bool => ($m->rate_detail['equity']['opening_id'] ?? null) === $opening->id);
     }
 
     /** @param array<string, int> $rows */

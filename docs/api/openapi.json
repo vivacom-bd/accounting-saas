@@ -8999,7 +8999,7 @@
             },
             "put": {
                 "operationId": "consolidation.members.opening.set",
-                "summary": "Enters or corrects the opening translated equity of a foreign subsidiary held before the group's first run, from the\nlast consolidation done elsewhere. The first run starts the day after `as_of`. Locked once a run using it is approved",
+                "summary": "Enters or corrects the opening translated equity of a foreign subsidiary held before the group's first run, from the\nlast consolidation done elsewhere. The first run starts the day after `as_of`. Locked while an approved run stands on it; reversing that run unlocks it",
                 "tags": [
                     "ConsolidationGroup"
                 ],
