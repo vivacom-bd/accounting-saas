@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\Auth\AdminTwoFactorController;
 use App\Http\Controllers\Admin\Billing\EntitlementOverridesController;
 use App\Http\Controllers\Admin\Billing\BillingStatusController;
 use App\Http\Controllers\Admin\Billing\SubscriptionsController;
+use App\Http\Controllers\Admin\Compliance\ComplianceController;
 use App\Http\Controllers\Admin\Plans\AddonsController;
 use App\Http\Controllers\Admin\Plans\CouponsController;
 use App\Http\Controllers\Admin\Plans\PlansController;
@@ -95,6 +96,18 @@ Route::middleware('admin.auth')->group(function (): void {
         Route::post('tenants/{tenant}/notes', [TenantNotesController::class, 'store'])->name('tenants.notes.store');
         Route::post('tenants/{tenant}/notes/{note}/pin', [TenantNotesController::class, 'pin'])->name('tenants.notes.pin');
     });
+    // Compliance (Task 18)
+    Route::middleware('admin.can:compliance.manage')->group(function (): void {
+        Route::post('tenants/{tenant}/deletion', [ComplianceController::class, 'requestDeletion'])->name('tenants.deletion');
+        Route::post('tenants/{tenant}/legal-hold', [ComplianceController::class, 'setLegalHold'])->name('tenants.legal-hold.set');
+        Route::delete('tenants/{tenant}/legal-hold', [ComplianceController::class, 'requestHoldRelease'])->name('tenants.legal-hold.release');
+        Route::put('tenants/{tenant}/archive-until', [ComplianceController::class, 'archiveUntil'])->name('tenants.archive-until');
+        Route::get('compliance/retention', [ComplianceController::class, 'retention'])->name('compliance.retention');
+        Route::get('compliance/gdpr-requests', [ComplianceController::class, 'gdprIndex'])->name('compliance.gdpr.index');
+        Route::post('compliance/gdpr-requests', [ComplianceController::class, 'gdprStore'])->name('compliance.gdpr.store');
+        Route::patch('compliance/gdpr-requests/{id}', [ComplianceController::class, 'gdprUpdate'])->name('compliance.gdpr.update');
+    });
+
     Route::middleware('admin.can:tenants.lifecycle')->group(function (): void {
         Route::post('tenants/{tenant}/lifecycle', [TenantsController::class, 'lifecycle'])->name('tenants.lifecycle');
         Route::post('tenants/{tenant}/users/{user}/reset-two-factor', [TenantMembersController::class, 'resetTwoFactor'])->name('tenants.users.reset-two-factor');

@@ -44,6 +44,8 @@ final class Rls
         'tenant_notes',
         // subscriptions and MRR movements (plan Task 11); ledgerly_platform only, tenants reach their plan through sysops functions
         'subscriptions', 'subscription_addons', 'subscription_events', 'stripe_prices',
+        // GDPR request queue (plan Task 18); ledgerly_platform only, subject email stored hashed
+        'gdpr_requests',
     ];
 
     public static function enable(Connection $connection, string $table): void
