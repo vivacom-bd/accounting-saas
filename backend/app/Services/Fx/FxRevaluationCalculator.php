@@ -39,10 +39,10 @@ final class FxRevaluationCalculator
             ->where('j.journal_date', '<=', $asOf)
             ->where('l.currency', '<>', $baseCurrency)
             ->whereIn('a.account_type', ['asset', 'liability'])
-            ->groupByRaw("l.account_id, l.currency, CASE WHEN a.control_type IN ('ar', 'ap') THEN l.contact_id END, a.code, a.name, a.account_type, a.control_type, a.currency_policy, a.account_subtype")
+            ->groupByRaw("l.account_id, l.currency, CASE WHEN a.control_type IN ('ar', 'ap') THEN l.contact_id END, a.code, a.name, a.account_type, a.control_type, a.currency_policy, a.account_subtype, a.reporting_tags::text, a.ifrs_element")
             ->orderBy('a.code')->orderBy('l.currency')
             ->selectRaw("l.account_id, l.currency, CASE WHEN a.control_type IN ('ar', 'ap') THEN l.contact_id END AS contact_id, "
-                .'a.code, a.name, a.account_type, a.control_type, a.currency_policy, a.account_subtype, '
+                .'a.code, a.name, a.account_type, a.control_type, a.currency_policy, a.account_subtype, a.reporting_tags::text AS tags, a.ifrs_element, '
                 .'SUM(CASE WHEN j.source_type IS DISTINCT FROM ? THEN l.amount_fc ELSE 0 END) AS fc, SUM(l.debit - l.credit) AS base', [self::SOURCE])
             ->toBase()->get();
 
@@ -56,7 +56,9 @@ final class FxRevaluationCalculator
         $quotes = [];
         foreach ($rows as $r) {
             $control = ControlType::from((string) $r->control_type);
-            if (! MonetaryAccounts::isRevalued((string) $r->account_type, $control, CurrencyPolicy::from((string) $r->currency_policy), $r->account_subtype === null ? null : (string) $r->account_subtype)) {
+            $tags = json_decode((string) $r->tags, true);
+            $tags = is_array($tags) ? array_values(array_filter($tags, 'is_string')) : [];
+            if (! MonetaryAccounts::isRevalued((string) $r->account_type, $control, CurrencyPolicy::from((string) $r->currency_policy), $r->account_subtype === null ? null : (string) $r->account_subtype, $tags, $r->ifrs_element === null ? null : (string) $r->ifrs_element)) {
                 continue;
             }
             $fc = (int) $r->fc;

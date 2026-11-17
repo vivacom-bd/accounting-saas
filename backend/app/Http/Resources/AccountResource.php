@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Domain\Fx\MonetaryAccounts;
 use App\Domain\Reports\BalanceSheetClassifier;
 use App\Http\Support\Json;
 use App\Models\Ledger\Account;
@@ -17,6 +18,17 @@ final class AccountResource extends JsonResource
     {
         foreach (['current', 'non_current'] as $class) {
             if (in_array('bs:'.$class, $this->resource->reporting_tags, true)) {
+                return $class;
+            }
+        }
+
+        return null;
+    }
+
+    private function monetaryTag(): ?string
+    {
+        foreach (['monetary', 'non_monetary'] as $class) {
+            if (in_array('fx:'.$class, $this->resource->reporting_tags, true)) {
                 return $class;
             }
         }
@@ -49,6 +61,12 @@ final class AccountResource extends JsonResource
             'balance_sheet_class' => $this->balanceSheetTag(),
             /** What the rules say without a tag: current, non_current, or null (unknown, shown as current). Assets and liabilities only. */
             'balance_sheet_default' => BalanceSheetClassifier::classify($this->account_type, $this->account_subtype, $this->control_type->value, [], $this->ifrs_element)?->value,
+            /** The company's own answer for an asset or liability (the `fx:*` tag): monetary, non_monetary, or null when the account follows the default. */
+            'monetary_class' => $this->monetaryTag(),
+            /** Whether the default rules treat the account as a monetary item, revalued at the closing rate (IAS 21.16); null for equity, income and expense. */
+            'monetary_default' => in_array($this->account_type, ['asset', 'liability'], true)
+                ? MonetaryAccounts::isMonetary($this->account_type, $this->control_type, $this->account_subtype, [], $this->ifrs_element)
+                : null,
             'version' => $this->lock_version,
             /** @var array<string, string> dimension id → required|optional|forbidden */
             'dimension_rules' => $this->whenLoaded('dimensionRules', fn () => $this->dimensionRules

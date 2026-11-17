@@ -8,9 +8,11 @@ use App\Actions\Ledger\ManageAccount;
 use App\Actions\Ledger\SetAccountBalanceSheetClass;
 use App\Actions\Ledger\SetAccountDimensionRules;
 use App\Actions\Ledger\SetAccountHidden;
+use App\Actions\Ledger\SetAccountMonetaryClass;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ledger\AccountBalanceSheetClassRequest;
 use App\Http\Requests\Ledger\AccountDimensionRulesRequest;
+use App\Http\Requests\Ledger\AccountMonetaryClassRequest;
 use App\Http\Requests\Ledger\AccountRequest;
 use App\Http\Requests\Ledger\AccountVisibilityRequest;
 use App\Http\Requests\Ledger\ListAccountsRequest;
@@ -79,6 +81,15 @@ final class AccountController extends Controller
     /** Sets or clears the balance sheet class (current or non-current) of an asset or liability account; presentation only. */
     #[Authorize('update', 'account')]
     public function setBalanceSheetClass(AccountBalanceSheetClassRequest $request, Company $company, Account $account, SetAccountBalanceSheetClass $action, ShowAccount $show): AccountResource
+    {
+        $action->handle(RequestActor::user($request, $company->id), $account->id, $request->version(), $request->class());
+
+        return new AccountResource($show($account->id));
+    }
+
+    /** Says whether an asset or liability holds a monetary item, revalued at the closing rate (IAS 21.16); null returns to the default. */
+    #[Authorize('update', 'account')]
+    public function setMonetaryClass(AccountMonetaryClassRequest $request, Company $company, Account $account, SetAccountMonetaryClass $action, ShowAccount $show): AccountResource
     {
         $action->handle(RequestActor::user($request, $company->id), $account->id, $request->version(), $request->class());
 

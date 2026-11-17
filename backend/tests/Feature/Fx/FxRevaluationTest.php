@@ -130,6 +130,32 @@ it('leaves non-monetary accounts alone (IAS 21): fixed assets keep their histori
         ->and(S::base($f, '1500'))->toBe(110000);
 });
 
+it('revalues a long-term loan tagged monetary in a non-current subtype, and leaves an untagged non-current asset alone (plan 3c.29c)', function () {
+    $f = $this->f;
+    foreach ([['1800', 'Loan to subsidiary', ['bs:non_current', 'fx:monetary']], ['1810', 'Long-term deposit for land', []]] as [$code, $name, $tags]) {
+        $f->accounts[$code] = (string) Str::uuid7();
+        DB::table('accounts')->insert([
+            'id' => $f->accounts[$code], 'tenant_id' => $f->tenantId, 'company_id' => $f->companyId, 'code' => $code, 'name' => $name,
+            'account_type' => 'asset', 'normal_balance' => 'debit', 'control_type' => 'none', 'currency_policy' => 'any',
+            'account_subtype' => 'Non-current Assets', 'reporting_tags' => json_encode($tags),
+        ]);
+    }
+    // EUR 1,000.00 lent to a subsidiary and EUR 500.00 paid towards land, both at 1.10.
+    S::post($f, JournalType::Bank, [S::fc($f, '1200', 'EUR', 150000, '1.10000000', 165000), new DraftLine($f->account('4000'), credit: 165000)], '2026-03-02');
+    S::post($f, JournalType::Bank, [
+        S::fc($f, '1800', 'EUR', 100000, '1.10000000', 110000), S::fc($f, '1810', 'EUR', 50000, '1.10000000', 55000),
+        S::fc($f, '1200', 'EUR', -150000, '1.10000000', -165000),
+    ], '2026-03-03');
+    S::rate($f, 'EUR', '2026-03-31', '1.20000000');
+
+    $run = ($this->run)();
+
+    // The loan moves 110,000 -> 120,000 (IAS 21.23); the deposit, a non-monetary item, keeps its historical rate.
+    expect($run->total_unrealised)->toBe(10000)
+        ->and(array_column(S::lines($f, (string) $run->journal_id), 'account'))->toBe(['1800', '7900'])
+        ->and(S::base($f, '1810'))->toBe(55000);
+});
+
 it('records a run with nothing to adjust and then refuses a second run for the period', function () {
     $f = $this->f;
     S::post($f, JournalType::Bank, [S::fc($f, '1200', 'EUR', 100000, '1.10000000', 110000), new DraftLine($f->account('4000'), credit: 110000)], '2026-03-10');
