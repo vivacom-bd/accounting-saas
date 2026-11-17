@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\PlatformMaintenance;
 use App\Notifications\Billing\PaymentFailed;
 use App\Notifications\Billing\PaymentReminder;
 use App\Notifications\Billing\TrialEnding;
+use App\Support\Ops\MaintenanceState;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -301,11 +303,11 @@ it('keeps answering the webhook during platform maintenance', function (): void 
         ['key' => 'maintenance'],
         ['value' => json_encode(['enabled' => true, 'message' => 'Upgrading', 'ends_at' => null]), 'updated_at' => now()],
     );
-    app(\App\Support\Ops\MaintenanceState::class)->forget();
+    app(MaintenanceState::class)->forget();
     stripeTenant('active', 'active');
 
     $request = Request::create('/api/stripe/webhook', 'POST');
-    $response = app(\App\Http\Middleware\PlatformMaintenance::class)->handle($request, fn () => response('through'));
+    $response = app(PlatformMaintenance::class)->handle($request, fn () => response('through'));
     expect($response->getContent())->toBe('through');
 
     stripeSend(stripeEvent('invoice_paid'))->assertOk();
