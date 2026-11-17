@@ -96,7 +96,9 @@ return new class extends Migration
         $db->statement("REVOKE ALL ON {$admin}, admin_audit_events_id_seq FROM PUBLIC, ledgerly_app, ledgerly_report");
         $db->statement("GRANT SELECT, INSERT, UPDATE, DELETE ON {$admin} TO ledgerly_platform");
         $db->statement('GRANT USAGE, SELECT ON admin_audit_events_id_seq TO ledgerly_platform');
-        $db->statement('GRANT SELECT ON tenants, users, tenant_users, failed_jobs TO ledgerly_platform');
+        $db->statement('GRANT SELECT ON tenants, tenant_users, failed_jobs TO ledgerly_platform');
+        // Never secrets: no password, remember token, 2FA secret or recovery codes, signing PIN hash.
+        $db->statement('GRANT SELECT (id, name, email, email_verified_at, two_factor_confirmed_at, signing_pin_set_at, signing_locked_until, locale, last_login_at, created_at, updated_at) ON users TO ledgerly_platform');
         $db->statement('GRANT UPDATE (lifecycle, lifecycle_since, delinquent_since, trial_ends_at, legal_hold, archive_until, country) ON tenants TO ledgerly_platform');
 
         SqlFile::run($db, 'admin_audit_guard.sql');

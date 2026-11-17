@@ -54,3 +54,11 @@ it('lets the platform role update only lifecycle columns of tenants', function (
     expect($platform->table('tenants')->where('id', $id)->update(['lifecycle' => 'suspended', 'country' => 'KE', 'lifecycle_since' => now(), 'delinquent_since' => now()]))->toBe(1)
         ->and(adminSqlState(fn () => $platform->table('tenants')->where('id', $id)->update(['name' => 'hacked'])))->toBe('42501');
 });
+
+it('lets the platform role read people but never their secrets', function () {
+    $platform = DB::connection('pgsql_platform');
+    expect(adminSqlState(fn () => $platform->select('SELECT id, name, email, last_login_at FROM users')))->toBeNull();
+    foreach (['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'signing_pin_hash'] as $column) {
+        expect(adminSqlState(fn () => $platform->select("SELECT {$column} FROM users")))->toBe('42501');
+    }
+});
