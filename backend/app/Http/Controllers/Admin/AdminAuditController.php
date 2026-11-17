@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Admin\AdminAuditEventResource;
 use App\Models\Admin\AdminAuditEvent;
 use App\Queries\Admin\ListAdminAudit;
 use App\Queries\Admin\VerifyAdminAuditChain;
@@ -26,7 +27,7 @@ final class AdminAuditController extends Controller
         $page = $audit($request, $filters);
 
         return response()->json([
-            'data' => $page->items->map(fn ($e): array => self::resource($e instanceof AdminAuditEvent ? $e : throw new \LogicException))->all(),
+            'data' => $page->items->map(fn ($e): array => AdminAuditEventResource::make($e instanceof AdminAuditEvent ? $e : throw new \LogicException))->all(),
             'meta' => ['next_cursor' => $page->nextCursor, 'prev_cursor' => $page->prevCursor, 'limit' => $page->limit],
         ]);
     }
@@ -36,25 +37,5 @@ final class AdminAuditController extends Controller
         $report = $verify();
 
         return response()->json(['data' => ['intact' => $report['brokenAtId'] === null, 'events' => $report['events'], 'broken_id' => $report['brokenAtId']]]);
-    }
-
-    /** @return array<string, mixed> */
-    private static function resource(AdminAuditEvent $e): array
-    {
-        return [
-            'id' => $e->id,
-            'admin_id' => $e->admin_id,
-            'action' => $e->action,
-            'tenant_id' => $e->tenant_id,
-            'subject_type' => $e->subject_type,
-            'subject_id' => $e->subject_id,
-            'before' => $e->before,
-            'after' => $e->after,
-            'reason' => $e->reason,
-            'ip' => $e->ip,
-            'user_agent' => $e->user_agent,
-            'request_id' => $e->request_id,
-            'occurred_at' => $e->occurred_at->format('c'),
-        ];
     }
 }

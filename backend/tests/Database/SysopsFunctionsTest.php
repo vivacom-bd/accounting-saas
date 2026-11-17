@@ -32,9 +32,10 @@ it('defines each function as SECURITY DEFINER, owned by sysops, with a fixed sea
                has_function_privilege('ledgerly_platform', p.oid, 'EXECUTE') AS platform_can,
                has_function_privilege('ledgerly_app', p.oid, 'EXECUTE') AS app_can
         FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-        WHERE n.nspname = 'sysops' ORDER BY p.proname
+        WHERE n.nspname = 'sysops' AND p.proname NOT LIKE 'admin\_%' ORDER BY p.proname
     SQL);
 
+    // The platform-only admin_* functions are covered by AdminSysopsTest.
     expect(array_column($functions, 'name'))->toBe(['claim_outbox_batch', 'einvoice_submissions_due', 'invitation_by_token_hash', 'invoice_link_by_token_hash', 'kpi_dirty_tenants', 'mark_kpi_dirty', 'practice_overview', 'purge_idempotency_keys', 'store_kpi_snapshots', 'tenants_due_for', 'webhook_deliveries_due']);
     foreach ($functions as $fn) {
         expect($fn->definer)->toBeTrue()
