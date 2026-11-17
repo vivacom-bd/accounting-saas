@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Actions\Admin\Staff\DeactivateStaff;
 use App\Actions\Admin\Staff\ResetStaffTwoFactor;
+use App\Actions\Admin\Staff\UpdateStaff;
 use App\Domain\Admin\AdminRole;
 use App\Models\Admin\AdminUser;
 use App\Notifications\AdminInvitation;
@@ -17,6 +18,21 @@ use PragmaRX\Google2FA\Google2FA;
 beforeEach(function (): void {
     $this->withHeaders(['Accept' => 'application/json']);
 });
+
+/** @return array<string, mixed> the admin session store's data, to resume that sign-in later */
+function adminSessionData(): array
+{
+    return app('session')->driver('admin')->all();
+}
+
+/** Resumes a sign-in captured earlier, as a browser holding that session's cookie would. */
+function restoreAdminSession(array $data): void
+{
+    app('auth')->forgetGuards();
+    $store = app('session')->driver('admin');
+    $store->flush();
+    $store->replace($data);
+}
 
 /** @return list<string> */
 function staffAuditActions(): array
@@ -262,4 +278,69 @@ it('verify_reports_intact', function (): void {
     $r = $this->postJson('/api/admin/audit/verify')->assertOk();
 
     expect($r->json('data.intact'))->toBeTrue()->and($r->json('data.events'))->toBeGreaterThanOrEqual(1)->and($r->json('data.broken_id'))->toBeNull();
+});
+
+it('an_older_session_stays_dead_after_a_two_factor_reset_and_a_new_sign_in', function (): void {
+    [$target, $secret] = $this->makeAdmin(AdminRole::Support);
+    $this->signInAdmin($target, $secret);
+    $this->getJson('/api/admin/session')->assertOk();
+    $olderSession = adminSessionData();
+
+    [$owner] = $this->makeAdmin(AdminRole::Owner);
+    app(ResetStaffTwoFactor::class)->handle(new AdminActor($owner->id, AdminRole::Owner), $target->id);
+
+    // The person re-enrols and signs in anew (a second session).
+    $newSecret = (new Google2FA)->generateSecretKey();
+    AdminUser::query()->whereKey($target->id)->first()->forceFill(['two_factor_secret' => $newSecret, 'two_factor_confirmed_at' => now(), 'two_factor_recovery_codes' => []])->save();
+    app('auth')->forgetGuards();
+    $this->flushSession();
+    $this->signInAdmin(AdminUser::query()->find($target->id), $newSecret);
+    $this->getJson('/api/admin/session')->assertOk();
+
+    // The first session is still dead.
+    app('auth')->forgetGuards();
+    restoreAdminSession($olderSession);
+    $this->getJson('/api/admin/session')->assertStatus(401);
+});
+
+it('a_role_change_ends_existing_sessions_but_other_sessions_are_unaffected', function (): void {
+    [$target, $secret] = $this->makeAdmin(AdminRole::Support);
+    [$bystander, $bystanderSecret] = $this->makeAdmin(AdminRole::Finance);
+    $this->signInAdmin($bystander, $bystanderSecret);
+    $bystanderSession = adminSessionData();
+    $this->signInAdmin($target, $secret);
+    $targetSession = adminSessionData();
+    $this->getJson('/api/admin/session')->assertOk();
+
+    [$owner] = $this->makeAdmin(AdminRole::Owner);
+    $actor = new AdminActor($owner->id, AdminRole::Owner);
+    app(UpdateStaff::class)->handle($actor, $target->id, ['name' => 'Only a rename']);
+    app('auth')->forgetGuards();
+    restoreAdminSession($targetSession);
+    $this->getJson('/api/admin/session')->assertOk();
+
+    app(UpdateStaff::class)->handle($actor, $target->id, ['role' => AdminRole::Engineer]);
+    app('auth')->forgetGuards();
+    restoreAdminSession($targetSession);
+    $this->getJson('/api/admin/session')->assertStatus(401);
+
+    app('auth')->forgetGuards();
+    restoreAdminSession($bystanderSession);
+    $this->getJson('/api/admin/session')->assertOk();
+});
+
+it('deactivation_and_password_set_bump_the_auth_epoch', function (): void {
+    $this->asAdmin(AdminRole::Owner);
+    [$id, $token] = inviteStaff($this);
+    $epoch = fn (): int => (int) DB::connection('pgsql_platform')->table('admin_users')->where('id', $id)->value('auth_epoch');
+    $start = $epoch();
+
+    $this->postJson('/api/admin/auth/logout');
+    $this->postJson('/api/admin/auth/set-password', ['token' => $token, 'password' => 'Brand-New-Pass-42'])->assertOk();
+    expect($epoch())->toBe($start + 1);
+
+    [$owner, $secret] = $this->makeAdmin(AdminRole::Owner);
+    $this->signInAdmin($owner, $secret);
+    $this->postJson("/api/admin/staff/{$id}/deactivate")->assertOk();
+    expect($epoch())->toBe($start + 2);
 });

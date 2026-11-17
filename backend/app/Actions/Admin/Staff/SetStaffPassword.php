@@ -27,7 +27,7 @@ final class SetStaffPassword
                 throw $invalid;
             }
 
-            $admin->forceFill(['password' => $password, 'password_set_token_hash' => null, 'password_set_expires_at' => null])->save();
+            $admin->forceFill(['password' => $password, 'auth_epoch' => $admin->auth_epoch + 1, 'password_set_token_hash' => null, 'password_set_expires_at' => null])->save();
 
             $this->audit->record(new AdminActor($admin->id, $admin->role, $context->ip, $context->userAgent, $context->requestId),
                 'staff.password_set', null, 'admin_user', $admin->id);

@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Builder;
  * @property DateTimeImmutable|null $two_factor_confirmed_at
  * @property list<string> $ip_allowlist
  * @property bool $is_active
+ * @property int $auth_epoch bumped to end every older session of this staff member
  * @property string|null $password_set_token_hash
  * @property DateTimeImmutable|null $password_set_expires_at
  * @property DateTimeImmutable|null $last_login_at
@@ -72,6 +73,7 @@ class AdminUser extends BaseModel implements AuthenticatableContract
             'two_factor_confirmed_at' => 'immutable_datetime',
             'ip_allowlist' => PgInetArray::class,
             'is_active' => 'boolean',
+            'auth_epoch' => 'integer',
             'password_set_expires_at' => 'immutable_datetime',
             'last_login_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',

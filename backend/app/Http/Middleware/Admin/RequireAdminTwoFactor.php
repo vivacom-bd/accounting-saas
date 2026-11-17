@@ -29,6 +29,11 @@ final class RequireAdminTwoFactor
             AdminSession::end($request);
 
             throw DomainRuleViolation::single('unauthenticated', 'Sign in to continue.');
+        } elseif ($request->session()->get(AdminSession::EPOCH) !== $admin->auth_epoch) {
+            // Credentials or role changed since this session signed in (or it predates the epoch): end it.
+            AdminSession::end($request);
+
+            throw DomainRuleViolation::single('unauthenticated', 'Sign in to continue.');
         } elseif ($admin->two_factor_confirmed_at === null) {
             AdminSession::end($request);
 

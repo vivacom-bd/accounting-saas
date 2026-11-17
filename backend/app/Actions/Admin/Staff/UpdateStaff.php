@@ -31,6 +31,9 @@ final class UpdateStaff
             }
 
             $before = self::snapshot($admin);
+            if (isset($changes['role']) && $changes['role'] !== $admin->role) {
+                $changes['auth_epoch'] = $admin->auth_epoch + 1;
+            }
             $admin->forceFill($changes)->save();
             $after = self::snapshot($admin);
 

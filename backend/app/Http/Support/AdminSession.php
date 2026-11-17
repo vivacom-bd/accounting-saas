@@ -26,6 +26,9 @@ final class AdminSession
 
     public const string SEEN_AT = 'admin.seen_at';
 
+    /** The staff member's auth_epoch when this session signed in; a later bump ends the session. */
+    public const string EPOCH = 'admin.epoch';
+
     /** Password accepted: remember who is half-way through signing in, on a fresh session id. */
     public static function begin(Request $request, AdminUser $admin, Clock $clock): void
     {
@@ -70,6 +73,7 @@ final class AdminSession
         $now = $clock->now()->getTimestamp();
         $session->put(self::LOGIN_AT, $now);
         $session->put(self::SEEN_AT, $now);
+        $session->put(self::EPOCH, $admin->auth_epoch);
     }
 
     /** Sign out and drop everything the session held, including the CSRF token. */

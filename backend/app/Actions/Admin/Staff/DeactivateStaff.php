@@ -26,7 +26,7 @@ final class DeactivateStaff
             }
 
             StaffGuards::assertNotLastOwner($admin);
-            $admin->forceFill(['is_active' => false, 'password_set_token_hash' => null, 'password_set_expires_at' => null])->save();
+            $admin->forceFill(['is_active' => false, 'auth_epoch' => $admin->auth_epoch + 1, 'password_set_token_hash' => null, 'password_set_expires_at' => null])->save();
 
             $this->audit->record($actor, 'staff.deactivated', null, 'admin_user', $admin->id, ['is_active' => true], ['is_active' => false]);
 

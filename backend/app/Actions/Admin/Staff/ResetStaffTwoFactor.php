@@ -21,7 +21,7 @@ final class ResetStaffTwoFactor
     {
         return AdminTransaction::run(function () use ($actor, $id): AdminUser {
             $admin = StaffGuards::lock($id);
-            $admin->forceFill(['two_factor_secret' => null, 'two_factor_recovery_codes' => null, 'two_factor_confirmed_at' => null])->save();
+            $admin->forceFill(['two_factor_secret' => null, 'two_factor_recovery_codes' => null, 'two_factor_confirmed_at' => null, 'auth_epoch' => $admin->auth_epoch + 1])->save();
 
             $this->audit->record($actor, 'staff.two_factor_reset', null, 'admin_user', $admin->id);
 
