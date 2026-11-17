@@ -18,7 +18,9 @@ use Illuminate\Support\Carbon;
  * @property string $ic_class
  * @property int $side_a
  * @property int $side_b
- * @property int $difference
+ * @property int $difference the intercompany difference, to the intercompany differences account
+ * @property int $to_reserve the FX part of a dividend, to the translation reserve
+ * @property int $recognised_before a balance or loan difference earlier runs took to profit or loss
  * @property int $matched
  * @property string|null $cause fx|timing|missing_counterpart
  * @property bool $exceeds_tolerance
@@ -33,7 +35,7 @@ class ConsolidationIcMatch extends BaseModel
     protected function casts(): array
     {
         return [
-            'side_a' => 'integer', 'side_b' => 'integer', 'difference' => 'integer', 'matched' => 'integer',
+            'side_a' => 'integer', 'side_b' => 'integer', 'difference' => 'integer', 'to_reserve' => 'integer', 'recognised_before' => 'integer', 'matched' => 'integer',
             'exceeds_tolerance' => 'boolean', 'detail' => 'array', 'accepted_at' => 'datetime',
         ];
     }

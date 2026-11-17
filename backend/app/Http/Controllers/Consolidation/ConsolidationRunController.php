@@ -75,7 +75,7 @@ final class ConsolidationRunController extends Controller
         return new ConsolidationIcReportResource($run);
     }
 
-    /** A second person accepts an intercompany difference above the group's tolerance, with a reason; it is not eliminated. */
+    /** A second person accepts an intercompany difference above the group's tolerance, with a reason; the pair is eliminated in full and the difference sits in the intercompany differences account. */
     #[Authorize('approve', 'run')]
     public function acceptDifference(ReasonRequest $request, ConsolidationRun $run, string $match, ManageConsolidationRun $action): ConsolidationIcReportResource
     {

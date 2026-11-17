@@ -18,8 +18,10 @@ use Illuminate\Support\Facades\Schema;
  *    external). `net_investment` designates a loan as part of the net investment in a foreign operation (IAS 21.15, .32).
  *  - `consolidation_ic_contacts`: a member company's contact that stands for another member of the group.
  *  - `consolidation_ic_matches`: the run's matching report, one row per pair of members and class, in the presentation
- *    currency after translation. It freezes with the run; the only change is a second person accepting a difference above
- *    the group's tolerance, once, with a reason (never the person who computed the run).
+ *    currency after translation. `difference` is the intercompany difference (side A + side B, less the FX part of a
+ *    dividend, `to_reserve`, which goes to the translation reserve); `recognised_before` is the difference of a balance or
+ *    loan already taken to profit or loss by earlier runs. It freezes with the run; the only change is a second person
+ *    accepting a difference above the group's tolerance, once, with a reason (never the person who computed the run).
  */
 return new class extends Migration
 {
@@ -71,6 +73,8 @@ return new class extends Migration
             $table->bigInteger('side_a');
             $table->bigInteger('side_b');
             $table->bigInteger('difference');
+            $table->bigInteger('to_reserve')->default(0);
+            $table->bigInteger('recognised_before')->default(0);
             $table->bigInteger('matched');
             $table->string('cause', 24)->nullable();
             $table->boolean('exceeds_tolerance');
@@ -86,7 +90,7 @@ return new class extends Migration
             'consolidation_ic_matches_class_check' => "ic_class IN ('balance', 'loan', 'income_expense', 'dividend')",
             'consolidation_ic_matches_cause_check' => "cause IS NULL OR cause IN ('fx', 'timing', 'missing_counterpart')",
             'consolidation_ic_matches_pair_check' => 'member_a_id < member_b_id',
-            'consolidation_ic_matches_figures_check' => 'difference = side_a + side_b AND matched >= 0',
+            'consolidation_ic_matches_figures_check' => 'difference + to_reserve = side_a + side_b AND matched >= 0',
             'consolidation_ic_matches_accepted_check' => '(accepted_by IS NULL) = (accepted_at IS NULL) AND (accepted_by IS NULL OR (exceeds_tolerance AND length(trim(reason)) > 0))',
         ] as $name => $expression) {
             DB::statement("ALTER TABLE consolidation_ic_matches ADD CONSTRAINT {$name} CHECK ({$expression})");

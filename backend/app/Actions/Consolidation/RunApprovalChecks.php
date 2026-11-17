@@ -50,10 +50,10 @@ final class RunApprovalChecks
             }
         }
         foreach (ConsolidationIcMatch::query()->where('run_id', $run->id)->get() as $m) {
-            $stored["ic|{$m->member_a_id}|{$m->member_b_id}|{$m->ic_class}"] = "{$m->side_a}|{$m->side_b}|{$m->exceeds_tolerance}";
+            $stored["ic|{$m->member_a_id}|{$m->member_b_id}|{$m->ic_class}"] = "{$m->side_a}|{$m->side_b}|{$m->difference}|{$m->recognised_before}|{$m->exceeds_tolerance}";
         }
         foreach ($result->matches as $m) {
-            $fresh["ic|{$m['member_a']}|{$m['member_b']}|{$m['class']}"] = "{$m['side_a']}|{$m['side_b']}|{$m['exceeds_tolerance']}";
+            $fresh["ic|{$m['member_a']}|{$m['member_b']}|{$m['class']}"] = "{$m['side_a']}|{$m['side_b']}|{$m['difference']}|{$m['recognised_before']}|{$m['exceeds_tolerance']}";
         }
         ksort($stored);
         ksort($fresh);

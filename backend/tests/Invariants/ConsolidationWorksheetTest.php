@@ -90,18 +90,22 @@ it('balances every translated column and the consolidated worksheet on random le
 /*
  * Plan 3c.29c: the same over random intragroup trade. Members sell to each other, the buyer sometimes booking a different
  * amount (or nothing), in a random transaction currency; some members carry an exchange difference on a net-investment
- * loan. Whatever the figures: every elimination entry balances on its own, eliminates exactly the matched amount from each
- * side, never more than either side holds, and the consolidated worksheet still sums to zero.
+ * loan. Whatever the figures, run after run: every entry balances on its own; both sides of every pair eliminate in full;
+ * the difference of a balance takes only its movement to profit or loss, so what the intercompany differences account has
+ * taken over the runs equals the difference standing now; and the consolidated worksheet still sums to zero.
  */
-it('keeps the worksheet balanced and every elimination balanced and bounded on random intragroup trade', function (int $seed): void {
+it('keeps the worksheet balanced, eliminates both sides in full and takes only the movement of a balance difference to profit or loss, on random intragroup trade', function (int $seed): void {
     mt_srand($seed);
     $accounts = [
         'cash' => ['type' => 'asset', 'role' => null], 'icr' => ['type' => 'asset', 'role' => null], 'icp' => ['type' => 'liability', 'role' => null],
         're' => ['type' => 'equity', 'role' => 'retained_earnings'], 'tr' => ['type' => 'equity', 'role' => 'translation_reserve'],
         'icrev' => ['type' => 'income', 'role' => null], 'icexp' => ['type' => 'expense', 'role' => null], 'fx' => ['type' => 'income', 'role' => null],
+        'icd' => ['type' => 'expense', 'role' => 'ic_difference'],
     ];
     $rate = fn (): string => sprintf('%d.%08d', mt_rand(0, 3), mt_rand(1, 99999999));
     $currencies = [['USD', 2], ['KES', 2], ['JPY', 0], ['KWD', 3]];
+    $prior = [];
+    $taken = [];
     $members = [];
     for ($i = 0; $i < 4; $i++) {
         [$ccy, $scale] = $i === 0 ? ['USD', 2] : $currencies[mt_rand(0, 3)];
@@ -159,23 +163,47 @@ it('keeps the worksheet balanced and every elimination balanced and bounded on r
             $members[$id]['bs'] = $bs;
         }
 
-        $result = (new ConsolidationCalculator)->run(new RunInput('USD', 2, $from->format('Y-m-d'), $to->format('Y-m-d'), $accounts, $inputs, [], mt_rand(0, 1000)));
+        $result = (new ConsolidationCalculator)->run(new RunInput('USD', 2, $from->format('Y-m-d'), $to->format('Y-m-d'), $accounts, $inputs, [], mt_rand(0, 1000), $prior));
+        $why = "seed {$seed} run {$run}";
 
-        expect($result->isBalanced())->toBeTrue("seed {$seed} run {$run}: worksheet does not balance");
+        expect($result->isBalanced())->toBeTrue("{$why}: worksheet does not balance");
         foreach ($result->proposed as $p) {
-            expect(array_sum(array_column($p['lines'], 'net')))->toBe(0, "seed {$seed} run {$run}: a {$p['kind']} entry does not balance");
+            expect(array_sum(array_column($p['lines'], 'net')))->toBe(0, "{$why}: a {$p['kind']} entry does not balance");
         }
-        $eliminations = array_values(array_filter($result->proposed, fn (array $p): bool => $p['kind'] === 'elimination'));
-        $withMatch = array_values(array_filter($result->matches, fn (array $m): bool => $m['matched'] > 0));
-        expect(count($eliminations))->toBe(count($withMatch));
-        foreach ($withMatch as $i => $m) {
-            expect($m['difference'])->toBe($m['side_a'] + $m['side_b'])
-                ->and($m['matched'])->toBeLessThanOrEqual(min(abs($m['side_a']), abs($m['side_b'])));
-            foreach (['a' => $m['side_a'], 'b' => $m['side_b']] as $side => $amount) {
-                $taken = array_sum(array_map(fn (array $l): int => $l['net'], array_filter($eliminations[$i]['lines'], fn (array $l): bool => $l['member_id'] === $m["member_{$side}"])));
-                expect($taken)->toBe(-($amount <=> 0) * $m['matched'], "seed {$seed} run {$run}: side {$side} eliminated {$taken}, matched {$m['matched']}");
+        // Both sides in full: the eliminations take out of each member exactly what it holds against the others.
+        $held = [];
+        $icd = 0;
+        $re = 0;
+        $nextPrior = [];
+        foreach ($result->matches as $m) {
+            $held[$m['member_a']] = ($held[$m['member_a']] ?? 0) + $m['side_a'];
+            $held[$m['member_b']] = ($held[$m['member_b']] ?? 0) + $m['side_b'];
+            $key = "{$m['member_a']}|{$m['member_b']}|{$m['class']}";
+            expect($m['difference'] + $m['to_reserve'])->toBe($m['side_a'] + $m['side_b'], "{$why}: {$key}");
+            $icd += $m['difference'] - $m['recognised_before'];
+            $re += $m['recognised_before'];
+            if ($m['class'] === 'balance') {
+                expect($m['recognised_before'])->toBe($prior[$key] ?? 0, "{$why}: {$key} recognised before");
+                $taken[$key] = ($taken[$key] ?? 0) + $m['difference'] - $m['recognised_before'];
+                expect($taken[$key])->toBe($m['difference'], "{$why}: {$key} taken to profit or loss over the runs");
+                $nextPrior[$key] = $m['difference'];
             }
         }
+        foreach ($held as $member => $amount) {
+            $out = 0;
+            foreach ($result->proposed as $p) {
+                if ($p['kind'] === 'elimination') {
+                    foreach ($p['lines'] as $l) {
+                        $out += $l['member_id'] === $member ? $l['net'] : 0;
+                    }
+                }
+            }
+            expect($out)->toBe(-$amount, "{$why}: member {$member} not eliminated in full");
+        }
+        $groupLines = fn (string $account): int => array_sum(array_map(fn (array $c): int => $c['source'] === 'elimination' && $c['account_id'] === $account ? $c['net'] : 0, $result->cells));
+        expect($groupLines('icd'))->toBe($icd, "{$why}: intercompany differences")
+            ->and($groupLines('re'))->toBe($re, "{$why}: differences recognised before, in retained earnings");
+        $prior = $nextPrior;
 
         foreach ($ids as $id) {
             $members[$id]['opening'] = $result->states[$id];

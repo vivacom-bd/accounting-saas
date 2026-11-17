@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Consolidation;
 
 use App\Domain\Consolidation\GroupRoles;
+use App\Domain\Consolidation\Intercompany;
 use App\Domain\Consolidation\MemberInput;
 use App\Domain\Consolidation\Rounding;
 use App\Domain\Consolidation\RunInput;
@@ -16,6 +17,7 @@ use App\Models\Consolidation\ConsolidationEntryLine;
 use App\Models\Consolidation\ConsolidationGroup;
 use App\Models\Consolidation\ConsolidationGroupAccount;
 use App\Models\Consolidation\ConsolidationIcContact;
+use App\Models\Consolidation\ConsolidationIcMatch;
 use App\Models\Consolidation\ConsolidationMember;
 use App\Models\Consolidation\ConsolidationMemberOpening;
 use App\Models\Consolidation\ConsolidationRateOverride;
@@ -229,7 +231,15 @@ final class RunInputBuilder
             ];
         }
 
-        return new PreparedRun(new RunInput($pres, $groupScale, $from, $to, $defs, $members, $lines, $group->ic_tolerance), $meta, $warnings);
+        // The balance and loan differences the previous approved run recognised (D16.7, owner's answer 2026-11-17).
+        $icPrior = [];
+        if ($prior !== null) {
+            foreach (ConsolidationIcMatch::query()->where('run_id', $prior->id)->whereIn('ic_class', Intercompany::POSITIONS)->get() as $m) {
+                $icPrior["{$m->member_a_id}|{$m->member_b_id}|{$m->ic_class}"] = $m->difference;
+            }
+        }
+
+        return new PreparedRun(new RunInput($pres, $groupScale, $from, $to, $defs, $members, $lines, $group->ic_tolerance, $icPrior), $meta, $warnings);
     }
 
     /**
@@ -251,15 +261,16 @@ final class RunInputBuilder
             return [[], []];
         }
         $contacts = ConsolidationIcContact::query()->where('member_id', $memberId)->pluck('counterparty_member_id', 'contact_id')->all();
-        $byType = ['bs' => [], 'pl' => [], 'eq' => []];
+        // Equity and dividend income by day: a dividend's FX part is measured against the rate of its own day.
+        $byType = ['bs' => [], 'pl' => [], 'day' => []];
         foreach ($maps as $map) {
             $type = $defs[$map->group_account_id]['type'] ?? 'asset';
-            $byType[$type === 'equity' ? 'eq' : (GroupRoles::isProfitAndLoss($type) ? 'pl' : 'bs')][] = $map->account_id;
+            $byType[$type === 'equity' || $map->ic_class === Intercompany::DIVIDEND ? 'day' : (GroupRoles::isProfitAndLoss($type) ? 'pl' : 'bs')][] = $map->account_id;
         }
         $rows = [
             ...($this->icLines)($company->id, $byType['bs'], null, $to),
             ...($this->icLines)($company->id, $byType['pl'], $windowFrom, $to),
-            ...($this->icLines)($company->id, $byType['eq'], $windowFrom, $to, true),
+            ...($this->icLines)($company->id, $byType['day'], $windowFrom, $to, true),
         ];
         $byAccount = [];
         $loans = [];
@@ -296,27 +307,69 @@ final class RunInputBuilder
             $ic[] = [...$slice, 'moves' => array_values($slice['moves'])];
         }
 
+        // Net-investment loans: every exchange difference over the window, unrealised (the revaluations and their
+        // reversals, against the unrealised FX account) and realised (the realised FX lines of the journals that settle
+        // or repay the loan), moves to the translation reserve (IAS 21.32, owner's answer 2026-11-17).
         $ni = [];
-        $moved = array_sum($this->icLines->revaluation($company->id, $loans, $windowFrom, $to));
-        if ($moved !== 0) {
-            $target = $this->unrealisedFxGroupAccount($memberId, $company->id, $moved < 0);
-            if ($target === null) {
-                $blockers[] = new Violation('net_investment_account_unmapped', "Company {$company->name}: the unrealised FX account in its settings has no group account, so the exchange difference on its net-investment loan cannot move to the translation reserve.");
-            } else {
-                $ni[] = ['account_id' => $target, 'net' => -$moved];
+        if ($loans !== []) {
+            $settings = $this->postingAccounts($company->id);
+            $moved = array_sum($this->icLines->revaluation($company->id, $loans, $windowFrom, $to));
+            if ($moved !== 0) {
+                $unrealised = $this->accountId($company->id, $moved < 0 ? [$settings['fx_unrealised_loss'] ?? null, $settings['fx_unrealised'] ?? null] : [$settings['fx_unrealised'] ?? null]);
+                $this->netInvestmentRow($ni, $memberId, $company, $unrealised, -$moved, $blockers);
+            }
+            $realisedAccounts = array_values(array_filter([
+                $this->accountId($company->id, [$settings['fx_realised'] ?? null]), $this->accountId($company->id, [$settings['fx_realised_loss'] ?? null]),
+            ], fn (?string $id): bool => $id !== null));
+            foreach ($this->icLines->settledAgainst($company->id, $loans, array_values(array_unique($realisedAccounts)), $windowFrom, $to) as $accountId => $net) {
+                $this->netInvestmentRow($ni, $memberId, $company, $accountId, $net, $blockers);
             }
         }
 
-        return [$ic, $ni];
+        $rows = [];
+        foreach ($ni as $group => $net) {
+            $rows[] = ['account_id' => (string) $group, 'net' => $net];
+        }
+
+        return [$ic, $rows];
     }
 
-    /** The group account of the company's unrealised FX account (its loss account for a loss, when it has one). */
-    private function unrealisedFxGroupAccount(string $memberId, string $companyId, bool $loss): ?string
+    /**
+     * Adds a profit or loss amount of a net-investment loan, on the group account its member account maps to.
+     *
+     * @param  array<string, int>  $ni  group account → net, accumulated
+     * @param  list<Violation>  $blockers
+     */
+    private function netInvestmentRow(array &$ni, string $memberId, Company $company, ?string $accountId, int $net, array &$blockers): void
+    {
+        if ($net === 0) {
+            return;
+        }
+        $group = $accountId === null ? null : ConsolidationAccountMap::query()->where('member_id', $memberId)->where('account_id', $accountId)->value('group_account_id');
+        if (! is_string($group)) {
+            $blockers[] = new Violation('net_investment_account_unmapped', "Company {$company->name}: the FX gain or loss account in its settings is missing or has no group account, so the exchange difference on its net-investment loan cannot move to the translation reserve.");
+
+            return;
+        }
+        $ni[$group] = ($ni[$group] ?? 0) + $net;
+    }
+
+    /** @return array<string, mixed> */
+    private function postingAccounts(string $companyId): array
     {
         $raw = CompanySettings::query()->where('company_id', $companyId)->first()?->getAttribute('posting_accounts');
-        /** @var array<string, mixed> $settings */
-        $settings = is_string($raw) ? (json_decode($raw, true) ?: []) : (is_array($raw) ? $raw : []);
-        $refs = $loss ? [$settings['fx_unrealised_loss'] ?? null, $settings['fx_unrealised'] ?? null] : [$settings['fx_unrealised'] ?? null];
+        $settings = is_string($raw) ? json_decode($raw, true) : $raw;
+
+        return is_array($settings) ? $settings : [];
+    }
+
+    /**
+     * The first of the references (an account code or id) that names an account of the company.
+     *
+     * @param  list<mixed>  $refs
+     */
+    private function accountId(string $companyId, array $refs): ?string
+    {
         foreach ($refs as $ref) {
             if (! is_string($ref) || $ref === '') {
                 continue;
@@ -326,9 +379,7 @@ final class RunInputBuilder
                 fn ($q2) => $q2->orWhere('id', $ref),
             ))->first();
             if ($account !== null) {
-                $group = ConsolidationAccountMap::query()->where('member_id', $memberId)->where('account_id', $account->id)->value('group_account_id');
-
-                return is_string($group) ? $group : null;
+                return $account->id;
             }
         }
 

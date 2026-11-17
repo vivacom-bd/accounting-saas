@@ -96,7 +96,7 @@ final class ManageConsolidationRun
                 $match = new ConsolidationIcMatch;
                 $match->forceFill([
                     'id' => $this->ids->next(), 'tenant_id' => $actor->tenantId, 'run_id' => $run->id, 'member_a_id' => $m['member_a'], 'member_b_id' => $m['member_b'],
-                    'ic_class' => $m['class'], 'side_a' => $m['side_a'], 'side_b' => $m['side_b'], 'difference' => $m['difference'], 'matched' => $m['matched'],
+                    'ic_class' => $m['class'], 'side_a' => $m['side_a'], 'side_b' => $m['side_b'], 'difference' => $m['difference'], 'to_reserve' => $m['to_reserve'], 'recognised_before' => $m['recognised_before'], 'matched' => $m['matched'],
                     'cause' => $m['cause'], 'exceeds_tolerance' => $m['exceeds_tolerance'], 'detail' => $m['detail'],
                 ])->save();
             }
@@ -170,7 +170,7 @@ final class ManageConsolidationRun
 
     /**
      * A second person accepts an intercompany difference above the group's tolerance, with a reason, so it no longer blocks
-     * approval (D16.7). The difference itself is not eliminated: it stays in the consolidated figures.
+     * approval (D16.7). The pair is eliminated in full either way; the difference is in the group's intercompany differences account.
      */
     public function acceptDifference(Actor $actor, string $runId, string $matchId, string $reason): ConsolidationIcMatch
     {

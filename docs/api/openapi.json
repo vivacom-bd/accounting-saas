@@ -49011,6 +49011,39 @@
                     },
                     "difference": {
                         "type": "object",
+                        "description": "The intercompany difference, posted to the group's intercompany differences account (G6910).",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
+                    "to_reserve": {
+                        "type": "object",
+                        "description": "A dividend's FX part (its income at the average instead of at the rate of its day), to the translation reserve.",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
+                    "recognised_before": {
+                        "type": "object",
+                        "description": "For a balance or loan, the difference earlier runs took to profit or loss; only the rest is this run's.",
                         "properties": {
                             "amount": {
                                 "type": "integer"
@@ -49083,6 +49116,8 @@
                     "side_a",
                     "side_b",
                     "difference",
+                    "to_reserve",
+                    "recognised_before",
                     "matched",
                     "cause",
                     "transaction_currencies",

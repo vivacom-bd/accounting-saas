@@ -56,7 +56,7 @@ final class ConsolidationCalculator
         }
         // Intercompany eliminations and the net-investment reclassification of this run (D16.7): proposed entries, posted
         // when the run is approved, shown in the worksheet now.
-        $ic = (new Intercompany)->run($in, $trAccount);
+        $ic = (new Intercompany)->run($in, $re, $trAccount);
         foreach ($ic['proposed'] as $p) {
             foreach ($p['lines'] as $l) {
                 $cells[] = ['source' => $p['kind'], 'member_id' => $l['member_id'], 'account_id' => $l['account_id'], 'net' => $l['net'], 'entry_id' => null];

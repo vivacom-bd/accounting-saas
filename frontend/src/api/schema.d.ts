@@ -7701,7 +7701,18 @@ export interface components {
                 amount: number;
                 currency: string;
             };
+            /** @description The intercompany difference, posted to the group's intercompany differences account (G6910). */
             difference: {
+                amount: number;
+                currency: string;
+            };
+            /** @description A dividend's FX part (its income at the average instead of at the rate of its day), to the translation reserve. */
+            to_reserve: {
+                amount: number;
+                currency: string;
+            };
+            /** @description For a balance or loan, the difference earlier runs took to profit or loss; only the rest is this run's. */
+            recognised_before: {
                 amount: number;
                 currency: string;
             };

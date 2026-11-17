@@ -85,4 +85,37 @@ final class IntercompanyLines
 
         return $out;
     }
+
+    /**
+     * The realised exchange differences of settling or repaying these accounts over the window: the lines on the realised FX
+     * accounts in journals that also post to one of them, revaluations left out, net = debit − credit per FX account.
+     *
+     * @param  list<string>  $accountIds
+     * @param  list<string>  $fxAccountIds
+     * @return array<string, int> FX account id → net
+     */
+    public function settledAgainst(string $companyId, array $accountIds, array $fxAccountIds, string $from, string $to): array
+    {
+        if ($accountIds === [] || $fxAccountIds === [] || $from > $to) {
+            return [];
+        }
+        $loans = implode(', ', array_fill(0, count($accountIds), '?'));
+        $fx = implode(', ', array_fill(0, count($fxAccountIds), '?'));
+        $rows = $this->runner->db()->select(
+            "SELECT l.account_id, (SUM(l.debit) - SUM(l.credit))::bigint AS net
+               FROM journal_lines l JOIN journals j ON j.id = l.journal_id
+              WHERE l.company_id = ? AND j.company_id = ? AND j.status IN ('posted', 'reversed')
+                AND j.journal_type <> 'closing' AND j.source_type IS DISTINCT FROM 'fx_revaluation'
+                AND j.journal_date BETWEEN ? AND ? AND l.account_id IN ({$fx})
+                AND EXISTS (SELECT 1 FROM journal_lines o WHERE o.journal_id = j.id AND o.account_id IN ({$loans}))
+              GROUP BY l.account_id",
+            [$companyId, $companyId, $from, $to, ...$fxAccountIds, ...$accountIds],
+        );
+        $out = [];
+        foreach ($rows as $r) {
+            $out[(string) $r->account_id] = (int) $r->net;
+        }
+
+        return $out;
+    }
 }
