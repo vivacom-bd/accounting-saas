@@ -401,6 +401,9 @@ it('offers every domain event for subscription, so a new event cannot silently n
     $types = [];
     foreach (File::allFiles(app_path('Events')) as $file) {
         $source = (string) file_get_contents($file->getPathname());
+        if ($file->getFilename() === 'NotificationEvent.php') {
+            continue; // bell-only events raised by jobs (exports ready, a send failed); never offered to webhooks
+        }
         if ($file->getFilename() === 'ProcurementEvent.php') {
             $types = [...$types, ...ProcurementEvent::TYPES];
         } elseif ($file->getFilename() === 'TransactionEvent.php') {

@@ -166,7 +166,7 @@ describe('tax codes and groups', () => {
   it('keeps the rate as the server\'s fraction text', () => {
     const t = toLiveTaxCode(code());
     expect(t.rate).toBe('0.100000');
-    expect(t.rates).toEqual([{ id: 'r1', rate: '0.100000', effective_from: '2026-01-01', effective_to: null }]);
+    expect(t.rates).toEqual([{ id: 'r1', rate: '0.100000', effective_from: '2026-01-01', effective_to: null, source: null, source_as_of: null }]);
     expect(t.can).toEqual({ update: true, deactivate: false });
     expect(toLiveTaxCode(code({ rate: null })).rate).toBeNull();
   });

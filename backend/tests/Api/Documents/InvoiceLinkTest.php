@@ -77,7 +77,7 @@ it('shows the invoice, its status and balance, and payment instructions, with no
 
     $res = ($this->stranger)("invoices/{$token}")->assertOk();
     $data = $res->json('data');
-    expect(array_keys($data))->toBe(['company_name', 'bill_to', 'number', 'issue_date', 'due_date', 'currency', 'status', 'balance_due', 'subtotal', 'tax_total', 'total', 'lines', 'payment_instructions'])
+    expect(array_keys($data))->toBe(['company_name', 'logo', 'bill_to', 'number', 'issue_date', 'due_date', 'currency', 'status', 'balance_due', 'subtotal', 'tax_total', 'total', 'lines', 'payment_instructions'])
         ->and($data['number'])->toBe($this->doc['number'])->and($data['status'])->toBe('open')
         ->and($data['balance_due'])->toBe(['amount' => 5500, 'currency' => 'USD'])->and($data['payment_instructions'])->toBe('Pay to IBAN 123')
         ->and($data['bill_to'])->toBe('Contact C1')->and($data['lines'])->toHaveCount(1);

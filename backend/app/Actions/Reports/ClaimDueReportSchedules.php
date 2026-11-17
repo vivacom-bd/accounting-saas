@@ -13,7 +13,6 @@ use App\Models\Reports\ReportScheduleRun;
 use App\Support\Actor;
 use DateTimeImmutable;
 use DateTimeZone;
-use Illuminate\Support\Facades\DB;
 
 /**
  * The scheduler's half of scheduled reports (plan 3c.23), for one company, as the system. A schedule is due on a date in the
@@ -40,7 +39,7 @@ final class ClaimDueReportSchedules
                 continue;
             }
             $id = $this->ids->next();
-            $inserted = DB::table('report_schedule_runs')->insertOrIgnore([
+            $inserted = ReportScheduleRun::query()->insertOrIgnore([
                 'id' => $id, 'tenant_id' => $system->tenantId, 'company_id' => $company->id, 'schedule_id' => $schedule->id,
                 'due_on' => $due, 'status' => 'queued', 'recipients' => 0, 'queued_at' => $now->format('Y-m-d H:i:sP'),
             ]);

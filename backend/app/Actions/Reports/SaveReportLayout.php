@@ -10,8 +10,13 @@ use App\Contracts\Clock;
 use App\Contracts\IdGenerator;
 use App\Domain\Reports\LayoutParams;
 use App\Domain\Shared\DomainRuleViolation;
+use App\Models\Budgets\Budget;
+use App\Models\Fiscal\FiscalPeriod;
+use App\Models\Ledger\Account;
+use App\Models\Ledger\Dimension;
 use App\Models\Organisation\Company;
 use App\Models\Reports\ReportLayout;
+use App\Models\Trade\Contact;
 use App\Queries\Reports\LayoutResolver;
 use App\Support\Actor;
 use App\Support\ActorType;
@@ -21,7 +26,6 @@ use App\Support\UnitOfWork\Outbox;
 use App\Support\UnitOfWork\UnitOfWork;
 use App\Support\UnitOfWork\VersionConflict;
 use DateTimeZone;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Saves a report's chosen parameters under a name (plan 3c.23). Anyone who can view reports keeps private layouts; sharing one with
@@ -101,9 +105,9 @@ final class SaveReportLayout
     /** @param array<string, mixed> $params */
     private function checkReferences(string $companyId, array $params): void
     {
-        $tables = ['period_id' => 'fiscal_periods', 'account_id' => 'accounts', 'contact_id' => 'contacts', 'budget_id' => 'budgets', 'breakdown' => 'dimensions'];
-        foreach ($tables as $key => $table) {
-            if (isset($params[$key]) && ! DB::table($table)->where('company_id', $companyId)->where('id', (string) $params[$key])->exists()) {
+        $models = ['period_id' => FiscalPeriod::class, 'account_id' => Account::class, 'contact_id' => Contact::class, 'budget_id' => Budget::class, 'breakdown' => Dimension::class];
+        foreach ($models as $key => $model) {
+            if (isset($params[$key]) && ! $model::query()->withoutGlobalScopes()->where('company_id', $companyId)->where('id', (string) $params[$key])->exists()) {
                 throw DomainRuleViolation::single('layout_reference_missing', 'Something this layout refers to does not exist in this company.');
             }
         }
