@@ -23,7 +23,7 @@ use App\Http\Resources\ConsolidationMapResource;
 use App\Http\Resources\ConsolidationOpeningResource;
 use App\Http\Resources\UnmappedBalanceResource;
 use App\Http\Support\RequestActor;
-use App\Http\Support\WebUser;
+use App\Http\Support\RequestUser;
 use App\Models\Consolidation\ConsolidationAccountMap;
 use App\Models\Consolidation\ConsolidationGroup;
 use App\Models\Consolidation\ConsolidationGroupAccount;
@@ -46,7 +46,7 @@ final class ConsolidationGroupController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $groups = ConsolidationGroup::query()->with('members.company', 'members.ownerships')->orderBy('name')->get()
-            ->filter(fn (ConsolidationGroup $g) => WebUser::of($request)?->can('view', $g) === true);
+            ->filter(fn (ConsolidationGroup $g) => RequestUser::principal($request)?->can('view', $g) === true);
 
         return ConsolidationGroupResource::collection($groups->values());
     }

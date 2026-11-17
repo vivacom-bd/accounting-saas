@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Domain\Documents\MessageTemplate;
+use App\Http\Support\RequestUser;
 use App\Models\Organisation\Company;
 use App\Models\Organisation\CompanySettings;
 use App\Models\Trade\DunningStage;
@@ -40,7 +41,7 @@ final class DunningSettingsResource extends JsonResource
             /** The only `{{ placeholders }}` the wording may use, with what each stands for. */
             'placeholders' => MessageTemplate::PLACEHOLDERS,
             'version' => $settings === null ? 0 : (int) $settings->getAttribute('lock_version'),
-            'can' => ['update' => (bool) $request->user()?->can('update', $this->resource)],
+            'can' => ['update' => (bool) RequestUser::principal($request)?->can('update', $this->resource)],
         ];
     }
 }

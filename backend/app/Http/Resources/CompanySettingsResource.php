@@ -8,7 +8,7 @@ use App\Actions\Organisation\UpdateCompanySettings;
 use App\Domain\Documents\MessageTemplate;
 use App\Domain\Shared\FormatPreferences;
 use App\Http\Support\Json;
-use App\Http\Support\WebUser;
+use App\Http\Support\RequestUser;
 use App\Models\Ledger\Account;
 use App\Models\Organisation\Company;
 use App\Models\Organisation\CompanySettings;
@@ -85,7 +85,7 @@ final class CompanySettingsResource extends JsonResource
             /** off | warn | refuse */
             'credit_limit_mode' => $settings === null ? 'off' : (string) $settings->getAttribute('credit_limit_mode'),
             'version' => $settings === null ? 0 : (int) $settings->getAttribute('lock_version'),
-            'can' => ['update' => (bool) WebUser::of($request)?->can('update', $this->resource)],
+            'can' => ['update' => (bool) RequestUser::principal($request)?->can('update', $this->resource)],
         ];
     }
 

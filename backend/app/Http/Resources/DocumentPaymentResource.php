@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Http\Support\Json;
+use App\Http\Support\RequestUser;
 use App\Models\Trade\CreditApplication;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -38,7 +39,7 @@ final class DocumentPaymentResource extends JsonResource
             'amount_fc' => Json::money((int) $r['amount_fc'], (string) $r['currency']),
             'amount' => Json::money((int) $r['amount'], $base),
             'fx_gain_loss' => Json::money((int) $r['fx_gain_loss'], $base),
-            'can' => ['undo' => $credit !== null && (bool) $request->user()?->can('undo', $credit)],
+            'can' => ['undo' => $credit !== null && (bool) RequestUser::principal($request)?->can('undo', $credit)],
         ];
     }
 }

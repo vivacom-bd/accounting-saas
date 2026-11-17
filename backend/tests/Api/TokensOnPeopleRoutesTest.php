@@ -39,6 +39,11 @@ it('lets a token list the companies it was issued for', function (): void {
     $this->getJson('/api/v1/companies')->assertOk()->assertJsonPath('data.0.id', $this->f->companyId);
 });
 
+it('asks the token\'s own client for its can flags, as it did before the typed helper', function (): void {
+    $can = $this->getJson('/api/v1/companies')->assertOk()->json('data.0.can');
+    expect($can)->toBe(['open' => true, 'manage_settings' => false]);
+});
+
 it('never type-hints User as a policy principal, which would turn a token into a 500', function (): void {
     foreach (File::allFiles(app_path('Policies')) as $file) {
         if ($file->getFilename() === 'PolicyContext.php') {

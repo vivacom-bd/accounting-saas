@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Actions\Admin\Tenants;
 
 use App\Actions\Organisation\IssueInvitation;
-use App\Contracts\Clock;
 use App\Domain\Shared\DomainRuleViolation;
 use App\Models\Organisation\Invitation;
 use App\Support\Actor;
@@ -34,7 +33,6 @@ final class ResendOwnerInvitation
         private readonly DatabaseManager $db,
         private readonly IssueInvitation $invitations,
         private readonly AdminAuditWriter $audit,
-        private readonly Clock $clock,
     ) {}
 
     /** @return array{email: string, expires_at: DateTimeImmutable} */

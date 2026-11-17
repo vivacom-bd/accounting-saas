@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Http\Support\RequestUser;
 use App\Models\Organisation\Invitation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -22,7 +23,7 @@ final class InvitationResource extends JsonResource
             'company_ids' => $this->company_ids ?? [],
             'invited_by' => $this->invited_by,
             'expires_at' => $this->expires_at->toIso8601String(),
-            'can' => ['revoke' => (bool) $request->user()?->can('delete', $this->resource)],
+            'can' => ['revoke' => (bool) RequestUser::principal($request)?->can('delete', $this->resource)],
         ];
     }
 }

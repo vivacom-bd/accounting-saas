@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Http\Support\RequestUser;
 use App\Models\Organisation\Company;
 use App\Support\Formats\CompanyFormats;
 use Illuminate\Http\Request;
@@ -30,8 +31,8 @@ final class CompanyResource extends JsonResource
             'formats' => $this->formats(),
             // 13 §7: the SPA shows actions from these hints and never re-derives permissions.
             'can' => [
-                'open' => (bool) $request->user()?->can('view', $this->resource),
-                'manage_settings' => (bool) $request->user()?->can('update', $this->resource),
+                'open' => (bool) RequestUser::principal($request)?->can('view', $this->resource),
+                'manage_settings' => (bool) RequestUser::principal($request)?->can('update', $this->resource),
             ],
         ];
     }
