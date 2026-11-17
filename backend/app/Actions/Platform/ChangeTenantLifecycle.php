@@ -18,7 +18,6 @@ use App\Support\Admin\AdminTransaction;
 use DateTimeImmutable;
 use DateTimeZone;
 use Illuminate\Database\Connection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use LogicException;
 use Throwable;
@@ -54,7 +53,7 @@ final class ChangeTenantLifecycle
             throw new LogicException('The actor belongs to another tenant.');
         }
         $at = ($at ?? $this->clock->now())->setTimezone(new DateTimeZone('UTC'));
-        $db = DB::connection(AdminTransaction::CONNECTION);
+        $db = AdminTransaction::connection();
 
         AdminTransaction::run(function () use ($db, $by, $tenantId, $to, $reason, $at, $expectedFrom) {
             /** @var object{id: string, name: string, lifecycle: string, legal_hold: bool}|null $tenant */

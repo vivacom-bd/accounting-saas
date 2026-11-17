@@ -140,8 +140,8 @@ it('updates_staff_and_audits_before_and_after', function (): void {
 it('last_owner_cannot_be_demoted', function (): void {
     $owner = $this->asAdmin(AdminRole::Owner);
 
-    $this->patchJson("/api/admin/staff/{$owner->id}", ['role' => 'finance'])->assertStatus(409)->assertJsonPath('code', 'last_owner');
-    $this->postJson("/api/admin/staff/{$owner->id}/deactivate")->assertStatus(409)->assertJsonPath('code', 'last_owner');
+    $this->patchJson("/api/admin/staff/{$owner->id}", ['role' => 'finance'])->assertStatus(409)->assertJsonPath('code', 'last_staff_owner');
+    $this->postJson("/api/admin/staff/{$owner->id}/deactivate")->assertStatus(409)->assertJsonPath('code', 'last_staff_owner');
 
     // A second active owner makes the first demotable; the second is then the last.
     [$second] = $this->makeAdmin(AdminRole::Owner);
@@ -151,7 +151,7 @@ it('last_owner_cannot_be_demoted', function (): void {
     // The demoted owner no longer holds staff.manage; sign back in as the second owner.
     $secret = (string) AdminUser::query()->find($second->id)->two_factor_secret;
     $this->signInAdmin($second, $secret);
-    $this->postJson("/api/admin/staff/{$second->id}/deactivate")->assertStatus(409)->assertJsonPath('code', 'last_owner');
+    $this->postJson("/api/admin/staff/{$second->id}/deactivate")->assertStatus(409)->assertJsonPath('code', 'last_staff_owner');
 });
 
 it('an_inactive_owner_does_not_count_as_an_owner', function (): void {
@@ -159,7 +159,7 @@ it('an_inactive_owner_does_not_count_as_an_owner', function (): void {
     [$other] = $this->makeAdmin(AdminRole::Owner);
     $other->forceFill(['is_active' => false])->save();
 
-    $this->postJson("/api/admin/staff/{$owner->id}/deactivate")->assertStatus(409)->assertJsonPath('code', 'last_owner');
+    $this->postJson("/api/admin/staff/{$owner->id}/deactivate")->assertStatus(409)->assertJsonPath('code', 'last_staff_owner');
 });
 
 it('ip_allowlist_validates_cidrs', function (): void {

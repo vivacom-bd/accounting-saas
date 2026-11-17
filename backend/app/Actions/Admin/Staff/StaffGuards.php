@@ -30,7 +30,7 @@ final class StaffGuards
         $owners = AdminUser::query()->where('role', AdminRole::Owner->value)->where('is_active', true)->count();
 
         if ($target->role === AdminRole::Owner && $target->is_active && $owners <= 1) {
-            throw DomainRuleViolation::single('last_owner', 'There must always be at least one active owner.');
+            throw DomainRuleViolation::single('last_staff_owner', 'There must always be at least one active owner.');
         }
     }
 }

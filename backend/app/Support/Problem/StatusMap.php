@@ -69,7 +69,7 @@ final class StatusMap
         'approval_not_pending' => 409,
         'approval_required' => 409,
         // Staff and security (plan Task 8).
-        'last_owner' => 409,
+        'last_staff_owner' => 409,
         'admin_ip_self_lockout' => 422,
         'invalid_token' => 422,
         // Tenant lifecycle (plan Task 5).
