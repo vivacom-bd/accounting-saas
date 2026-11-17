@@ -149,6 +149,7 @@ export const AdminShell: React.FC = () => {
     '/admin/ops': Activity,
     '/admin/flags': Flag,
     '/admin/staff': ShieldCheck,
+    '/admin/audit': ShieldCheck,
     '/admin/compliance': Scale,
   };
   const BADGES: Record<string, string | undefined> = {
@@ -158,7 +159,7 @@ export const AdminShell: React.FC = () => {
   // Live mode hides every area the signed-in role has no ability for; mock mode shows the whole console.
   const navSections: AdminNavSection[] = (IS_LIVE ? visibleAdminNav(liveSession?.can ?? []) : ADMIN_NAV).map((section) => ({
     title: section.title,
-    items: section.items.map((item) => ({ label: item.label, to: item.to, exact: item.exact, icon: ICONS[item.to] ?? LayoutDashboard, badge: BADGES[item.to] })),
+    items: section.items.filter((item) => IS_LIVE || !item.liveOnly).map((item) => ({ label: item.label, to: item.to, exact: item.exact, icon: ICONS[item.to] ?? LayoutDashboard, badge: BADGES[item.to] })),
   }));
 
   return (
