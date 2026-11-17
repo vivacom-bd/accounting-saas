@@ -12,7 +12,12 @@ Schedule::command('kpi:refresh')->everyFifteenSeconds()->withoutOverlapping()->o
 Schedule::command('webhooks:sweep')->everyTenSeconds()->withoutOverlapping()->onOneServer();
 Schedule::command('einvoice:sweep')->everyThirtySeconds()->withoutOverlapping()->onOneServer();
 Schedule::command('idempotency:purge')->hourly()->onOneServer();
+// Verify before sealing: the nightly check starts after the newest valid seal, so it covers everything written since, and the seal then pins the tip.
+Schedule::command('audit:verify-all')->dailyAt('01:00')->timezone('UTC')->onOneServer();
+Schedule::command('audit:verify-all --full')->weeklyOn(0, '03:00')->timezone('UTC')->onOneServer();
 Schedule::command('audit:seal')->dailyAt('01:30')->timezone('UTC')->onOneServer();
+// Stored balances against the posted journal lines, journal balance and trial balance (13 §9, plan 4.2); findings are recorded and owners told.
+Schedule::command('ledger:check-drift')->dailyAt('02:00')->timezone('UTC')->onOneServer();
 // ECB publishes around 16:00 CET; fetch after that, then retry pending FX revaluation reversals.
 Schedule::command('fx:fetch-rates')->dailyAt('17:30')->timezone('Europe/Berlin')->onOneServer();
 // Uploaded files whose scan is still pending: queue them again (scanner was down, or the sync queue skipped them).
