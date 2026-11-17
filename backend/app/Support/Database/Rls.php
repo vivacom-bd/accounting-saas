@@ -38,6 +38,8 @@ final class Rls
         'tenant_lifecycle_events',
         // plan catalogue (10_SaaS_Admin §6, Task 9): platform-owned pricing; tenants reach it through sysops functions only
         'plans', 'plan_versions', 'plan_addons', 'coupons',
+        // subscriptions and MRR movements (plan Task 11); ledgerly_platform only, tenants reach their plan through sysops functions
+        'subscriptions', 'subscription_addons', 'subscription_events', 'stripe_prices',
     ];
 
     public static function enable(Connection $connection, string $table): void
