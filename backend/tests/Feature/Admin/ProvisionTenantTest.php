@@ -53,7 +53,7 @@ function provInput(array $over = []): ProvisionTenantInput
     ]);
 }
 
-function platformDb(): Connection
+function provPlatformDb(): Connection
 {
     return DB::connection('pgsql_platform');
 }
@@ -73,7 +73,7 @@ it('provisions a trial tenant with an owner invitation', function (): void {
     $result = app(ProvisionTenant::class)->handle($admin, $in);
 
     expect($result->created)->toBeTrue();
-    $tenant = platformDb()->table('tenants')->where('id', $in->tenantId)->first();
+    $tenant = provPlatformDb()->table('tenants')->where('id', $in->tenantId)->first();
     expect($tenant->lifecycle)->toBe('trial')->and($tenant->country)->toBe('KE')->and($tenant->name)->toBe('Acme Ltd');
     expect(json_decode($tenant->settings, true)['plan_version_id'])->toBe($versionId);
     $days = (new DateTimeImmutable($tenant->trial_ends_at))->diff($this->clock->now())->days;
@@ -84,10 +84,12 @@ it('provisions a trial tenant with an owner invitation', function (): void {
         ->and($invitations[0]->invited_by)->toBeNull();
     Notification::assertSentOnDemand(InvitationNotification::class, fn ($n, $channels, $notifiable) => $notifiable->routes['mail'] === 'owner@acme.test');
 
-    $event = platformDb()->table('tenant_lifecycle_events')->where('tenant_id', $in->tenantId)->first();
+    $event = provPlatformDb()->table('tenant_lifecycle_events')->where('tenant_id', $in->tenantId)->first();
     expect($event->from_status)->toBeNull()->and($event->to_status)->toBe('trial')->and($event->actor_type)->toBe('admin')->and($event->actor_id)->toBe($admin->id);
-    $audit = platformDb()->table('admin_audit_events')->where('action', 'tenant.provisioned')->first();
+    $audit = provPlatformDb()->table('admin_audit_events')->where('action', 'tenant.provisioned')->first();
     expect($audit->tenant_id)->toBe($in->tenantId)->and($audit->reason)->toBe('Referred by partner');
+    $notes = provPlatformDb()->table('tenant_notes')->where('tenant_id', $in->tenantId)->get();
+    expect($notes)->toHaveCount(1)->and($notes[0]->body)->toBe('Referred by partner')->and($notes[0]->admin_id)->toBe($admin->id)->and((bool) $notes[0]->pinned)->toBeFalse();
     $tenantAudit = app(TenantContext::class)->run($in->tenantId, fn () => DB::connection('pgsql')->table('audit_events')->where('action', 'organisation.provisioned')->first());
     expect($tenantAudit->actor_type)->toBe('admin')->and($tenantAudit->actor_id)->toBe($admin->id);
 });
@@ -99,9 +101,9 @@ it('provisions an offline active tenant', function (): void {
 
     app(ProvisionTenant::class)->handle(provActor(), $in);
 
-    $tenant = platformDb()->table('tenants')->where('id', $in->tenantId)->first();
+    $tenant = provPlatformDb()->table('tenants')->where('id', $in->tenantId)->first();
     expect($tenant->lifecycle)->toBe('active')->and($tenant->trial_ends_at)->toBeNull();
-    expect(platformDb()->table('tenant_lifecycle_events')->where('tenant_id', $in->tenantId)->value('to_status'))->toBe('active');
+    expect(provPlatformDb()->table('tenant_lifecycle_events')->where('tenant_id', $in->tenantId)->value('to_status'))->toBe('active');
 });
 
 it('invites an owner email that already has an account without creating a second user', function (): void {
@@ -128,9 +130,9 @@ it('creates one tenant when the same request is retried', function (): void {
 
     expect($first->created)->toBeTrue()->and($second->created)->toBeFalse()->and($second->id)->toBe($first->id)
         ->and($second->ownerInvitationExpiresAt)->toEqual($first->ownerInvitationExpiresAt);
-    expect(platformDb()->table('tenants')->count())->toBe(1);
-    expect(platformDb()->table('tenant_lifecycle_events')->count())->toBe(1);
-    expect(platformDb()->table('admin_audit_events')->where('action', 'tenant.provisioned')->count())->toBe(1);
+    expect(provPlatformDb()->table('tenants')->count())->toBe(1);
+    expect(provPlatformDb()->table('tenant_lifecycle_events')->count())->toBe(1);
+    expect(provPlatformDb()->table('admin_audit_events')->where('action', 'tenant.provisioned')->count())->toBe(1);
     Notification::assertSentOnDemandTimes(InvitationNotification::class, 1);
 });
 
@@ -152,7 +154,7 @@ it('gives organisations with the same name distinct slugs', function (): void {
     app(ProvisionTenant::class)->handle(provActor(), provInput());
     app(ProvisionTenant::class)->handle(provActor(), provInput());
 
-    $slugs = platformDb()->table('tenants')->pluck('slug')->all();
+    $slugs = provPlatformDb()->table('tenants')->pluck('slug')->all();
     expect($slugs)->toHaveCount(2)->and(array_unique($slugs))->toHaveCount(2)->and($slugs[0])->toStartWith('acme-ltd');
 });
 
@@ -176,7 +178,7 @@ it('lets the owner accept the invitation and become the organisation owner', fun
         new AcceptInvitationInput($invitationId, $token, 'Olu Owner', bcrypt('Sup3r-secret-pw')),
     ));
 
-    expect(platformDb()->table('tenant_users')->where('tenant_id', $in->tenantId)->where('user_id', $userId)->value('role'))->toBe('owner');
+    expect(provPlatformDb()->table('tenant_users')->where('tenant_id', $in->tenantId)->where('user_id', $userId)->value('role'))->toBe('owner');
 });
 
 it('rejects an unknown plan and creates nothing', function (): void {
@@ -184,5 +186,5 @@ it('rejects an unknown plan and creates nothing', function (): void {
     provPlan();
 
     expect(fn () => app(ProvisionTenant::class)->handle(provActor(), provInput(['planCode' => 'nope'])))->toThrow(DomainRuleViolation::class);
-    expect(platformDb()->table('tenants')->count())->toBe(0);
+    expect(provPlatformDb()->table('tenants')->count())->toBe(0);
 });
