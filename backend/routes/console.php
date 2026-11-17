@@ -37,3 +37,6 @@ Schedule::command('lifecycle:advance')->dailyAt('00:15')->timezone('UTC')->witho
 
 // Offline (invoiced) subscriptions: due cancellations, ended pauses, renewals (plan Task 11).
 Schedule::command('subscriptions:advance')->dailyAt('00:30')->timezone('UTC')->withoutOverlapping()->onOneServer();
+
+// SaaS dunning (plan Task 12): payment reminders on days 1, 4 and 7 after a failure, trial-ending notices 3 and 1 days before; once each.
+Schedule::command('saas-dunning:run')->dailyAt('07:00')->timezone('UTC')->onOneServer();

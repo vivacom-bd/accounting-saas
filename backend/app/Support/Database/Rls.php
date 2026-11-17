@@ -46,6 +46,8 @@ final class Rls
         'subscriptions', 'subscription_addons', 'subscription_events', 'stripe_prices',
         // GDPR request queue (plan Task 18); ledgerly_platform only, subject email stored hashed
         'gdpr_requests',
+        // Stripe webhook events, invoice and payout mirrors, dunning notices (plan Task 12); ledgerly_platform only
+        'stripe_events', 'stripe_invoices', 'stripe_payouts', 'billing_notices_sent',
     ];
 
     public static function enable(Connection $connection, string $table): void

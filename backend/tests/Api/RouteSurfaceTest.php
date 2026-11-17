@@ -14,6 +14,7 @@ it('exposes only the API and allowlisted framework routes', function (): void {
     $allowedPrefixes = [
         'api/v1/',
         'api/admin/',        // platform admin surface: own guard, session and middleware group (plan Task 3)
+        'api/stripe/webhook', // Stripe webhook: no session, signature-verified, throttled (plan Task 12)
         'horizon',           // gated: local only until the admin guard (4b.1)
         'docs/api',          // Scramble: local only (config/scramble.php)
         '_scramble/',

@@ -1,0 +1,17 @@
+{
+  "id": "evt_charge_refunded",
+  "object": "event",
+  "type": "charge.refunded",
+  "created": 1773568000,
+  "data": {
+    "object": {
+      "id": "ch_test_1",
+      "object": "charge",
+      "customer": "cus_test_1",
+      "invoice": "in_test_1",
+      "currency": "usd",
+      "amount": 5684,
+      "amount_refunded": 1000
+    }
+  }
+}

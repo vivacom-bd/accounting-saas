@@ -64,7 +64,7 @@ services:
     profiles: ["app"]
     build:
       context: ./worker
-    command: php artisan queue:work --queue=exports,mail --tries=1 --timeout=120 --max-time=3600 --sleep=2
+    command: php artisan queue:work --queue=exports,mail,billing --tries=1 --timeout=120 --max-time=3600 --sleep=2
     restart: unless-stopped
     volumes:
       - ../backend:/var/www/backend

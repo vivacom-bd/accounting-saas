@@ -88,6 +88,7 @@ final class StatusMap
         'membership_pending' => 409,
         // Billing gateway and subscriptions (plan Task 11).
         'billing_not_configured' => 503,
+        'invalid_signature' => 400,
         'billing_gateway_error' => 502,
         'billing_price_not_synced' => 409,
         'subscription_not_found' => 404,
