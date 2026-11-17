@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\Plans\CouponsController;
 use App\Http\Controllers\Admin\Plans\PlansController;
 use App\Http\Controllers\Admin\Staff\StaffController;
 use App\Http\Controllers\Admin\Tenants\ProvisionTenantController;
+use App\Http\Controllers\Admin\Tenants\ResendOwnerInvitationController;
 use App\Http\Controllers\Admin\Tenants\TenantMembersController;
 use App\Http\Controllers\Admin\Tenants\TenantNotesController;
 use App\Http\Controllers\Admin\Tenants\TenantsController;
@@ -49,6 +50,7 @@ Route::middleware('admin.auth')->group(function (): void {
 
     // Tenants (Task 6)
     Route::post('tenants', ProvisionTenantController::class)->middleware('admin.can:tenants.provision')->name('tenants.store');
+    Route::post('tenants/{tenant}/resend-owner-invitation', ResendOwnerInvitationController::class)->middleware('admin.can:tenants.provision')->name('tenants.resend-owner-invitation');
 
     Route::middleware('admin.can:audit.view')->group(function (): void {
         Route::get('audit', [AdminAuditController::class, 'index'])->name('audit.index');
