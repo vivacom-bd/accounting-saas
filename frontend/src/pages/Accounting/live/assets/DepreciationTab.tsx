@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { useDepreciationPreview, useDepreciationRuns, useFixedAssetActions } from '@/data/fixedAssets';
 import { useFiscalYears } from '@/data/fiscal';
 import { useActiveCompany } from '@/data/session';
-import { blockerText, unitsBody, type DepreciationLine, type DepreciationRun } from '@/api/adapters/fixedAssets';
+import { blockerText, nextDuePeriodId, unitsBody, type DepreciationLine, type DepreciationRun } from '@/api/adapters/fixedAssets';
 import { defaultPeriod, defaultYear } from '@/api/adapters/fiscal';
 import { formatDate, formatMoney } from '@/lib/format';
 import { ErrorLine, LoadingLine } from '../parts';
@@ -46,7 +46,7 @@ export const DepreciationTab: React.FC<{ writer: Writer }> = ({ writer }) => {
   const [memo, setMemo] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
 
-  const periodId = picked || defaultPeriod(defaultYear(years.data))?.id || periods[0]?.id || '';
+  const periodId = picked || nextDuePeriodId(periods, runs.data) || defaultPeriod(defaultYear(years.data))?.id || periods[0]?.id || '';
 
   const debouncedUnits = useDebounced(units, 400);
   const preview = useDepreciationPreview(periodId, debouncedUnits);

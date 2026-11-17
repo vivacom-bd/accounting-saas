@@ -629,6 +629,23 @@ export interface DepreciationRun {
   can: DocCan;
 }
 
+/**
+ * The month a depreciation run is due next: the one after the latest month that has a run still counting (a draft, one
+ * waiting for approval, or posted). Null when there is no such run or no month after it is known, so the screen falls
+ * back to its own default. Months arrive in any order; adjustment periods never carry depreciation.
+ */
+export function nextDuePeriodId(
+  periods: Array<{ id: string; kind: string; starts_on: string }>,
+  runs: Array<{ period_id: string; status: string }>,
+): string | null {
+  const months = periods.filter((p) => p.kind !== 'adjustment').sort((a, b) => a.starts_on.localeCompare(b.starts_on));
+  const counting = new Set(runs.filter((r) => r.status === 'draft' || r.status === 'pending_approval' || r.status === 'posted').map((r) => r.period_id));
+  let last = -1;
+  months.forEach((p, i) => { if (counting.has(p.id)) last = i; });
+  if (last < 0) return null;
+  return months[Math.min(last + 1, months.length - 1)].id;
+}
+
 export interface DocCan {
   submit: boolean;
   approve: boolean;

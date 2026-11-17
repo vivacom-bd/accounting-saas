@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import {
   asMethod, bpToPercent, categoryToDraft, emptyAssetTx, emptyCategoryDraft, emptyNewAsset, emptyTaxClassDraft, percentToBp, scheduleQuery, toAssetCreateRequest, toAssetSchedule,
   toAssetTxRequest, toAssetUpdateRequest, toCategory, toCategoryRequest, toDepreciationPreview, toFixedAsset, toReconciliation, toTaxClassRequest, toTaxSchedule, toTxPreview, unitsBody,
-  unitsQuery, wornDownPercent, blockerText, type ApiAssetCategory, type ApiFixedAsset,
+  unitsQuery, wornDownPercent, nextDuePeriodId, blockerText, type ApiAssetCategory, type ApiFixedAsset,
 } from '@/api/adapters/fixedAssets';
 import { toApprovalItem, journalTypeLabel, type ApiApproval } from '@/api/adapters/journal';
 import { checkTitle } from '@/api/adapters/fiscal';
@@ -166,6 +166,27 @@ describe('depreciation preview', () => {
   it('sends units as units[assetId] in the query and as an id map in the body, skipping blanks', () => {
     expect(unitsQuery({ a: '12', b: '', c: 'x' })).toEqual({ 'units[a]': '12' });
     expect(unitsBody({ a: '12', b: '', c: '0' })).toEqual({ a: 12, c: 0 });
+  });
+});
+
+describe('the month the depreciation tab opens on', () => {
+  const period = (n: number, status = 'open') => ({ id: `p${n}`, kind: 'regular', starts_on: `2026-${String(n).padStart(2, '0')}-01`, status }) as never;
+  const periods = [period(3), period(1), period(2), period(4), { ...period(5), kind: 'adjustment' }];
+  const run = (n: number, status: string) => ({ period_id: `p${n}`, status }) as never;
+
+  it('is the month after the latest run that still counts, whatever order the periods arrive in', () => {
+    expect(nextDuePeriodId(periods, [run(1, 'posted'), run(2, 'draft')])).toBe('p3');
+    expect(nextDuePeriodId(periods, [run(2, 'pending_approval')])).toBe('p3');
+  });
+  it('ignores voided and reversed runs', () => {
+    expect(nextDuePeriodId(periods, [run(1, 'posted'), run(2, 'reversed'), run(3, 'void')])).toBe('p2');
+  });
+  it('stays on the last month when every month has a run, and skips the adjustment period', () => {
+    expect(nextDuePeriodId(periods, [run(4, 'posted')])).toBe('p4');
+  });
+  it('has no opinion before any run, so the caller falls back to its default', () => {
+    expect(nextDuePeriodId(periods, [])).toBeNull();
+    expect(nextDuePeriodId([], [run(1, 'posted')])).toBeNull();
   });
 });
 
