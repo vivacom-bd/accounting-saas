@@ -63,7 +63,7 @@ function countingExecutor(ApprovalKind $kind): object
     return $executor;
 }
 
-function auditActions(): array
+function adminApprovalAuditActions(): array
 {
     return DB::connection('pgsql_platform')->table('admin_audit_events')->orderBy('id')->pluck('action')->all();
 }
@@ -103,7 +103,7 @@ it('approving runs the executor once', function (): void {
         ->and($done->executed_at)->not->toBeNull()
         ->and(violationCode(fn () => app(DecideApproval::class)->handle($owner, $approval->id, true, null)))->toBe('approval_not_pending')
         ->and($executor->calls)->toBe(1)
-        ->and(auditActions())->toBe(['approval.requested', 'approval.approved', 'approval.executed']);
+        ->and(adminApprovalAuditActions())->toBe(['approval.requested', 'approval.approved', 'approval.executed']);
 });
 
 it('rejecting records the reason and runs nothing', function (): void {
@@ -114,7 +114,7 @@ it('rejecting records the reason and runs nothing', function (): void {
 
     expect($done->status)->toBe('rejected')->and($done->rejection_reason)->toBe('not covered')
         ->and($executor->calls)->toBe(0)
-        ->and(auditActions())->toBe(['approval.requested', 'approval.rejected']);
+        ->and(adminApprovalAuditActions())->toBe(['approval.requested', 'approval.rejected']);
 });
 
 it('impersonate write is approved not executed', function (): void {
