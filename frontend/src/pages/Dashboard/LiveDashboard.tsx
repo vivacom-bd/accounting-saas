@@ -15,7 +15,7 @@ import { describeError } from '@/api/messages';
 import { panelState, useLiveDashboard, type PanelState } from '@/data/dashboard';
 import { useBudgetCard } from '@/data/budgets';
 import { useSetupState } from '@/data/setup';
-import { useClosingCash, useMonthlyPnl, useRecentActivity, useYearStart } from '@/data/dashboardExtras';
+import { useClosingCash, usePeriodTrend, useRecentActivity, useYearStart } from '@/data/dashboardExtras';
 import { useMe } from '@/data/session';
 import { useCurrentCompany } from '@/data/team';
 import { KeyFigures, type Figure } from './widgets/KeyFigures';
@@ -40,7 +40,7 @@ export const LiveDashboard: React.FC = () => {
   const me = useMe();
   const d = useLiveDashboard(company);
   const yearStart = useYearStart(company, d.today);
-  const monthly = useMonthlyPnl(company, d.today, yearStart.data);
+  const trend = usePeriodTrend(company, d.today);
   const cash = useClosingCash(company, d.today, yearStart.data);
   // The budget note appears only when an approved budget exists; on no budget, no permission or any error there is nothing to show.
   const budgetCard = useBudgetCard(d.ready && d.allowed.budget);
@@ -187,12 +187,12 @@ export const LiveDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {!d.may('trend') ? null : (() => {
-          if (yearStart.isError || monthly.error) return panelState({ isPending: false, isError: true, error: monthly.error ?? yearStart.error }) === 'hidden' ? null : (
-            <Card className="lg:col-span-7"><CardHeader title="Income vs expenses" /><Retry error={monthly.error ?? yearStart.error} onRetry={() => { void yearStart.refetch(); monthly.results.forEach((r) => void r.refetch()); }} /></Card>
+          if (trend.isError) return panelState(trend) === 'hidden' ? null : (
+            <Card className="lg:col-span-7"><CardHeader title="Income vs expenses" /><Retry error={trend.error} onRetry={() => void trend.refetch()} /></Card>
           );
-          if (monthly.pending) return <Card className="lg:col-span-7"><CardHeader title="Income vs expenses" /><p role="status" className="px-5 pb-5 text-[13px] text-text-muted">Loading…</p></Card>;
-          const all = monthly.ranges.flatMap((r, i) => { const pnl = monthly.results[i]?.data; return pnl ? [{ label: r.label, pnl }] : []; });
-          // Months before the first posting say nothing; leave them off (a comparison with zero, no arithmetic).
+          if (trend.isPending) return <Card className="lg:col-span-7"><CardHeader title="Income vs expenses" /><p role="status" className="px-5 pb-5 text-[13px] text-text-muted">Loading…</p></Card>;
+          const all = trend.data ?? [];
+          // Periods before the first posting say nothing; leave them off (a comparison with zero, no arithmetic).
           const quiet = (m: (typeof all)[number]) => m.pnl.revenue === 0 && m.pnl.otherIncome === 0 && m.pnl.costOfSales === 0 && m.pnl.operatingExpenses === 0 && m.pnl.otherExpenses === 0;
           const first = all.findIndex((m) => !quiet(m));
           const bars = first < 0 ? all : all.slice(first);

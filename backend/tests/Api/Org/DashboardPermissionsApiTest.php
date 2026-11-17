@@ -27,6 +27,7 @@ beforeEach(function (): void {
         ['reports/ap-aging', "as_of={$today}"],
         ['reports/profit-and-loss', "from={$year}-01-01&to={$today}"],
         ['reports/cash-flow', "from={$year}-01-01&to={$today}"],
+        ['reports/profit-and-loss-trend', "as_of={$today}&count=6"],
     ];
     $this->roleWith = function (string ...$permissions) {
         $permission = implode('+', $permissions);

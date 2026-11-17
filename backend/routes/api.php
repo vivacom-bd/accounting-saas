@@ -367,6 +367,7 @@ Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent', 'c
         // Reports (13 §13): statements and ledger detail from the reporting connection, the drill behind every cell, exports.
         Route::get('reports/trial-balance', [ReportController::class, 'trialBalance'])->name('reports.trial-balance');
         Route::get('reports/profit-and-loss', [ReportController::class, 'profitAndLoss'])->name('reports.profit-and-loss');
+        Route::get('reports/profit-and-loss-trend', [ReportController::class, 'profitAndLossTrend'])->name('reports.profit-and-loss-trend');
         Route::get('reports/balance-sheet', [ReportController::class, 'balanceSheet'])->name('reports.balance-sheet');
         Route::get('reports/cash-flow', [ReportController::class, 'cashFlow'])->name('reports.cash-flow');
         Route::get('reports/general-ledger', [ReportController::class, 'generalLedger'])->name('reports.general-ledger');

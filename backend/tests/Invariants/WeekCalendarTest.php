@@ -125,3 +125,22 @@ it('closes the year and posts the year-end into the adjustment period of a 53-we
     expect($closing)->not->toBeNull()
         ->and((string) $this->inTenant(fn () => DB::table('fiscal_periods')->where('id', $closing->fiscal_period_id)->value('kind')))->toBe('adjustment');
 });
+
+it('serves the dashboard trend by fiscal period: named, in order, without the adjustment period', function (): void {
+    ($this->createYear)('FY2027', '2027-01-01')->assertCreated();
+    foreach ([[1000, '2027-01-28'], [2000, '2027-01-29'], [4000, '2027-02-25'], [8000, '2027-02-26'], [16000, '2027-04-01']] as [$amount, $date]) {
+        ($this->submit)(($this->post)($amount, $date))->assertOk();
+    }
+    [$p1, $p2, $p3] = [($this->periodAt)('2027-01-28'), ($this->periodAt)('2027-02-10'), ($this->periodAt)('2027-03-10')];
+
+    $data = $this->asPerson($this->owner)->getJson($this->api('reports/profit-and-loss-trend?as_of=2027-03-10&count=4'))->assertOk()->json('data');
+    $adjustments = $this->inTenant(fn () => DB::table('fiscal_periods')->where('company_id', $this->f->companyId)->where('kind', 'adjustment')->pluck('id')->all());
+    $ids = array_column($data['periods'], 'period_id');
+    expect($ids)->toHaveCount(4)->and(array_intersect($ids, $adjustments))->toBe([])
+        ->and(array_slice($ids, 1))->toBe([$p1->id, $p2->id, $p3->id])
+        ->and(array_slice(array_column($data['periods'], 'name'), 1))->toBe([$p1->name, $p2->name, $p3->name])
+        ->and(array_column(array_slice($data['periods'], 1), 'from'))->toBe(['2027-01-01', '2027-01-29', '2027-02-26'])
+        ->and(array_map(fn ($p) => $p['net_profit']['amount'], array_slice($data['periods'], 1)))->toBe([1000, 6000, 24000])
+        ->and($data['periods'][2]['net_profit'])->toBe(['amount' => 6000, 'currency' => 'USD'])
+        ->and($data['currency'])->toBe('USD');
+});

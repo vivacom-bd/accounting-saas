@@ -66,6 +66,8 @@ final class ReportRequest extends CompanyRequest
             'actor_id' => ['nullable', 'uuid'],
             'subject_type' => ['nullable', 'string', 'max:64'],
             'subject_id' => ['nullable', 'uuid'],
+            /** Profit and loss trend: how many fiscal periods to return. */
+            'count' => ['nullable', 'integer', 'min:1', 'max:12'],
             'format' => ['nullable', 'string', Rule::in(['xlsx', 'csv', 'pdf'])],
         ];
     }

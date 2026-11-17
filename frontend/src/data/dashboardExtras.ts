@@ -1,52 +1,33 @@
-/** Extra dashboard panels (live mode): monthly income and expense, cash and bank, recent activity. Each is its own query, so a 403 or a failure leaves only that panel out. */
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { fetchClosingCash, fetchMonthPnl, fetchRecentAudit } from '@/api/live/dashboardExtras';
+/** Extra dashboard panels (live mode): income and expense by fiscal period, cash and bank, recent activity. Each is its own query, so a 403 or a failure leaves only that panel out. */
+import { useQuery } from '@tanstack/react-query';
+import { fetchClosingCash, fetchPnlTrend, fetchRecentAudit } from '@/api/live/dashboardExtras';
 import { toAuditRow } from '@/api/adapters/admin';
 import type { Company } from '@/types';
 import { useDashboardAccess, yearStartFor } from './dashboard';
 
 const opts = { retry: false, staleTime: 30_000 } as const;
-const MONTHS_SHOWN = 6;
+const PERIODS_SHOWN = 6;
 
-export interface MonthRange {
-  label: string;
-  from: string;
-  to: string;
-}
-
-/** The last six calendar months up to `today`, but not before the fiscal year starts (the report is per fiscal year). Dates are plain strings. */
-export function monthRanges(today: string, yearStart: string): MonthRange[] {
-  const [y, m] = today.split('-').map(Number);
-  const out: MonthRange[] = [];
-  for (let i = MONTHS_SHOWN - 1; i >= 0; i--) {
-    const d = new Date(Date.UTC(y, m - 1 - i, 1));
-    const from = d.toISOString().slice(0, 10);
-    const last = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).toISOString().slice(0, 10);
-    const to = last < today ? last : today;
-    if (to < yearStart) continue;
-    out.push({ label: d.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' }), from: from < yearStart ? yearStart : from, to });
-  }
-  return out;
-}
-
-/** The fiscal year start, asked for only by panels that need it (the monthly chart and cash), so a person with neither never reads fiscal years. */
+/** The fiscal year start, asked for only by the cash figure, so a person without it never reads fiscal years. */
 export function useYearStart(company: Company, today: string) {
   const { allowed, ready, canViewPeriods } = useDashboardAccess();
   return useQuery({
     queryKey: ['dashboard', company.id, 'year-start', today, canViewPeriods],
     queryFn: () => yearStartFor(company, today, canViewPeriods),
-    enabled: ready && (allowed.trend || allowed.cash),
+    enabled: ready && allowed.cash,
     ...opts,
   });
 }
 
-export function useMonthlyPnl(company: Company, today: string, yearStart: string | undefined) {
+/** The bars: the company's last fiscal periods up to today, named as the company names them (a 4-4-5 calendar gives its own periods). */
+export function usePeriodTrend(company: Company, today: string) {
   const { allowed, ready } = useDashboardAccess();
-  const ranges = yearStart && ready && allowed.trend ? monthRanges(today, yearStart) : [];
-  const results = useQueries({
-    queries: ranges.map((r) => ({ queryKey: ['dashboard', company.id, 'pnl-month', r.from, r.to], queryFn: () => fetchMonthPnl(company.id, r.from, r.to), ...opts })),
+  return useQuery({
+    queryKey: ['dashboard', company.id, 'pnl-trend', today],
+    queryFn: () => fetchPnlTrend(company.id, today, PERIODS_SHOWN),
+    enabled: ready && allowed.trend,
+    ...opts,
   });
-  return { ranges, results, pending: !yearStart || results.some((r) => r.isPending), error: results.find((r) => r.isError)?.error ?? null };
 }
 
 export function useClosingCash(company: Company, today: string, yearStart: string | undefined) {

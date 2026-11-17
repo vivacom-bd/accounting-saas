@@ -22,7 +22,7 @@ const compact = (v: number, currency: string) => {
 };
 
 /**
- * Income against expenses per month, from one profit-and-loss call per month. Each bar segment is a section total
+ * Income against expenses per fiscal period (a bar is labelled with the period's name), from the server's profit-and-loss trend. Each bar segment is a section total
  * the server returned; the chart stacks them, so no money is added in this file.
  */
 export const LiveIncomeExpense: React.FC<{ months: MonthBar[]; currency: string; to: string; className?: string }> = ({ months, currency, to, className }) => {
@@ -38,7 +38,7 @@ export const LiveIncomeExpense: React.FC<{ months: MonthBar[]; currency: string;
     <Card className={className}>
       <CardHeader
         title="Income vs expenses"
-        sub={`Monthly, in ${currency}`}
+        sub={`By fiscal period, in ${currency}`}
         right={<button type="button" onClick={() => navigate(to)} className="hidden sm:block text-xs text-accent hover:underline cursor-pointer">View P&amp;L</button>}
       />
       <div className="px-5 flex items-center gap-4 text-xs text-text-secondary">

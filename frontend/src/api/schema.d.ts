@@ -4822,6 +4822,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/companies/{company}/reports/profit-and-loss-trend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The dashboard's bars: the last `count` (1 to 12, default 6) regular fiscal periods started by `as_of`, each with its profit and loss totals */
+        get: operations["reports.profit-and-loss-trend"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/companies/{company}/reports/balance-sheet": {
         parameters: {
             query?: never;
@@ -13525,6 +13542,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;
@@ -18909,6 +18928,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
                 /** @description Opaque, from `meta.next_cursor` or `meta.prev_cursor`. */
                 cursor?: string;
@@ -18977,6 +18998,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;
@@ -19059,6 +19082,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;
@@ -19141,6 +19166,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;
@@ -19232,6 +19259,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;
@@ -19319,6 +19348,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;
@@ -22732,6 +22763,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;
@@ -22800,6 +22833,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;
@@ -22821,6 +22856,73 @@ export interface operations {
                             [key: string]: unknown;
                         };
                     };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "reports.profit-and-loss-trend": {
+        parameters: {
+            query?: {
+                period_id?: string | null;
+                as_of?: string | null;
+                from?: string | null;
+                to?: string | null;
+                basis?: "month" | "ytd" | null;
+                /** @description Trial balance only: `movement` adds opening, debit and credit movement and closing over the period or from..to. */
+                view?: "balances" | "movement" | null;
+                comparison?: "none" | "previous_period" | "previous_year" | null;
+                /** @description Dimension id → a value id or a list of them; withValidator checks the shape. */
+                "dimensions[]"?: string[] | null;
+                /** @description Trial balance (as of) and profit and loss: a dimension id whose values become columns, plus an untagged column. */
+                breakdown?: string | null;
+                hide_zero?: boolean | null;
+                account_id?: string | null;
+                exclude_closing?: boolean | null;
+                contact_side?: "debit" | "credit" | null;
+                contact_id?: string | null;
+                /** @description Budget vs actual only: the budget version to read; default is the approved one of the period's fiscal year. */
+                budget_id?: string | null;
+                /** @description Journal list (3c.20): status, source ('none' = typed by hand), the person and in which role, lines under each journal. */
+                status?: "draft" | "pending_approval" | "posted" | "reversed" | "void" | null;
+                source?: string | null;
+                user_id?: string | null;
+                user_role?: "created" | "submitted" | "approved" | "posted" | null;
+                include_lines?: boolean | null;
+                /** @description Drill from the aging (the bucket of a cell) and from the tax return (a row: side and tax code, `none` for lines without one). */
+                bucket?: "current" | "days_1_30" | "days_31_60" | "days_61_90" | "days_over_90" | "open" | "credits" | null;
+                side?: "sales" | "purchases" | null;
+                tax_code_id?: string | null;
+                /** @description Bank reconciliation report: the finished reconciliation. */
+                reconciliation_id?: string | null;
+                /** @description Audit trail (3c.20): same filters as the audit log. */
+                action?: string | null;
+                actor_id?: string | null;
+                subject_type?: string | null;
+                subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
+                format?: "xlsx" | "csv" | "pdf" | null;
+            };
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `FreeFormDataResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FreeFormDataResource"];
                 };
             };
             401: components["responses"]["AuthenticationException"];
@@ -22868,6 +22970,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;
@@ -22936,6 +23040,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;
@@ -23004,6 +23110,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
                 /** @description Opaque, from `meta.next_cursor` or `meta.prev_cursor`. */
                 cursor?: string;
@@ -23082,6 +23190,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;
@@ -23150,6 +23260,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;
@@ -23218,6 +23330,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;
@@ -23286,6 +23400,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;
@@ -23354,6 +23470,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;
@@ -23422,6 +23540,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;
@@ -23490,6 +23610,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
                 /** @description Opaque, from `meta.next_cursor` or `meta.prev_cursor`. */
                 cursor?: string;
@@ -23635,6 +23757,8 @@ export interface operations {
                 actor_id?: string | null;
                 subject_type?: string | null;
                 subject_id?: string | null;
+                /** @description Profit and loss trend: how many fiscal periods to return. */
+                count?: number | null;
                 format?: "xlsx" | "csv" | "pdf" | null;
             };
             header?: never;

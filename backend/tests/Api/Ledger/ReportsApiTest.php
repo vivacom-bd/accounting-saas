@@ -345,3 +345,21 @@ it('runs a large export as a queued job, tracked and downloadable only by who as
     $this->asPerson($this->owner)->getJson($this->api("reports/exports/{$id}"))->assertNotFound();
     $this->asPerson($this->accountant)->getJson($this->api('reports/exports/'.Str::uuid7()))->assertNotFound();
 });
+
+it('serves the profit and loss trend by fiscal period, only to those who may read reports', function (): void {
+    $this->asPerson($this->viewer);
+    $data = $this->getJson($this->api('reports/profit-and-loss-trend?as_of=2026-02-28&count=6'))->assertOk()->json('data');
+    // Calendar-month year: January and February are the only regular periods up to the date; the adjustment period is never a bar.
+    expect(array_column($data['periods'], 'period_id'))->toBe([$this->jan, $this->feb]);
+
+    // Each bar is the same figure the period's own profit and loss reports.
+    foreach ($data['periods'] as $p) {
+        $one = $this->getJson($this->api("reports/profit-and-loss?period_id={$p['period_id']}&basis=month"))->assertOk()->json('data');
+        expect($p['net_profit'])->toBe($one['subtotals']['net_profit']['amount'])->and($p['name'])->not->toBe('');
+    }
+    expect($data['periods'][0]['net_profit']['amount'] + $data['periods'][1]['net_profit']['amount'])->toBe(40_500);
+
+    $this->getJson($this->api('reports/profit-and-loss-trend?as_of=2026-02-28&count=0'))->assertStatus(422);
+    $this->getJson($this->api('reports/profit-and-loss-trend?as_of=2026-02-28&count=13'))->assertStatus(422);
+    $this->asPerson($this->sales)->getJson($this->api('reports/profit-and-loss-trend?as_of=2026-02-28'))->assertForbidden();
+});

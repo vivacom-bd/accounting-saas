@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Reports;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Reports\ReportRequest;
+use App\Http\Resources\FreeFormDataResource;
 use App\Http\Support\CursorPage;
 use App\Http\Support\Json;
 use App\Models\Ledger\JournalLine;
@@ -14,12 +15,14 @@ use App\Queries\Ledger\DimensionPositions;
 use App\Queries\Reports\GeneralLedger;
 use App\Queries\Reports\LedgerLines;
 use App\Queries\Reports\LineFilter;
+use App\Queries\Reports\ProfitLossTrend;
 use App\Queries\Reports\ReportParamsResolver;
 use App\Queries\Reports\RunReport;
 use App\Support\Reports\Report;
 use App\Support\Reports\ReportRunner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Financial reports (13 §13). Statements are computed from `account_period_balances` where fiscal period
@@ -39,6 +42,18 @@ final class ReportController extends Controller
     public function profitAndLoss(ReportRequest $request, Company $company, RunReport $report): JsonResponse
     {
         return response()->json(['data' => $report('profit-and-loss', $company, $request->validated())]);
+    }
+
+    /** The dashboard's bars: the last `count` (1 to 12, default 6) regular fiscal periods started by `as_of`, each with its profit and loss totals. */
+    #[Authorize('view', Report::class)]
+    public function profitAndLossTrend(ReportRequest $request, Company $company, ProfitLossTrend $trend): FreeFormDataResource
+    {
+        $asOf = $request->validated('as_of');
+        if (! is_string($asOf)) {
+            throw ValidationException::withMessages(['as_of' => ['Give the date the bars run up to.']]);
+        }
+
+        return new FreeFormDataResource($trend($company, $asOf, (int) ($request->validated('count') ?? 6)));
     }
 
     #[Authorize('view', Report::class)]
