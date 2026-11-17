@@ -10,7 +10,7 @@ import { Plan, SupportedCurrency } from '@/types/admin';
 import { toast } from 'sonner';
 import { Check, X, RefreshCw, Users } from 'lucide-react';
 
-export const PlansList: React.FC = () => {
+export const MockPlansList: React.FC = () => {
   const { plans, mockPlanAddons } = useAdminStore() as any;
   const [currency, setCurrency] = useState<SupportedCurrency>('USD');
   const [interval, setInterval] = useState<'monthly' | 'annual'>('monthly');

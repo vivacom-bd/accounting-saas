@@ -8,9 +8,13 @@ import { initDexiePersistence } from './mock/store';
 import { queryClient } from './api/queryClient';
 import { IS_LIVE } from './api/config';
 import { installLiveSessionGuard } from './data/session';
+import { installAdminSessionGuard } from './data/adminSession';
 
 initDexiePersistence();
-if (IS_LIVE) installLiveSessionGuard();
+if (IS_LIVE) {
+  installLiveSessionGuard();
+  installAdminSessionGuard();
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

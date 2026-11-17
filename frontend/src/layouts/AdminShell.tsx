@@ -8,6 +8,11 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAdminStore } from '@/mock/store/adminStore';
+import { IS_LIVE } from '@/api/config';
+import { useAdminSession, forgetAdminSession } from '@/data/adminSession';
+import { adminLogout } from '@/api/live/platform/session';
+import { ADMIN_NAV, canDo, visibleAdminNav } from '@/api/adapters/platform/session';
+import { useQueryClient } from '@tanstack/react-query';
 import { useLedgerStore, UIRowDensity } from '@/mock/store';
 import { useTheme } from '@/layouts/shell/useTheme';
 import { toast } from 'sonner';
@@ -81,8 +86,29 @@ export const AdminShell: React.FC = () => {
 
   const { uiDensity, setUiDensity } = useLedgerStore();
 
-  const pendingApprovalsCount = approvals.filter((a) => a.status === 'pending').length;
+  // Live: who is signed in and what they may open come from GET /api/admin/session; the mock store only feeds mock mode.
+  const liveSession = useAdminSession().data;
+  const qc = useQueryClient();
+  const admin = IS_LIVE && liveSession ? liveSession : currentAdmin;
+  const may = (ability?: string) => !IS_LIVE || canDo({ can: liveSession?.can ?? [] }, ability);
+
+  const pendingApprovalsCount = IS_LIVE ? 0 : approvals.filter((a) => a.status === 'pending').length;
   const kpis = getKpis();
+
+  const signOut = async () => {
+    if (IS_LIVE) {
+      try {
+        await adminLogout();
+      } catch {
+        /* the session may already be gone; either way we leave */
+      }
+      forgetAdminSession(qc);
+    } else {
+      logoutAdmin();
+    }
+    toast.info('Staff session ended');
+    navigate('/admin/login');
+  };
 
   // Real-time clock (UTC)
   useEffect(() => {
@@ -111,40 +137,30 @@ export const AdminShell: React.FC = () => {
     items: AdminNavItem[];
   }
 
-  const navSections: AdminNavSection[] = [
-    {
-      title: 'Platform',
-      items: [
-        { label: 'Overview', to: '/admin', icon: LayoutDashboard, exact: true },
-        { label: 'Tenants', to: '/admin/tenants', icon: Building2 },
-      ],
-    },
-    {
-      title: 'Commercial',
-      items: [
-        { label: 'Plans and pricing', to: '/admin/plans', icon: Package },
-        { label: 'Coupons and discounts', to: '/admin/coupons', icon: Ticket },
-        { label: 'Billing operations', to: '/admin/billing', icon: CreditCard, badge: pendingApprovalsCount > 0 ? `${pendingApprovalsCount}` : undefined },
-        { label: 'Trials and growth', to: '/admin/growth', icon: TrendingUp },
-        { label: 'Partners and resellers', to: '/admin/partners', icon: Briefcase },
-      ],
-    },
-    {
-      title: 'Operations',
-      items: [
-        { label: 'Support and communications', to: '/admin/support', icon: Headphones },
-        { label: 'Platform telemetry', to: '/admin/ops', icon: Activity },
-        { label: 'Feature flags', to: '/admin/flags', icon: Flag },
-      ],
-    },
-    {
-      title: 'Governance',
-      items: [
-        { label: 'Staff and security', to: '/admin/staff', icon: ShieldCheck, badge: pendingApprovalsCount > 0 ? 'Review' : undefined },
-        { label: 'Compliance and GDPR', to: '/admin/compliance', icon: Scale },
-      ],
-    },
-  ];
+  const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+    '/admin': LayoutDashboard,
+    '/admin/tenants': Building2,
+    '/admin/plans': Package,
+    '/admin/coupons': Ticket,
+    '/admin/billing': CreditCard,
+    '/admin/growth': TrendingUp,
+    '/admin/partners': Briefcase,
+    '/admin/support': Headphones,
+    '/admin/ops': Activity,
+    '/admin/flags': Flag,
+    '/admin/staff': ShieldCheck,
+    '/admin/audit': ShieldCheck,
+    '/admin/compliance': Scale,
+  };
+  const BADGES: Record<string, string | undefined> = {
+    '/admin/billing': pendingApprovalsCount > 0 ? `${pendingApprovalsCount}` : undefined,
+    '/admin/staff': pendingApprovalsCount > 0 ? 'Review' : undefined,
+  };
+  // Live mode hides every area the signed-in role has no ability for; mock mode shows the whole console.
+  const navSections: AdminNavSection[] = (IS_LIVE ? visibleAdminNav(liveSession?.can ?? []) : ADMIN_NAV).map((section) => ({
+    title: section.title,
+    items: section.items.filter((item) => IS_LIVE || !item.liveOnly).map((item) => ({ label: item.label, to: item.to, exact: item.exact, icon: ICONS[item.to] ?? LayoutDashboard, badge: BADGES[item.to] })),
+  }));
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -222,17 +238,17 @@ export const AdminShell: React.FC = () => {
                   type="button"
                   className="flex items-center gap-1 sm:gap-1.5 h-8 px-2 sm:px-2.5 rounded-md border border-border hover:border-border-strong bg-surface text-[13px] font-medium text-text-primary transition outline-none focus-visible:ring-2 focus-visible:ring-accent/50 cursor-pointer shrink-0"
                 >
-                  <span className="max-w-[70px] sm:max-w-[130px] truncate">{currentAdmin.name.split(' ')[0]}</span>
+                  <span className="max-w-[70px] sm:max-w-[130px] truncate">{admin.name.split(' ')[0]}</span>
                   <span className="hidden sm:inline text-[11px] text-text-muted bg-surface-neutral px-1 py-px rounded-[3px] capitalize">
-                    {currentAdmin.role}
+                    {admin.role}
                   </span>
                   <ChevronDown className="w-3 h-3 text-text-muted opacity-60 shrink-0" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-72">
-                <DropdownMenuLabel>Operator personas</DropdownMenuLabel>
+                <DropdownMenuLabel>{IS_LIVE ? admin.email : 'Operator personas'}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {staffUsers.map((staff) => (
+                {!IS_LIVE && staffUsers.map((staff) => (
                   <DropdownMenuItem
                     key={staff.id}
                     onClick={() => {
@@ -253,13 +269,9 @@ export const AdminShell: React.FC = () => {
                     </div>
                   </DropdownMenuItem>
                 ))}
-                <DropdownMenuSeparator />
+                {!IS_LIVE && <DropdownMenuSeparator />}
                 <DropdownMenuItem
-                  onClick={() => {
-                    logoutAdmin();
-                    toast.info('Staff session ended');
-                    navigate('/admin/login');
-                  }}
+                  onClick={() => void signOut()}
                   className="flex items-center gap-2 text-danger hover:text-danger hover:bg-danger-soft cursor-pointer font-medium text-xs"
                 >
                   <LogOut className="w-3.5 h-3.5 text-danger" />
@@ -386,10 +398,7 @@ export const AdminShell: React.FC = () => {
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  onClick={() => {
-                    toast.info('Signed out of platform admin');
-                    navigate('/admin/login');
-                  }}
+                  onClick={() => void signOut()}
                   className="p-1.5 text-text-muted hover:text-danger rounded-sm hover:bg-danger-soft transition cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
@@ -418,6 +427,7 @@ export const AdminShell: React.FC = () => {
             <span>Overview</span>
           </NavLink>
 
+          {may('tenants.view') && (
           <NavLink
             to="/admin/tenants"
             className={({ isActive }) =>
@@ -430,9 +440,11 @@ export const AdminShell: React.FC = () => {
             }
           >
             <Building2 className="w-3.5 h-3.5 text-text-muted shrink-0" />
-            <span>Tenants ({useAdminStore.getState().tenants.length})</span>
+            <span>{IS_LIVE ? 'Tenants' : `Tenants (${useAdminStore.getState().tenants.length})`}</span>
           </NavLink>
+          )}
 
+          {may('billing.view') && (
           <NavLink
             to="/admin/billing"
             className={({ isActive }) =>
@@ -447,7 +459,9 @@ export const AdminShell: React.FC = () => {
             <CreditCard className="w-3.5 h-3.5 text-text-muted shrink-0" />
             <span>Billing operations</span>
           </NavLink>
+          )}
 
+          {may('staff.manage') && (
           <NavLink
             to="/admin/staff"
             className={({ isActive }) =>
@@ -462,6 +476,7 @@ export const AdminShell: React.FC = () => {
             <ShieldCheck className="w-3.5 h-3.5 text-text-muted shrink-0" />
             <span>Staff &amp; approvals</span>
           </NavLink>
+          )}
         </div>
 
         {/* 3. Main Body: Sidebar + Viewport */}
@@ -544,7 +559,7 @@ export const AdminShell: React.FC = () => {
             </div>
 
             {/* Sidebar Bottom Operator Summary Card */}
-            {!sidebarCollapsed && (
+            {!IS_LIVE && !sidebarCollapsed && (
               <div className="p-2 border-t border-border bg-surface-subtle">
                 <div className="p-2 rounded-md bg-surface border border-border space-y-1">
                   <div className="flex items-center justify-between text-[11px]">
@@ -586,7 +601,7 @@ export const AdminShell: React.FC = () => {
             </div>
             <span className="hidden sm:inline">|</span>
             <span className="text-text-secondary truncate">
-              Role: <strong className="text-text-primary font-medium capitalize">{currentAdmin.role}</strong>
+              Role: <strong className="text-text-primary font-medium capitalize">{admin.role}</strong>
             </span>
             <span>|</span>
             <span className="text-success flex items-center gap-1 shrink-0">
@@ -604,10 +619,14 @@ export const AdminShell: React.FC = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-3 shrink-0">
-            <span>Horizon: 0 failed / 1,420 jobs/min</span>
-            <span>|</span>
-            <span>Telemetry: p95 142ms</span>
-            <span>|</span>
+            {!IS_LIVE && (
+              <>
+                <span>Horizon: 0 failed / 1,420 jobs/min</span>
+                <span>|</span>
+                <span>Telemetry: p95 142ms</span>
+                <span>|</span>
+              </>
+            )}
             <span>Ledgerly Platform v1.2</span>
           </div>
         </footer>

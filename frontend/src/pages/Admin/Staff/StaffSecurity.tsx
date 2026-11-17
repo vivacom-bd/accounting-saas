@@ -11,7 +11,7 @@ import { StatusPill } from '@/components/domain/StatusPill';
 import { toast } from 'sonner';
 import { KeyRound, Users, History, CheckCircle2, ShieldAlert } from 'lucide-react';
 
-export const StaffSecurity: React.FC = () => {
+export const MockStaffSecurity: React.FC = () => {
   const {
     staffUsers,
     currentAdmin,

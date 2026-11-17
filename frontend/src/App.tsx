@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { AppShell } from './layouts/AppShell';
 import { AdminShell } from './layouts/AdminShell';
@@ -102,22 +102,38 @@ import { Toaster } from './components/ui/sonner';
 // Platform Admin Auth
 import { AdminLogin } from './pages/Admin/Auth/AdminLogin';
 import { AdminTwoFactor } from './pages/Admin/Auth/AdminTwoFactor';
+import { LiveAdminLogin } from './pages/Admin/Auth/LiveAdminLogin';
+import { LiveAdminTwoFactor } from './pages/Admin/Auth/LiveAdminTwoFactor';
+import { LiveAdminSetPassword } from './pages/Admin/Auth/LiveAdminSetPassword';
+import { AdminBlocked } from './pages/Admin/Auth/AdminBlocked';
+import { useAdminSession } from './data/adminSession';
+import { adminGuardTarget } from './api/adapters/platform/session';
+import { rememberNextPath } from './api/adapters/security';
+import { describeError } from './api/messages';
 
 // Platform Admin Modules (§3.1 to §3.12)
 import { AdminDashboard } from './pages/Admin/Overview/AdminDashboard';
 import { TenantsList } from './pages/Admin/Tenants/TenantsList';
 import { TenantDetail } from './pages/Admin/Tenants/TenantDetail';
 import { OrgSettings } from './pages/Org/OrgSettings';
-import { PlansList } from './pages/Admin/Plans/PlansList';
-import { CouponsList } from './pages/Admin/Coupons/CouponsList';
+import { MockPlansList } from './pages/Admin/Plans/PlansList';
+import { LivePlansList } from './pages/Admin/Plans/LivePlansList';
+import { MockCouponsList } from './pages/Admin/Coupons/CouponsList';
+import { LiveCouponsList } from './pages/Admin/Coupons/LiveCouponsList';
 import { BillingOps } from './pages/Admin/Billing/BillingOps';
 import { GrowthTrials } from './pages/Admin/Growth/GrowthTrials';
 import { PartnersList } from './pages/Admin/Partners/PartnersList';
 import { SupportCenter } from './pages/Admin/Support/SupportCenter';
 import { PlatformOps } from './pages/Admin/Ops/PlatformOps';
 import { FeatureFlags } from './pages/Admin/Flags/FeatureFlags';
-import { StaffSecurity } from './pages/Admin/Staff/StaffSecurity';
+import { MockStaffSecurity } from './pages/Admin/Staff/StaffSecurity';
+import { LiveStaffSecurity } from './pages/Admin/Staff/LiveStaffSecurity';
+import { LiveAuditLog } from './pages/Admin/Staff/LiveAuditLog';
 import { ComplianceCenter } from './pages/Admin/Compliance/ComplianceCenter';
+
+const PlansList = selectByMode({ mock: MockPlansList, live: LivePlansList });
+const CouponsList = selectByMode({ mock: MockCouponsList, live: LiveCouponsList });
+const StaffSecurity = selectByMode({ mock: MockStaffSecurity, live: LiveStaffSecurity });
 
 const useGuardSync = selectByMode<(slug: string | undefined) => { unknownCompany: boolean }>({
   mock: () => ({ unknownCompany: false }),
@@ -149,7 +165,7 @@ function RequireOrgAuth() {
   return <OrgSettings />;
 }
 
-function RequireAdminAuth() {
+function MockRequireAdminAuth() {
   const isAdminAuthenticated = useAdminStore((s) => s.isAdminAuthenticated);
   const location = useLocation();
 
@@ -158,6 +174,31 @@ function RequireAdminAuth() {
   }
   return <AdminShell />;
 }
+
+/** Live: the admin API decides. A password-only sign-in, an idle session and a blocked network each have a page. */
+function LiveRequireAdminAuth() {
+  const session = useAdminSession();
+  const location = useLocation();
+  const target = session.isPending ? null : adminGuardTarget(session.error, location);
+  const next = target?.kind === 'redirect' ? target.next : undefined;
+  useEffect(() => {
+    if (next) rememberNextPath(next);
+  }, [next]);
+
+  if (session.isPending) return null;
+  if (target?.kind === 'redirect') return <Navigate to={target.to} replace />;
+  if (target?.kind === 'error') {
+    return (
+      <div role="alert" className="p-8 text-[13px] text-danger">
+        {describeError(session.error)}{' '}
+        <button type="button" className="underline cursor-pointer" onClick={() => void session.refetch()}>Try again</button>
+      </div>
+    );
+  }
+  return <AdminShell />;
+}
+
+const RequireAdminAuth = selectByMode({ mock: MockRequireAdminAuth, live: LiveRequireAdminAuth });
 
 function RootRedirect() {
   const { status } = useAuthStatus();
@@ -185,24 +226,28 @@ export default function App() {
         {IS_LIVE && <Route path="/i/:token" element={<PublicInvoicePage />} />}
 
         {/* Platform Admin Auth */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/two-factor" element={<AdminTwoFactor />} />
+        <Route path="/admin/login" element={IS_LIVE ? <LiveAdminLogin /> : <AdminLogin />} />
+        <Route path="/admin/two-factor" element={IS_LIVE ? <LiveAdminTwoFactor /> : <AdminTwoFactor />} />
+        {IS_LIVE && <Route path="/admin/set-password" element={<LiveAdminSetPassword />} />}
+        {IS_LIVE && <Route path="/admin/blocked" element={<AdminBlocked />} />}
 
         {/* Platform Admin Back-Office Console (/admin/*) */}
         <Route path="/admin" element={<RequireAdminAuth />}>
-          <Route index element={<AdminDashboard />} />
+          {IS_LIVE ? <Route index element={<Navigate to="/admin/tenants" replace />} /> : <Route index element={<AdminDashboard />} />}
           <Route path="tenants" element={<TenantsList />} />
           <Route path="tenants/:id" element={<TenantDetail />} />
           <Route path="plans" element={<PlansList />} />
           <Route path="coupons" element={<CouponsList />} />
-          <Route path="billing" element={<BillingOps />} />
-          <Route path="growth" element={<GrowthTrials />} />
-          <Route path="partners" element={<PartnersList />} />
-          <Route path="support" element={<SupportCenter />} />
-          <Route path="ops" element={<PlatformOps />} />
-          <Route path="flags" element={<FeatureFlags />} />
+          {!IS_LIVE && <Route path="billing" element={<BillingOps />} />}
+          {!IS_LIVE && <Route path="growth" element={<GrowthTrials />} />}
+          {!IS_LIVE && <Route path="partners" element={<PartnersList />} />}
+          {!IS_LIVE && <Route path="support" element={<SupportCenter />} />}
+          {!IS_LIVE && <Route path="ops" element={<PlatformOps />} />}
+          {!IS_LIVE && <Route path="flags" element={<FeatureFlags />} />}
           <Route path="staff" element={<StaffSecurity />} />
-          <Route path="compliance" element={<ComplianceCenter />} />
+          {IS_LIVE && <Route path="audit" element={<LiveAuditLog />} />}
+          {!IS_LIVE && <Route path="compliance" element={<ComplianceCenter />} />}
+          {IS_LIVE && <Route path="*" element={<Navigate to="/admin/tenants" replace />} />}
         </Route>
 
         {/* Main Tenant Application */}
