@@ -1818,7 +1818,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** A second person accepts an intercompany difference above the group's tolerance, with a reason; it is not eliminated */
+        /** A second person accepts an intercompany difference above the group's tolerance, with a reason; the pair is eliminated in full and the difference sits in the intercompany differences account */
         post: operations["consolidation.runs.intercompany.accept"];
         delete?: never;
         options?: never;

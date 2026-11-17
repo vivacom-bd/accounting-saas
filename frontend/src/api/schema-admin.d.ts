@@ -199,6 +199,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/announcements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin.announcements.index"];
+        put?: never;
+        post: operations["admin.announcements.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/announcements/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["admin.announcements.update"];
+        post?: never;
+        delete: operations["admin.announcements.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/approvals": {
         parameters: {
             query?: never;
@@ -418,6 +450,150 @@ export interface paths {
         put: operations["admin.tenants.overrides.put"];
         post?: never;
         delete: operations["admin.tenants.overrides.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/flags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin.flags.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/flags/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["admin.flags.set"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/flags/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["admin.tenants.flags.set"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/impersonations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin.impersonations.index"];
+        put?: never;
+        post: operations["admin.impersonations.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/impersonations/{id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["admin.impersonations.end"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/impersonations/write-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["admin.impersonations.write-requests.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin.ops.health"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ops/maintenance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin.ops.maintenance"];
+        put: operations["admin.ops.maintenance.set"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/rate-limit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin.tenants.rate-limit.show"];
+        put: operations["admin.tenants.rate-limit.set"];
+        post?: never;
+        delete: operations["admin.tenants.rate-limit.clear"];
         options?: never;
         head?: never;
         patch?: never;
@@ -706,6 +882,102 @@ export interface paths {
         put?: never;
         post: operations["admin.tenants.subscription.apply-coupon"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin.search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/jobs/failed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin.jobs.failed.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mail-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin.mail-log.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/webhook-deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin.tenants.webhook-deliveries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/jobs/failed/{uuid}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["admin.jobs.failed.retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/jobs/failed/{uuid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["admin.jobs.failed.forget"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1294,6 +1566,91 @@ export interface operations {
                 };
             };
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "admin.announcements.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: unknown[];
+                    };
+                };
+            };
+        };
+    };
+    "admin.announcements.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: string;
+                    };
+                };
+            };
+        };
+    };
+    "admin.announcements.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: string;
+                    };
+                };
+            };
+        };
+    };
+    "admin.announcements.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     "admin.approvals.index": {
@@ -1981,6 +2338,487 @@ export interface operations {
             path: {
                 tenant: string;
                 key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "admin.flags.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            name: string;
+                            description: string;
+                            default: string;
+                            global: boolean | null;
+                            overrides_count: string;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    "admin.flags.set": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    active: boolean | null;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            name: string;
+                            active: boolean | null;
+                        };
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "admin.tenants.flags.set": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    active: boolean | null;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            tenant_id: string;
+                            name: string;
+                            active: boolean | null;
+                        };
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "admin.impersonations.index": {
+        parameters: {
+            query?: {
+                tenant?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            tenant_id: string;
+                            admin_id: string;
+                            admin_name: unknown;
+                            user_id: string;
+                            mode: string;
+                            reason: string;
+                            owner_override: boolean;
+                            grant_id: string | null;
+                            approval_id: string | null;
+                            started_at: string | null;
+                            ends_at: string;
+                            ended_at: string | null;
+                            created_at: string;
+                            /** @enum {string} */
+                            status: "ended" | "expired" | "active" | "pending";
+                        }[];
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "admin.impersonations.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uuid */
+                    tenant_id: string;
+                    /** Format: uuid */
+                    user_id: string;
+                    /** @enum {string} */
+                    mode: "read" | "write";
+                    reason: string;
+                    /** Format: uuid */
+                    approval_id?: string | null;
+                    owner_override?: boolean;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            session_id: string;
+                            ticket: string;
+                            url: string;
+                            mode: string;
+                            ends_at: string;
+                            owner_override: boolean;
+                        };
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "admin.impersonations.end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            tenant_id: string;
+                            admin_id: string;
+                            admin_name: unknown;
+                            user_id: string;
+                            mode: string;
+                            reason: string;
+                            owner_override: boolean;
+                            grant_id: string | null;
+                            approval_id: string | null;
+                            started_at: string | null;
+                            ends_at: string;
+                            ended_at: string | null;
+                            created_at: string;
+                            /** @enum {string} */
+                            status: "ended" | "expired" | "active" | "pending";
+                        };
+                    };
+                };
+            };
+        };
+    };
+    "admin.impersonations.write-requests.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uuid */
+                    tenant_id: string;
+                    /** Format: uuid */
+                    user_id: string;
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            /** @enum {string} */
+                            kind: "refund" | "impersonate_write" | "plan_migration" | "tenant_delete" | "legal_hold_release";
+                            tenant_id: string | null;
+                            subject: {
+                                [key: string]: unknown;
+                            };
+                            reason: string;
+                            requested_by: string;
+                            approved_by: string | null;
+                            status: string;
+                            rejection_reason: string | null;
+                            expires_at: string;
+                            decided_at: string | null;
+                            executed_at: string | null;
+                            created_at: string | null;
+                        };
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "admin.ops.health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            database: string;
+                            redis: string;
+                            queue: {
+                                /** @enum {string} */
+                                status: "down" | "ok";
+                                pending: string | null;
+                                failed: string | null;
+                                queues: string[];
+                            };
+                            outbox_backlog: {
+                                /** @constant */
+                                status: "ok";
+                                pending: number;
+                                oldest_at: string | null;
+                            } | {
+                                /** @constant */
+                                status: "down";
+                                pending: null;
+                                oldest_at: null;
+                            };
+                            scheduler_last_beat: {
+                                /** @enum {string} */
+                                status: "stale" | "ok";
+                                at: null;
+                            } | {
+                                /** @constant */
+                                status: "down";
+                                at: null;
+                            };
+                            audit_seal_last_run: {
+                                /** @enum {string} */
+                                status: "stale" | "ok";
+                                at: null;
+                            } | {
+                                /** @constant */
+                                status: "unknown";
+                                at: null;
+                            } | {
+                                /** @constant */
+                                status: "down";
+                                at: null;
+                            };
+                            /** @description mail_log records only mail that was sent (Laravel has no failed-mail event), so this counts sent mail. */
+                            mail_sent_24h: number | null;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    "admin.ops.maintenance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            enabled: boolean;
+                            message: string | null;
+                            ends_at: string | null;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    "admin.ops.maintenance.set": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    enabled: boolean;
+                    message?: string | null;
+                    /** Format: date-time */
+                    ends_at?: string | null;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            enabled: boolean;
+                            message: string | null;
+                            ends_at: string | null;
+                        };
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "admin.tenants.rate-limit.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            tenant_id: string;
+                            per_minute: number;
+                            reason: string;
+                            expires_at: string | null;
+                        } | null;
+                    };
+                };
+            };
+        };
+    };
+    "admin.tenants.rate-limit.set": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    per_minute: number;
+                    reason: string;
+                    /** Format: date-time */
+                    expires_at?: string | null;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            tenant_id: string;
+                            per_minute: number;
+                            reason: string;
+                            expires_at: string | null;
+                        } | null;
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "admin.tenants.rate-limit.clear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
             };
             cookie?: never;
         };
@@ -2948,6 +3786,176 @@ export interface operations {
                 };
             };
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "admin.search": {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        tenants: unknown[];
+                        users: unknown[];
+                        companies: unknown[];
+                        invoices: unknown[];
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "admin.jobs.failed.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            job: string;
+                            queue: string;
+                            connection: string;
+                            failed_at: string;
+                            exception: string;
+                        }[];
+                        meta: {
+                            next_cursor: string | null;
+                            prev_cursor: string | null;
+                            limit: number;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    "admin.mail-log.index": {
+        parameters: {
+            query?: {
+                tenant?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            tenant_id: string;
+                            to: string;
+                            subject: string;
+                            notification: string;
+                            status: string;
+                            sent_at: string;
+                        }[];
+                        meta: {
+                            next_cursor: string | null;
+                            prev_cursor: string | null;
+                            limit: number;
+                        };
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "admin.tenants.webhook-deliveries": {
+        parameters: {
+            query?: {
+                limit?: number | null;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: unknown[];
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "admin.jobs.failed.retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            job: string | null;
+                            queue: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    "admin.jobs.failed.forget": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                uuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     "admin.tenants.users.reset-two-factor": {

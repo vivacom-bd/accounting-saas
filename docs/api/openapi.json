@@ -9885,7 +9885,7 @@
         "/v1/consolidation/runs/{run}/intercompany/{match}/accept": {
             "post": {
                 "operationId": "consolidation.runs.intercompany.accept",
-                "summary": "A second person accepts an intercompany difference above the group's tolerance, with a reason; it is not eliminated",
+                "summary": "A second person accepts an intercompany difference above the group's tolerance, with a reason; the pair is eliminated in full and the difference sits in the intercompany differences account",
                 "tags": [
                     "ConsolidationRun"
                 ],
@@ -59416,7 +59416,6 @@
                     "two_factor_enabled",
                     "signing_pin_set",
                     "tenants",
-                    "features"
                     "features",
                     "impersonation"
                 ],
