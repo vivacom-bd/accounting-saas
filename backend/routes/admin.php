@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin\ApprovalsController;
 use App\Http\Controllers\Admin\Auth\AdminLoginController;
 use App\Http\Controllers\Admin\Auth\AdminSessionController;
 use App\Http\Controllers\Admin\Auth\AdminTwoFactorController;
@@ -22,4 +23,8 @@ Route::post('auth/two-factor', [AdminTwoFactorController::class, 'verify'])->mid
 
 Route::middleware('admin.auth')->group(function (): void {
     Route::get('session', [AdminSessionController::class, 'show'])->name('session');
+
+    Route::get('approvals', [ApprovalsController::class, 'index'])->name('approvals.index');
+    Route::post('approvals/{id}/approve', [ApprovalsController::class, 'approve'])->middleware('admin.can:approvals.decide')->name('approvals.approve');
+    Route::post('approvals/{id}/reject', [ApprovalsController::class, 'reject'])->middleware('admin.can:approvals.decide')->name('approvals.reject');
 });

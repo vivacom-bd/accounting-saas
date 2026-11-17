@@ -64,6 +64,10 @@ final class StatusMap
         'admin_two_factor_required' => 401,
         'two_factor_already_confirmed' => 409,
         'two_factor_not_started' => 409,
+        // Two-person approvals (plan Task 4).
+        'approval_self_decision' => 403,
+        'approval_not_pending' => 409,
+        'approval_required' => 409,
     ];
 
     public static function status(string $code): int

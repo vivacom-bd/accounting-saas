@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Tests\Support\AdminApi;
 use Tests\Support\AssetApi;
 use Tests\Support\MakesApiCalls;
 use Tests\Support\ProcurementApi;
@@ -17,4 +18,5 @@ pest()->use(MakesApiCalls::class)->in('Api/Ledger', 'Api/Trade', 'Api/Files', 'A
 pest()->use(TradeApi::class)->in('Api/Trade', 'Api/Files', 'Api/Recurring', 'Api/Settings', 'Api/Workflow', 'Api/Org', 'Api/Audit', 'Api/Procurement', 'Api/Documents', 'Api/Notifications', 'Feature/FixedAssets', 'Invariants/FixedAssets');
 pest()->use(ProcurementApi::class)->in('Api/Procurement');
 pest()->use(AssetApi::class)->in('Feature/FixedAssets', 'Invariants/FixedAssets');
+pest()->use(AdminApi::class)->in('Api/Admin', 'Feature/Admin');
 pest()->use(UploadsAttachments::class)->in('Api/Files');
