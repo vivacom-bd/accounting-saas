@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\Plans\AddonsController;
 use App\Http\Controllers\Admin\Plans\CouponsController;
 use App\Http\Controllers\Admin\Plans\PlansController;
 use App\Http\Controllers\Admin\Staff\StaffController;
+use App\Http\Controllers\Admin\Tenants\ProvisionTenantController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -42,6 +43,9 @@ Route::middleware('admin.auth')->group(function (): void {
         Route::post('staff/{id}/deactivate', [StaffController::class, 'deactivate'])->name('staff.deactivate');
         Route::post('staff/{id}/reset-two-factor', [StaffController::class, 'resetTwoFactor'])->name('staff.reset-two-factor');
     });
+
+    // Tenants (Task 6)
+    Route::post('tenants', ProvisionTenantController::class)->middleware('admin.can:tenants.provision')->name('tenants.store');
 
     Route::middleware('admin.can:audit.view')->group(function (): void {
         Route::get('audit', [AdminAuditController::class, 'index'])->name('audit.index');
