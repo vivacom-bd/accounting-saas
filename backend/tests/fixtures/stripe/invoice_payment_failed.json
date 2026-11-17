@@ -1,0 +1,26 @@
+{
+  "id": "evt_invoice_failed",
+  "object": "event",
+  "type": "invoice.payment_failed",
+  "created": 1773567000,
+  "data": {
+    "object": {
+      "id": "in_test_2",
+      "object": "invoice",
+      "customer": "cus_test_1",
+      "subscription": "sub_test_1",
+      "number": "LDG-0002",
+      "status": "open",
+      "currency": "usd",
+      "subtotal": 4900,
+      "tax": 0,
+      "total": 4900,
+      "amount_paid": 0,
+      "due_date": 1773567000,
+      "status_transitions": {},
+      "period_start": 1773567000,
+      "period_end": 1776245400,
+      "lines": {"data": [{"description": "Pro plan (monthly)", "amount": 4900, "period": {"start": 1773567000, "end": 1776245400}}]}
+    }
+  }
+}

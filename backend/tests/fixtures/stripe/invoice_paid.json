@@ -1,0 +1,36 @@
+{
+  "id": "evt_invoice_paid",
+  "object": "event",
+  "type": "invoice.paid",
+  "created": 1773567000,
+  "data": {
+    "object": {
+      "id": "in_test_1",
+      "object": "invoice",
+      "customer": "cus_test_1",
+      "subscription": "sub_test_1",
+      "number": "LDG-0001",
+      "status": "paid",
+      "currency": "usd",
+      "subtotal": 4900,
+      "tax": 784,
+      "total": 5684,
+      "amount_paid": 5684,
+      "due_date": 1773567000,
+      "status_transitions": {"paid_at": 1773567000},
+      "invoice_pdf": "https://pay.example.test/in_test_1.pdf",
+      "period_start": 1773567000,
+      "period_end": 1776245400,
+      "lines": {
+        "data": [
+          {
+            "description": "Pro plan (monthly)",
+            "amount": 4900,
+            "period": {"start": 1773567000, "end": 1776245400},
+            "metadata": {"plan_code": "pro"}
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "evt_sub_created",
+  "object": "event",
+  "type": "customer.subscription.created",
+  "created": 1773566000,
+  "data": {
+    "object": {
+      "id": "sub_test_1",
+      "object": "subscription",
+      "customer": "cus_test_1",
+      "status": "incomplete",
+      "current_period_end": 1776245400,
+      "trial_end": null,
+      "cancel_at": null,
+      "cancel_at_period_end": false
+    }
+  }
+}

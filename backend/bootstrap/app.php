@@ -46,6 +46,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 $admin->domain($domain);
             }
             $admin->group(base_path('routes/admin.php'));
+            // Stripe webhook (plan Task 12): outside /api/v1, no middleware group, signature-verified in the controller.
+            Route::group([], base_path('routes/billing.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {

@@ -1,0 +1,16 @@
+{
+  "id": "evt_payout_paid",
+  "object": "event",
+  "type": "payout.paid",
+  "created": 1773569000,
+  "data": {
+    "object": {
+      "id": "po_test_1",
+      "object": "payout",
+      "amount": 120000,
+      "currency": "usd",
+      "arrival_date": 1773705600,
+      "status": "paid"
+    }
+  }
+}
