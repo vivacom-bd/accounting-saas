@@ -10,6 +10,9 @@ use App\Contracts\Clock;
 use App\Http\Controllers\Controller;
 use App\Http\Support\AdminSession;
 use App\Http\Support\RequestAdminActor;
+use App\Support\Admin\AdminAuditWriter;
+use App\Support\Admin\AdminTransaction;
+use App\Support\Admin\AdminTwoFactor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -32,6 +35,19 @@ final class AdminLoginController extends Controller
         ]);
 
         $admin = $attempt($data['email'], $data['password'], RequestAdminActor::context($request));
+        if (! AdminTwoFactor::required()) {
+            AdminSession::begin($request, $admin, $clock);
+            AdminTransaction::run(function () use ($admin, $request, $clock): void {
+                $admin->last_login_at = $clock->now();
+                $admin->save();
+                $audit = app(AdminAuditWriter::class);
+                $audit->record(RequestAdminActor::for($request, $admin), 'auth.login', null, 'admin_user', $admin->id, after: ['method' => 'password', 'two_factor' => 'off']);
+            });
+            AdminSession::complete($request, $admin, $clock);
+
+            return response()->json(['two_factor' => 'off', 'data' => AdminSessionController::payload($admin)]);
+        }
+
         AdminSession::begin($request, $admin, $clock);
 
         return response()->json(['two_factor' => $admin->two_factor_confirmed_at === null ? 'enrol' : 'challenge']);

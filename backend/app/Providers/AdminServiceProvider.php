@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Session\SessionManager;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -33,6 +34,10 @@ final class AdminServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if ($this->app->environment('production') && config('admin.two_factor') === false) {
+            Log::warning('ADMIN_TWO_FACTOR=false is ignored in production: staff two-factor stays mandatory.');
+        }
+
         // A session store of its own, over the same kind of handler as tenant sessions (config admin.session_driver).
         $this->app->make(SessionManager::class)->extend(UseAdminSession::DRIVER, function (Application $app) {
             return (new SessionManager($app))->driver((string) config('admin.session_driver'))->getHandler();

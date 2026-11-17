@@ -12,6 +12,10 @@ describe('admin login state machine', () => {
     expect(loginReducer(initialLogin, { type: 'password_ok', twoFactor: 'challenge' })).toEqual({ step: 'challenge' });
   });
 
+  it('password accepted with two-factor switched off: signed in, nothing more to do', () => {
+    expect(loginReducer(initialLogin, { type: 'password_ok', twoFactor: 'off' })).toEqual({ step: 'done' });
+  });
+
   it('password accepted: a new account must enrol first', () => {
     expect(loginReducer(initialLogin, { type: 'password_ok', twoFactor: 'enrol' })).toEqual({ step: 'enrol', enrolment: null });
   });

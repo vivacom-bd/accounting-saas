@@ -514,18 +514,71 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "two_factor": {
-                                            "type": "string",
-                                            "enum": [
-                                                "enrol",
-                                                "challenge"
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "two_factor": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "enrol",
+                                                        "challenge"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "two_factor"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "two_factor": {
+                                                    "type": "string",
+                                                    "const": "off"
+                                                },
+                                                "data": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "email": {
+                                                            "type": "string"
+                                                        },
+                                                        "role": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "owner",
+                                                                "finance",
+                                                                "sales",
+                                                                "support",
+                                                                "engineer",
+                                                                "readonly"
+                                                            ]
+                                                        },
+                                                        "can": {
+                                                            "type": "array",
+                                                            "items": {}
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "name",
+                                                        "email",
+                                                        "role",
+                                                        "can"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "two_factor",
+                                                "data"
                                             ]
                                         }
-                                    },
-                                    "required": [
-                                        "two_factor"
                                     ]
                                 }
                             }

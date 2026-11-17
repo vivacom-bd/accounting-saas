@@ -21,6 +21,11 @@ export const LiveAdminLogin: React.FC = () => {
     try {
       const twoFactor = await adminLogin(email.trim(), password);
       const next = loginReducer(initialLogin, { type: 'password_ok', twoFactor });
+      if (next.step === 'done') {
+        // Two-factor is switched off on this server: the password already signed the staff member in.
+        navigate('/admin', { replace: true });
+        return;
+      }
       rememberTwoFactorMode(next.step === 'enrol' ? 'enrol' : 'challenge');
       navigate('/admin/two-factor');
     } catch (err) {

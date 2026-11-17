@@ -1397,6 +1397,17 @@ export interface operations {
                     "application/json": {
                         /** @enum {string} */
                         two_factor: "enrol" | "challenge";
+                    } | {
+                        /** @constant */
+                        two_factor: "off";
+                        data: {
+                            id: string;
+                            name: string;
+                            email: string;
+                            /** @enum {string} */
+                            role: "owner" | "finance" | "sales" | "support" | "engineer" | "readonly";
+                            can: unknown[];
+                        };
                     };
                 };
             };

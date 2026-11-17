@@ -16,7 +16,7 @@ export type LoginState =
   | { step: 'done' };
 
 export type LoginEvent =
-  | { type: 'password_ok'; twoFactor: 'challenge' | 'enrol' }
+  | { type: 'password_ok'; twoFactor: 'challenge' | 'enrol' | 'off' }
   | { type: 'enrol_started'; enrolment: Enrolment }
   | { type: 'confirmed'; recoveryCodes: string[] }
   | { type: 'acknowledged' }
@@ -28,6 +28,7 @@ export function loginReducer(state: LoginState, event: LoginEvent): LoginState {
   switch (event.type) {
     case 'password_ok':
       if (state.step !== 'password') return state;
+      if (event.twoFactor === 'off') return { step: 'done' };
       return event.twoFactor === 'enrol' ? { step: 'enrol', enrolment: null } : { step: 'challenge' };
     case 'enrol_started':
       return state.step === 'enrol' ? { step: 'enrol', enrolment: event.enrolment } : state;

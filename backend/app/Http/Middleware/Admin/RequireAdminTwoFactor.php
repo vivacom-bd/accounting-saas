@@ -6,6 +6,7 @@ namespace App\Http\Middleware\Admin;
 
 use App\Domain\Shared\DomainRuleViolation;
 use App\Http\Support\AdminSession;
+use App\Support\Admin\AdminTwoFactor;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -34,7 +35,7 @@ final class RequireAdminTwoFactor
             AdminSession::end($request);
 
             throw DomainRuleViolation::single('unauthenticated', 'Sign in to continue.');
-        } elseif ($admin->two_factor_confirmed_at === null) {
+        } elseif ($admin->two_factor_confirmed_at === null && AdminTwoFactor::required()) {
             AdminSession::end($request);
 
             throw DomainRuleViolation::single('admin_two_factor_required', 'Set up two-factor authentication to continue.');

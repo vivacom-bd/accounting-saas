@@ -18,6 +18,10 @@ return [
     'idle_minutes' => (int) env('ADMIN_IDLE_MINUTES', 30),
     'absolute_hours' => (int) env('ADMIN_ABSOLUTE_HOURS', 12),
 
+    // Staff two-factor sign-in. Setting this false only takes effect outside production (see AdminTwoFactor::required()):
+    // the password alone then signs staff in. Production always requires two-factor.
+    'two_factor' => (bool) env('ADMIN_TWO_FACTOR', true),
+
     // Minutes between a correct password and the TOTP step before the half-finished sign-in is dropped.
     'pending_minutes' => 10,
 

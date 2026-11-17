@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Middleware\Admin\UseAdminSession;
 use App\Http\Middleware\Admin\ValidateAdminCsrfToken;
 use App\Models\Admin\AdminUser;
+use App\Support\Admin\AdminTwoFactor;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -357,4 +358,31 @@ it('logs out and records it', function (): void {
 
     $logout = DB::connection('pgsql_platform')->table('admin_audit_events')->where('action', 'auth.logout')->first();
     expect($logout->admin_id)->toBe($admin->id);
+});
+
+it('signs in on the password alone when two-factor is switched off outside production', function (): void {
+    config(['admin.two_factor' => false]);
+    $admin = staffAdmin(['email' => 'nofa@ledgerly.test']);
+
+    $this->postJson('/api/admin/auth/login', ['email' => 'nofa@ledgerly.test', 'password' => ADMIN_PASSWORD])
+        ->assertOk()->assertJsonPath('two_factor', 'off')->assertJsonPath('data.email', 'nofa@ledgerly.test');
+
+    $this->getJson('/api/admin/session')->assertOk()->assertJsonPath('data.id', $admin->id);
+    $event = DB::connection('pgsql_platform')->table('admin_audit_events')->where('action', 'auth.login')->first();
+    expect(json_decode((string) $event->after, true))->toMatchArray(['two_factor' => 'off']);
+});
+
+it('keeps two-factor mandatory in production whatever the flag says', function (): void {
+    config(['admin.two_factor' => false]);
+    expect(AdminTwoFactor::required())->toBeFalse();
+
+    app()->detectEnvironment(fn (): string => 'production');
+    expect(AdminTwoFactor::required())->toBeTrue();
+
+    // The enforcement point: an account without a confirmed device is turned away, not let through on the flag.
+    staffAdmin(['email' => 'prod@ledgerly.test']);
+    $this->withoutMiddleware(ValidateAdminCsrfToken::class);
+    $this->postJson('/api/admin/auth/login', ['email' => 'prod@ledgerly.test', 'password' => ADMIN_PASSWORD])
+        ->assertOk()->assertExactJson(['two_factor' => 'enrol']);
+    $this->getJson('/api/admin/session')->assertStatus(401)->assertJsonPath('code', 'admin_two_factor_required');
 });

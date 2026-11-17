@@ -9,7 +9,7 @@ export async function getAdminSession(): Promise<AdminSession> {
   return toAdminSession(res.data);
 }
 
-export async function adminLogin(email: string, password: string, intent: Intent = createIntent()): Promise<'challenge' | 'enrol'> {
+export async function adminLogin(email: string, password: string, intent: Intent = createIntent()): Promise<'challenge' | 'enrol' | 'off'> {
   const res = await adminHttp.post('/auth/login', { body: { email, password }, intent });
   return res.two_factor;
 }
