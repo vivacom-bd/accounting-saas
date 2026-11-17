@@ -23,7 +23,6 @@ final class OrganisationController extends Controller
         $principal = $request->user() ?? abort(401);
 
         return new FreeFormDataResource($profile($principal) + ['can' => ['update' => (bool) RequestUser::principal($request)?->can('update', Tenant::class)]]);
-        return new FreeFormDataResource($profile($principal) + ['can' => ['update' => RequestUser::principal($request)?->can('update', Tenant::class) ?? false]]);
     }
 
     #[Authorize('update', Tenant::class)]

@@ -33,14 +33,13 @@ final class SessionResource extends JsonResource
      *         current: bool,
      *         can: array{manage_members: bool, create_companies: bool}
      *     }>,
-     *     features: array<string, bool>
+     *     features: array<string, bool>,
      *     impersonation: array{admin_name: string, mode: string, ends_at: string}|null
      * }
      */
     public function toArray(Request $request): array
     {
-        /** @var array{id: string, name: string, email: string, two_factor_enabled: bool, signing_pin_set: bool, tenants: list<array{id: string, name: string, slug: string, lifecycle: string, role: string, current: bool, can: array{manage_members: bool, create_companies: bool}}>, features: array<string, bool>} $session */
-        /** @var array{id: string, name: string, email: string, two_factor_enabled: bool, signing_pin_set: bool, tenants: list<array{id: string, name: string, slug: string, lifecycle: string, role: string, current: bool, can: array{manage_members: bool, create_companies: bool}}>, impersonation: array{admin_name: string, mode: string, ends_at: string}|null} $session */
+        /** @var array{id: string, name: string, email: string, two_factor_enabled: bool, signing_pin_set: bool, tenants: list<array{id: string, name: string, slug: string, lifecycle: string, role: string, current: bool, can: array{manage_members: bool, create_companies: bool}}>, features: array<string, bool>, impersonation: array{admin_name: string, mode: string, ends_at: string}|null} $session */
         $session = $this->resource;
 
         return $session;

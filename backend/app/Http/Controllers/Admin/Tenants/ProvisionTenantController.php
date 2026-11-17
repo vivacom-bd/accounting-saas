@@ -9,8 +9,9 @@ use App\Actions\Admin\Tenants\ProvisionTenant;
 use App\Domain\Shared\DomainRuleViolation;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ProvisionTenantRequest;
-use App\Http\Resources\Admin\AdminTenantResource;
+use App\Http\Resources\Admin\ProvisionedTenantResource;
 use App\Http\Support\RequestAdminActor;
+use App\Queries\Admin\Tenants\TenantDirectory;
 use Illuminate\Http\JsonResponse;
 use Ramsey\Uuid\Uuid;
 
@@ -50,6 +51,8 @@ final class ProvisionTenantController extends Controller
             customAmount: $request->filled('custom_amount') ? (int) $request->input('custom_amount') : null,
         ));
 
-        return response()->json(['data' => AdminTenantResource::make($result)], $result->created ? 201 : 200);
+        $tenant = TenantDirectory::find($result->id) ?? throw DomainRuleViolation::single('not_found', 'Organisation not found.');
+
+        return response()->json(['data' => ProvisionedTenantResource::make($tenant, $result)], $result->created ? 201 : 200);
     }
 }

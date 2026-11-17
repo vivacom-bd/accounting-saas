@@ -124,6 +124,8 @@ Route::middleware('admin.auth')->group(function (): void {
         Route::post('tenants/{tenant}/lifecycle', [TenantsController::class, 'lifecycle'])->name('tenants.lifecycle');
         Route::post('tenants/{tenant}/users/{user}/reset-two-factor', [TenantMembersController::class, 'resetTwoFactor'])->name('tenants.users.reset-two-factor');
         Route::post('tenants/{tenant}/users/{user}/disable', [TenantMembersController::class, 'disable'])->name('tenants.users.disable');
+    });
+
     // Billing gateway and subscriptions (Task 11)
     Route::middleware('admin.can:billing.view')->group(function (): void {
         Route::get('billing/status', BillingStatusController::class)->name('billing.status');
@@ -140,7 +142,6 @@ Route::middleware('admin.auth')->group(function (): void {
         Route::post('tenants/{tenant}/subscription/convert-trial', [SubscriptionsController::class, 'convertTrial'])->name('tenants.subscription.convert-trial');
         Route::post('tenants/{tenant}/subscription/apply-coupon', [SubscriptionsController::class, 'applyCoupon'])->name('tenants.subscription.apply-coupon');
     });
-
     // Support tools (Task 15)
     Route::get('search', [SupportController::class, 'search'])->middleware('admin.can:tenants.view')->name('search');
     Route::middleware('admin.can:ops.view')->group(function (): void {
@@ -158,7 +159,6 @@ Route::middleware('admin.auth')->group(function (): void {
         Route::put('announcements/{id}', [AnnouncementsController::class, 'update'])->whereUuid('id')->name('announcements.update');
         Route::delete('announcements/{id}', [AnnouncementsController::class, 'destroy'])->whereUuid('id')->name('announcements.destroy');
     });
-
     // Platform operations and feature flags (Task 17)
     Route::middleware('admin.can:ops.view')->group(function (): void {
         Route::get('ops/health', [OpsController::class, 'health'])->name('ops.health');

@@ -188,20 +188,6 @@ final class ProvisionTenant
             // Serialise concurrent retries on the tenant row, so the event and the audit row are written once.
             AdminTransaction::connection()->table('tenants')->where('id', $in->tenantId)->lockForUpdate()->value('id');
             $done = AdminTransaction::connection()->table('tenant_lifecycle_events')->where('tenant_id', $in->tenantId)->exists();
-            if ($done) {
-                return;
-            }
-            $state = LifecycleState::from($result->status);
-            $this->lifecycle->recordInitial($admin, $in->tenantId, $state, 'Provisioned from admin', $this->clock->now());
-            $this->audit->record(
-                $admin, 'tenant.provisioned', $in->tenantId, 'tenant', $in->tenantId, null,
-                [
-                    'name' => $result->name, 'slug' => $result->slug, 'country' => $result->country, 'lifecycle' => $result->status,
-                    'plan' => $result->planCode, 'billing' => $in->billing, 'owner_email' => $result->ownerEmail,
-                    'trial_ends_at' => $result->trialEndsAt?->format(DATE_ATOM),
-                ],
-                $in->note,
-            );
             if (! $done) {
                 $this->recordFirstEvents($admin, $in, $result);
             }

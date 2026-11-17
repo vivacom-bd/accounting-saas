@@ -59,7 +59,6 @@ return Application::configure(basePath: dirname(__DIR__))
         // SPA requests from SANCTUM_STATEFUL_DOMAINS get session cookies and CSRF (13 §7).
         $middleware->statefulApi();
         $middleware->api(prepend: [AssignRequestId::class, SetTenantFromToken::class], append: [MeterApiCall::class]);
-        $middleware->api(prepend: [AssignRequestId::class, SetTenantFromToken::class]);
         // Platform maintenance mode (plan T8): 503 on the tenant API, except sign-in, session and public paths.
         $middleware->api(append: [PlatformMaintenance::class]);
         // Priority-sorted ahead of auth, so the 503 shows to signed-out and signed-in callers alike.
