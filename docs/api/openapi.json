@@ -53568,7 +53568,10 @@
                         }
                     },
                     "invited_by": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "expires_at": {
                         "type": "string"

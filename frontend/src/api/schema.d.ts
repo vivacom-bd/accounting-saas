@@ -8878,7 +8878,7 @@ export interface components {
             role: string;
             company_role: string | null;
             company_ids: string[];
-            invited_by: string;
+            invited_by: string | null;
             expires_at: string;
             can: {
                 [key: string]: boolean;
