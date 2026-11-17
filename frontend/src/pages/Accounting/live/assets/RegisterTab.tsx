@@ -8,7 +8,7 @@ import {
 } from '@/api/adapters/fixedAssets';
 import { formatDate, formatMoney } from '@/lib/format';
 import { ErrorLine, LoadingLine } from '../parts';
-import { Badge, DialogShell, Field, fieldClass, MoneyField, Note, primaryBtn, Problem, secondaryBtn, todayISO, type Writer } from './parts';
+import { Badge, DialogShell, SourceWarningBadge, Field, fieldClass, MoneyField, Note, primaryBtn, Problem, secondaryBtn, todayISO, type Writer } from './parts';
 
 function useDebounced<T>(value: T, ms: number): T {
   const [v, setV] = useState(value);
@@ -324,6 +324,7 @@ export const RegisterTab: React.FC<{ writer: Writer }> = ({ writer }) => {
                       <div className="flex items-center gap-1.5 font-mono text-[11px] text-text-muted">
                         {a.number}
                         {a.is_opening && <Badge tone="draft" title="Brought in as an opening asset">Opening asset</Badge>}
+                        {a.source_warning && <SourceWarningBadge warning={a.source_warning} />}
                       </div>
                     </td>
                     <td className="px-3 text-text-secondary">{a.category_name}</td>
@@ -343,6 +344,15 @@ export const RegisterTab: React.FC<{ writer: Writer }> = ({ writer }) => {
                   {open === a.id && (
                     <tr className="bg-surface-neutral/40">
                       <td colSpan={11} className="px-4 py-3">
+                        {a.source_warning && (
+                          <p role="status" data-testid="source-warning-note" className="mb-3 rounded-md border border-warning/40 bg-warning-soft px-3 py-2 text-xs text-text-primary">
+                            {a.source_warning.message}{' '}
+                            {a.source_warning.document_id && (a.source_warning.document_type === 'bill' || a.source_warning.document_type === 'journal') && (
+                              <Link to={`/${company.slug}/${a.source_warning.document_type === 'bill' ? 'bills' : 'journals'}/${a.source_warning.document_id}`} className="font-medium text-accent hover:underline">View {a.source_warning.document_number ?? 'it'}</Link>
+                            )}{' '}
+                            <Link to={`/${company.slug}/assets?tab=adjustments`} className="font-medium text-accent hover:underline">Dispose of or write off the asset</Link>
+                          </p>
+                        )}
                         <div className="flex flex-wrap items-start justify-between gap-4 text-xs">
                           <dl className="grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-3">
                             <dt className="text-text-muted">Worn down</dt><dd>{wornDownPercent(a)}% of its depreciable value</dd>

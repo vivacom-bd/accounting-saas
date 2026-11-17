@@ -239,7 +239,30 @@ export function toTaxClassRequest(d: TaxClassDraft, version?: number): Built<Rec
 
 /* ------------------------------------------------------------------ the register */
 
+/** The bill or journal an asset was capitalised from was reversed, voided or credited in full. The register only flags it; the accountant decides. */
+export interface SourceWarning {
+  code: string;
+  message: string;
+  document_type: string;
+  document_id: string;
+  document_number: string | null;
+}
+
+export function toSourceWarning(x: unknown): SourceWarning | null {
+  if (x === null || typeof x !== 'object') return null;
+  const o = x as Record<string, unknown>;
+  if (typeof o.code !== 'string') return null;
+  return {
+    code: o.code,
+    message: typeof o.message === 'string' ? o.message : '',
+    document_type: typeof o.document_type === 'string' ? o.document_type : '',
+    document_id: typeof o.document_id === 'string' ? o.document_id : '',
+    document_number: typeof o.document_number === 'string' ? o.document_number : null,
+  };
+}
+
 export interface FixedAssetRow {
+  source_warning: SourceWarning | null;
   id: string;
   number: string;
   name: string;
@@ -309,6 +332,7 @@ export function toFixedAsset(a: ApiFixedAsset): FixedAssetRow {
     is_opening: a.is_opening,
     opening_accumulated: fromApiMoney(a.opening_accumulated),
     opening_as_of: a.opening_as_of ?? '',
+    source_warning: toSourceWarning(a.source_warning),
     source_type: a.source_type,
     source_id: a.source_id,
     source_journal_id: a.source_journal_id,
@@ -541,6 +565,7 @@ export interface DepreciationLine {
   units: number;
   carrying_before: number;
   carrying_after: number;
+  source_warning: SourceWarning | null;
 }
 
 export interface DepreciationPreview {
@@ -567,6 +592,7 @@ function toPreviewLine(x: unknown): DepreciationLine {
     units: typeof o.units === 'number' ? o.units : 0,
     carrying_before: money(o.carrying_before),
     carrying_after: money(o.carrying_after),
+    source_warning: toSourceWarning(o.source_warning),
   };
 }
 
@@ -612,6 +638,7 @@ export interface DepreciationRunLine {
   months: number;
   units: number;
   catch_up_months: number;
+  source_warning: SourceWarning | null;
 }
 
 export interface DepreciationRun {
@@ -672,7 +699,7 @@ export function toDepreciationRun(r: ApiDepreciationRun): DepreciationRun {
     version: r.version,
     lines: (r.lines ?? []).map((l) => ({
       id: l.id, asset_id: l.asset_id, asset_number: l.asset_number, asset_name: l.asset_name, amount: fromApiMoney(l.amount),
-      months: l.months, units: l.units, catch_up_months: l.catch_up_months,
+      months: l.months, units: l.units, catch_up_months: l.catch_up_months, source_warning: toSourceWarning(l.source_warning),
     })),
     can: docCan(r.can),
   };

@@ -29,6 +29,12 @@ final class DepreciationRunLineResource extends JsonResource
             'months' => $this->months,
             'units' => $this->units,
             'catch_up_months' => (int) ($this->detail['catch_up_months'] ?? 0),
+            /**
+             * Set when the asset's source bill or journal was reversed, voided or credited in full; the run still posts.
+             *
+             * @var array{code: string, message: string, document_type: string, document_id: string, document_number: string|null}|null
+             */
+            'source_warning' => $this->asset?->sourceWarning,
         ];
     }
 }

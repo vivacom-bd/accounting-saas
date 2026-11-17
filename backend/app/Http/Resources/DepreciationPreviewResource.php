@@ -26,6 +26,7 @@ final class DepreciationPreviewResource extends JsonResource
             'asset_id' => $l->assetId, 'asset_number' => $l->assetNumber, 'asset_name' => $l->assetName, 'category_name' => $l->categoryName,
             'method' => $l->method, 'months' => $l->months, 'catch_up_months' => $l->catchUpMonths, 'amount' => Json::money($l->amount, $cur),
             'units' => $l->units, 'carrying_before' => Json::money($l->carryingBefore, $cur), 'carrying_after' => Json::money($l->carryingAfter, $cur),
+            'source_warning' => $l->sourceWarning,
         ];
 
         return [

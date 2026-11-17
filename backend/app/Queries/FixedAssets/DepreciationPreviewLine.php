@@ -19,5 +19,7 @@ final readonly class DepreciationPreviewLine
         public int $units,
         public int $carryingBefore,
         public int $carryingAfter,
+        /** @var array{code: string, message: string, document_type: string, document_id: string, document_number: string|null}|null */
+        public ?array $sourceWarning = null,
     ) {}
 }

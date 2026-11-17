@@ -10,6 +10,7 @@ use App\Models\Fiscal\FiscalPeriod;
 use App\Models\FixedAssets\AssetCategory;
 use App\Models\FixedAssets\DepreciationRun;
 use App\Models\FixedAssets\FixedAsset;
+use App\Services\FixedAssets\AssetSourceStatus;
 use App\Services\FixedAssets\DepreciationCalendarLoader;
 use App\Services\FixedAssets\DepreciationPlanner;
 
@@ -19,7 +20,11 @@ use App\Services\FixedAssets\DepreciationPlanner;
  */
 final class PreviewDepreciation
 {
-    public function __construct(private readonly DepreciationPlanner $planner, private readonly DepreciationCalendarLoader $calendars) {}
+    public function __construct(
+        private readonly DepreciationPlanner $planner,
+        private readonly DepreciationCalendarLoader $calendars,
+        private readonly AssetSourceStatus $sources,
+    ) {}
 
     /** @param array<string, int> $units asset id → units used (units-of-production assets) */
     public function __invoke(string $companyId, string $periodId, array $units): DepreciationPreviewData
@@ -49,12 +54,14 @@ final class PreviewDepreciation
         }
 
         $calendar = $this->calendars->forCompany($companyId);
+        $warnings = $this->sources->warnings(array_map(static fn (array $l): FixedAsset => $l['asset'], $plan->lines));
         $lines = [];
         foreach ($plan->lines as $l) {
             $c = $l['charge'];
             $lines[] = new DepreciationPreviewLine(
                 $l['asset']->id, $l['asset']->number, $l['asset']->name, (string) ($categories[$l['asset']->category_id] ?? ''), $l['asset']->method,
                 count($c->months), $c->catchUpMonths($end, $calendar), $c->amount, $c->units, $l['asset']->carrying(), $c->newCarrying,
+                $warnings[$l['asset']->id] ?? null,
             );
         }
         $pending = array_map(fn (FixedAsset $a): DepreciationPreviewLine => new DepreciationPreviewLine(

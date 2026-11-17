@@ -6,6 +6,7 @@ namespace App\Http\Resources;
 
 use App\Http\Support\Json;
 use App\Models\FixedAssets\FixedAsset;
+use App\Services\FixedAssets\AssetSourceStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -55,6 +56,12 @@ final class FixedAssetResource extends JsonResource
             'source_type' => $this->source_type,
             'source_id' => $this->source_id,
             'source_journal_id' => $this->source_journal_id,
+            /**
+             * Set when the bill or journal the asset was capitalised from was reversed, voided or credited in full; null while the source stands.
+             *
+             * @var array{code: string, message: string, document_type: string, document_id: string, document_number: string|null}|null
+             */
+            'source_warning' => $this->resource->sourceWarningLoaded ? $this->resource->sourceWarning : app(AssetSourceStatus::class)->warningFor($this->resource),
             'tax_class_id' => $this->tax_class_id,
             /** Dimension position → value id. */
             'dimensions' => array_filter($this->dimensions(), static fn (?string $v): bool => $v !== null),

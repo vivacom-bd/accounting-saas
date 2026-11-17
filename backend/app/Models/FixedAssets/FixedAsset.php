@@ -52,6 +52,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class FixedAsset extends BaseModel
 {
+    /**
+     * Not stored: whether the bill or journal this asset was capitalised from still stands (AssetSourceStatus), set by the caller
+     * that read many assets at once so the response does not ask per asset.
+     *
+     * @var array{code: string, message: string, document_type: string, document_id: string, document_number: string|null}|null
+     */
+    public ?array $sourceWarning = null;
+
+    public bool $sourceWarningLoaded = false;
+
     /** @return array<string, string> */
     protected function casts(): array
     {

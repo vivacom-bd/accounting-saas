@@ -362,7 +362,8 @@ export interface paths {
             cookie?: never;
         };
         get: operations["asset-transactions.show"];
-        put?: never;
+        /** Edits a draft in place and works its figures out again; the kind cannot change. `version` is required */
+        put: operations["asset-transactions.update"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1939,7 +1940,8 @@ export interface paths {
             cookie?: never;
         };
         get: operations["depreciation-runs.show"];
-        put?: never;
+        /** Edits a draft in place (another period, units or note); the figures are worked out again. `version` is required */
+        put: operations["depreciation-runs.update"];
         post?: never;
         delete?: never;
         options?: never;
@@ -6844,6 +6846,8 @@ export interface components {
                 asset_id: string;
                 value: number;
             }[] | null;
+            /** @description The version the edit is based on; a PUT only. */
+            version?: number;
         };
         /** AssetTransactionResource */
         AssetTransactionResource: {
@@ -7900,6 +7904,14 @@ export interface components {
             months: number;
             units: number;
             catch_up_months: number;
+            /** @description Set when the asset's source bill or journal was reversed, voided or credited in full; the run still posts. */
+            source_warning: {
+                code: string;
+                message: string;
+                document_type: string;
+                document_id: string;
+                document_number: string | null;
+            } | null;
         };
         /**
          * DepreciationRunRequest
@@ -7911,6 +7923,8 @@ export interface components {
             /** @description Asset id → units used in the period. */
             units?: number[] | null;
             memo?: string | null;
+            /** @description The version the edit is based on; a PUT only. */
+            version?: number;
         };
         /** DepreciationRunResource */
         DepreciationRunResource: {
@@ -8304,6 +8318,14 @@ export interface components {
             source_type: string | null;
             source_id: string | null;
             source_journal_id: string | null;
+            /** @description Set when the bill or journal the asset was capitalised from was reversed, voided or credited in full; null while the source stands. */
+            source_warning: {
+                code: string;
+                message: string;
+                document_type: string;
+                document_id: string;
+                document_number: string | null;
+            } | null;
             tax_class_id: string | null;
             /** @description Dimension position → value id. */
             dimensions: unknown[];
@@ -10365,7 +10387,7 @@ export interface components {
          */
         UploadImportRequest: {
             /** @enum {string} */
-            kind: "contacts" | "accounts" | "opening_balances" | "invoices" | "bank_lines" | "budget_lines";
+            kind: "contacts" | "accounts" | "opening_balances" | "invoices" | "bank_lines" | "budget_lines" | "fixed_assets_opening";
             /**
              * Format: binary
              * @description Maximum file size: 5120 kilobytes.
@@ -11627,6 +11649,41 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "asset-transactions.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The asset transaction ID */
+                assetTransaction: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetTransactionRequest"];
+            };
+        };
+        responses: {
+            /** @description `AssetTransactionResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AssetTransactionResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "asset-transactions.submit": {
@@ -15491,6 +15548,8 @@ export interface operations {
                 period_id: string;
                 "units[]"?: number[];
                 memo?: string | null;
+                /** @description The version the edit is based on; a PUT only. */
+                version?: number;
             };
             header?: never;
             path: {
@@ -15546,6 +15605,41 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "depreciation-runs.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The depreciation run ID */
+                depreciationRun: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepreciationRunRequest"];
+            };
+        };
+        responses: {
+            /** @description `DepreciationRunResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DepreciationRunResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "depreciation-runs.submit": {

@@ -8,7 +8,7 @@ import { blockerText, nextDuePeriodId, unitsBody, type DepreciationLine, type De
 import { defaultPeriod, defaultYear } from '@/api/adapters/fiscal';
 import { formatDate, formatMoney } from '@/lib/format';
 import { ErrorLine, LoadingLine } from '../parts';
-import { DocActions, DocStatusBadge, Field, fieldClass, Note, primaryBtn, Problem, type Writer } from './parts';
+import { DocActions, DocStatusBadge, SourceWarningBadge, Field, fieldClass, Note, primaryBtn, Problem, type Writer } from './parts';
 
 function useDebounced<T>(value: T, ms: number): T {
   const [v, setV] = useState(value);
@@ -104,7 +104,7 @@ export const DepreciationTab: React.FC<{ writer: Writer }> = ({ writer }) => {
                   {r.lines.map((l) => (
                     <tr key={l.id} className="h-8">
                       <td className="font-mono text-text-muted">{l.asset_number}</td>
-                      <td className="text-text-primary">{l.asset_name}</td>
+                      <td className="text-text-primary">{l.asset_name}{l.source_warning && <SourceWarningBadge warning={l.source_warning} />}</td>
                       <td className="text-text-muted">{l.catch_up_months > 0 ? `${l.months} months, ${l.catch_up_months} caught up` : `${l.months} month${l.months === 1 ? '' : 's'}`}</td>
                       <td className="text-right tabular-nums">{formatMoney(l.amount, cur)}</td>
                     </tr>
@@ -172,7 +172,7 @@ export const DepreciationTab: React.FC<{ writer: Writer }> = ({ writer }) => {
                   {p.lines.map((l) => (
                     <tr key={l.asset_id} className="h-9">
                       <td className="px-3 font-mono text-accent">{l.asset_number}</td>
-                      <td className="px-3 text-text-primary">{l.asset_name}</td>
+                      <td className="px-3 text-text-primary">{l.asset_name}{l.source_warning && <SourceWarningBadge warning={l.source_warning} />}</td>
                       <td className="px-3 text-text-secondary">
                         {l.months}
                         {l.catch_up_months > 0 && <span className="ml-1.5 rounded-[3px] bg-warning-soft px-1 text-[11px] font-medium text-warning" title="Earlier months that were never depreciated are included in this charge.">includes {l.catch_up_months} earlier month{l.catch_up_months === 1 ? '' : 's'}</span>}

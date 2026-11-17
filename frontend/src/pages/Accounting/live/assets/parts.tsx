@@ -9,7 +9,7 @@ import { isSigningCancelled, useSignedRun } from '@/data/signing';
 import { IntentSlot } from '@/api/intentSlot';
 import { ApiError } from '@/api/errors';
 import type { Intent } from '@/api/idempotency';
-import { DOC_STATUS_LABEL, type DocCan, type DocStatus } from '@/api/adapters/fixedAssets';
+import { DOC_STATUS_LABEL, type DocCan, type DocStatus, type SourceWarning } from '@/api/adapters/fixedAssets';
 import { verdictText } from '../parts';
 import { cn } from '@/lib/utils';
 
@@ -71,6 +71,13 @@ const STATUS_STYLE: Record<string, string> = {
 export const Badge: React.FC<{ tone?: string; children: React.ReactNode; title?: string }> = ({ tone = 'draft', children, title }) => (
   <span title={title} className={cn('inline-flex items-center rounded-[3px] px-1.5 py-px text-xs font-medium', STATUS_STYLE[tone] ?? 'bg-surface-neutral text-text-secondary')}>
     {children}
+  </span>
+);
+
+/** Flags an asset whose source bill or journal no longer stands. The full sentence is the tooltip. */
+export const SourceWarningBadge: React.FC<{ warning: SourceWarning }> = ({ warning }) => (
+  <span title={warning.message} data-testid="source-warning" className="ml-1.5 rounded-[3px] bg-warning-soft px-1 text-[11px] font-medium text-warning">
+    {warning.code === 'source_credited' ? 'Source bill credited' : 'Source reversed'}
   </span>
 );
 

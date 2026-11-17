@@ -28,6 +28,7 @@ use App\Http\Support\RequestActor;
 use App\Models\FixedAssets\DepreciationRun;
 use App\Models\Organisation\Company;
 use App\Queries\FixedAssets\PreviewDepreciation;
+use App\Services\FixedAssets\AssetSourceStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -130,6 +131,9 @@ final class DepreciationRunController extends Controller
 
     private function fresh(string $id): DepreciationRun
     {
-        return DepreciationRun::query()->with('lines.asset')->findOrFail($id);
+        $run = DepreciationRun::query()->with('lines.asset')->findOrFail($id);
+        app(AssetSourceStatus::class)->attach($run->lines->map(fn ($l) => $l->asset)->filter()->all());
+
+        return $run;
     }
 }

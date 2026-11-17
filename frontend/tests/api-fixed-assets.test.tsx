@@ -3,12 +3,12 @@ import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import {
-  asMethod, bpToPercent, categoryToDraft, emptyAssetTx, emptyCategoryDraft, emptyNewAsset, emptyTaxClassDraft, percentToBp, scheduleQuery, toAssetCreateRequest, toAssetSchedule,
+  asMethod, bpToPercent, toDepreciationRun, categoryToDraft, emptyAssetTx, emptyCategoryDraft, emptyNewAsset, emptyTaxClassDraft, percentToBp, scheduleQuery, toAssetCreateRequest, toAssetSchedule,
   toAssetTxRequest, toAssetUpdateRequest, toCategory, toCategoryRequest, toDepreciationPreview, toFixedAsset, toReconciliation, toTaxClassRequest, toTaxSchedule, toTxPreview, unitsBody,
   unitsQuery, wornDownPercent, nextDuePeriodId, blockerText, type ApiAssetCategory, type ApiFixedAsset,
 } from '@/api/adapters/fixedAssets';
 import { toApprovalItem, journalTypeLabel, type ApiApproval } from '@/api/adapters/journal';
-import { checkTitle } from '@/api/adapters/fiscal';
+import { checkTitle, toCloseCheck } from '@/api/adapters/fiscal';
 import { toPostingRows } from '@/api/adapters/admin';
 import { ReconciliationCard } from '@/pages/Accounting/live/assets/RegisterTab';
 import { TxPreviewPanel } from '@/pages/Accounting/live/assets/AdjustmentsTab';
@@ -86,7 +86,7 @@ const apiAsset = (over: Partial<ApiFixedAsset> = {}): ApiFixedAsset => ({
   acquired_on: '2026-01-10', available_from: '2026-01-10', disposed_on: null, cost: m(1_200_000), residual: m(200_000), accumulated_depreciation: m(300_000),
   accumulated_impairment: m(50_000), carrying_amount: m(850_000), revaluation_reserve: m(0), method: 'straight_line', useful_life_months: 60, declining_rate_bp: null,
   units_total: null, units_used: 0, months_charged: 6, depreciated_through: '2026-06-30', is_opening: true, opening_accumulated: m(100_000), opening_as_of: '2026-01-01',
-  source_type: null, source_id: null, source_journal_id: null, tax_class_id: null, dimensions: { d1: 'v1' }, version: 4, can: { update: true }, ...over,
+  source_type: null, source_id: null, source_journal_id: null, source_warning: null, tax_class_id: null, dimensions: { d1: 'v1' }, version: 4, can: { update: true }, ...over,
 });
 
 describe('register', () => {
@@ -166,6 +166,27 @@ describe('depreciation preview', () => {
   it('sends units as units[assetId] in the query and as an id map in the body, skipping blanks', () => {
     expect(unitsQuery({ a: '12', b: '', c: 'x' })).toEqual({ 'units[a]': '12' });
     expect(unitsBody({ a: '12', b: '', c: '0' })).toEqual({ a: 12, c: 0 });
+  });
+});
+
+describe('a source that no longer stands', () => {
+  const warning = { code: 'source_reversed', message: 'The bill BILL-1 has been reversed.', document_type: 'bill', document_id: 'b1', document_number: 'BILL-1' };
+  it('carries the warning on the register row, and none when the source stands', () => {
+    expect(toFixedAsset(apiAsset({ source_warning: warning })).source_warning).toEqual(warning);
+    expect(toFixedAsset(apiAsset()).source_warning).toBeNull();
+  });
+  it('carries it on preview lines and on the lines of a drafted run', () => {
+    const line = { asset_id: 'f1', asset_number: 'FA-1', asset_name: 'Van', category_name: 'Vehicles', method: 'straight_line', months: 1, catch_up_months: 0, amount: m(5000), units: 0, carrying_before: m(9000), carrying_after: m(4000) };
+    const p = toDepreciationPreview({ period_id: 'p1', period_name: 'March', as_of: '2026-03-31', total: m(5000), lines: [{ ...line, source_warning: warning }, { ...line, asset_id: 'f2', source_warning: null }], pending_units: [], blockers: [] });
+    expect(p.lines[0].source_warning).toEqual(warning);
+    expect(p.lines[1].source_warning).toBeNull();
+    const run = toDepreciationRun({ id: 'r1', number: '', status: 'draft', fiscal_period_id: 'p1', as_of: '2026-03-31', total: m(5000), journal_id: null, reversal_journal_id: null, memo: null, version: 0, can: { update: true }, lines: [{ id: 'l1', line_no: 1, asset_id: 'f1', asset_number: 'FA-1', asset_name: 'Van', amount: m(5000), months: 1, units: 0, catch_up_months: 0, source_warning: warning }] } as never);
+    expect(run.lines[0].source_warning).toEqual(warning);
+  });
+  it('shows on the close checklist as a warning that passes, with its own title', () => {
+    const c = toCloseCheck({ code: 'ASSET_SOURCE', passed: true, message: '1 asset(s) were capitalised from a bill that was reversed.', detail: { warning: true, assets: [] } });
+    expect(c).toMatchObject({ status: 'pass', warning: true, title: 'Assets still stand on their source bill or journal' });
+    expect(toCloseCheck({ code: 'ASSET_SOURCE', passed: true, message: 'ok', detail: { warning: false, assets: [] } }).warning).toBeUndefined();
   });
 });
 

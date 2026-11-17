@@ -17,6 +17,7 @@ use App\Models\Organisation\Company;
 use App\Queries\FixedAssets\AssetLedgerCheck;
 use App\Queries\FixedAssets\ListCapitalisable;
 use App\Queries\FixedAssets\ListFixedAssets;
+use App\Services\FixedAssets\AssetSourceStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -35,6 +36,7 @@ final class FixedAssetController extends Controller
             $request->query('q') ? (string) $request->query('q') : null,
         );
         $page = CursorPage::fetch($query, $request, 'number');
+        app(AssetSourceStatus::class)->attach($page->items);
 
         return FixedAssetResource::collection($page->items)->additional(['meta' => ['next_cursor' => $page->nextCursor, 'prev_cursor' => $page->prevCursor, 'limit' => $page->limit]]);
     }

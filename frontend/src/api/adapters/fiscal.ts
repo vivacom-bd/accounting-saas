@@ -115,6 +115,7 @@ const CHECK_TITLES: Record<string, string> = {
   FX_REVAL: 'Foreign-currency balances adjusted',
   DEPR_RUN: 'Depreciation run done or nothing to depreciate',
   TRANSFERS_IN_TRANSIT: 'Transfers received before the period ends',
+  ASSET_SOURCE: 'Assets still stand on their source bill or journal',
 };
 
 export function checkTitle(code: string): string {
@@ -124,10 +125,12 @@ export function checkTitle(code: string): string {
 export function toCloseCheck(c: ApiCloseCheck): LiveCloseCheck {
   const d = (c.detail ?? {}) as Record<string, unknown>;
   const num = (v: unknown): number | null => (typeof v === 'number' && Number.isSafeInteger(v) ? v : null);
-  const warning = c.code === 'TRANSFERS_IN_TRANSIT' && d.warning === true;
+  const transitWarning = c.code === 'TRANSFERS_IN_TRANSIT' && d.warning === true;
+  const warning = transitWarning || (c.code === 'ASSET_SOURCE' && d.warning === true);
   return {
     id: c.code, check_code: c.code, title: checkTitle(c.code), detail: c.message, status: c.passed ? 'pass' : 'fail',
-    ...(warning ? { warning: true, transit: { count: num(d.open_transfers) ?? 0, total: num(d.open_total) ?? 0, balance: num(d.in_transit_balance) } } : {}),
+    ...(warning ? { warning: true } : {}),
+    ...(transitWarning ? { transit: { count: num(d.open_transfers) ?? 0, total: num(d.open_total) ?? 0, balance: num(d.in_transit_balance) } } : {}),
   };
 }
 
