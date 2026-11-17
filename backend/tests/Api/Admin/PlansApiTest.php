@@ -74,14 +74,21 @@ it('creates, lists and versions a plan', function (): void {
     expect(auditCount('plan.created'))->toBe(1)->and(auditCount('plan.version_published'))->toBe(1);
 });
 
-it('counts tenants on a plan', function (): void {
+it('counts tenants on a plan by their live subscriptions', function (): void {
     $this->asAdmin(AdminRole::Finance);
     $this->postJson('/api/admin/plans', planBody())->assertCreated();
     $versionId = $this->getJson('/api/admin/plans')->json('data.0.current_version.id');
-    DB::connection('pgsql_owner')->table('tenants')->insert([
-        'id' => (string) Str::uuid7(), 'name' => 'Acme', 'slug' => 'acme', 'settings' => json_encode(['plan_version_id' => $versionId]),
+    $tenant = fn (string $slug) => tap((string) Str::uuid7(), fn (string $id) => DB::connection('pgsql_owner')->table('tenants')->insert([
+        'id' => $id, 'name' => $slug, 'slug' => $slug, 'settings' => json_encode(['plan_version_id' => $versionId]),
         'created_at' => now(), 'updated_at' => now(),
+    ]));
+    $sub = fn (string $tenantId, string $status) => DB::connection('pgsql_owner')->table('subscriptions')->insert([
+        'id' => (string) Str::uuid7(), 'tenant_id' => $tenantId, 'plan_version_id' => $versionId, 'collection' => 'offline', 'interval' => 'month',
+        'currency' => 'USD', 'quantity' => 1, 'status' => $status, 'created_at' => now(), 'updated_at' => now(),
     ]);
+    $sub($tenant('acme'), 'active');
+    $sub($tenant('gone'), 'cancelled');
+    $tenant('settings-only'); // recorded on the tenant but with no subscription: not counted
 
     $this->getJson('/api/admin/plans')->assertJsonPath('data.0.tenant_count', 1);
 });

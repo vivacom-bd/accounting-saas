@@ -58,14 +58,14 @@ final class ListPlans
     }
 
     /**
-     * Tenants per plan version, from the version id provisioning stores on the tenant until subscriptions exist (Task 11).
+     * Tenants per plan version, counted from the live (not cancelled) subscriptions.
      *
      * @return array<string, int>
      */
     private function tenantCounts(): array
     {
         $rows = DB::connection('pgsql_platform')->select(
-            "SELECT settings->>'plan_version_id' AS version_id, count(*) AS n FROM tenants WHERE settings->>'plan_version_id' IS NOT NULL GROUP BY 1",
+            "SELECT plan_version_id AS version_id, count(*) AS n FROM subscriptions WHERE status <> 'cancelled' GROUP BY 1",
         );
 
         $counts = [];

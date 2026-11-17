@@ -91,7 +91,7 @@ it('lets the platform role manage overrides and nothing else of this feature', f
 it('grants the sysops role exactly what the functions need', function (): void {
     $priv = fn (string $table, string $p): bool => (bool) DB::selectOne('SELECT has_table_privilege(?, ?, ?) AS ok', ['ledgerly_sysops', $table, $p])->ok;
 
-    foreach (['plans', 'plan_versions', 'tenant_entitlement_overrides', 'tenants'] as $t) {
+    foreach (['plans', 'plan_versions', 'tenant_entitlement_overrides', 'tenants', 'subscriptions'] as $t) {
         expect($priv($t, 'SELECT'))->toBeTrue($t)->and($priv($t, 'INSERT'))->toBeFalse($t)->and($priv($t, 'UPDATE'))->toBeFalse($t)->and($priv($t, 'DELETE'))->toBeFalse($t);
     }
     expect($priv('usage_daily', 'INSERT'))->toBeTrue()->and($priv('usage_daily', 'UPDATE'))->toBeTrue()->and($priv('usage_daily', 'DELETE'))->toBeFalse();
@@ -116,4 +116,37 @@ it('resolves the plan, applies overrides and falls back to the default plan', fu
         ['tenant_id' => $f->tenantId, 'key' => 'budgets', 'value' => 'true', 'reason' => 'x', 'expires_at' => now()->subDay(), 'created_at' => now(), 'updated_at' => now()],
     ]);
     expect($read())->toEqual(['plan_code' => 'starter', 'limits' => ['users' => 10], 'entitlements' => ['budgets' => false]]); // the expired override is ignored
+});
+
+it('prefers the live subscription over the plan recorded on the tenant', function (): void {
+    $f = LedgerFixture::create();
+    $platform = DB::connection('pgsql_platform');
+    $version = function (string $code, int $users) use ($platform): string {
+        $planId = (string) Str::uuid7();
+        $platform->table('plans')->insert(['id' => $planId, 'code' => $code, 'name' => ucfirst($code), 'created_at' => now(), 'updated_at' => now()]);
+        $platform->table('plan_versions')->insert([
+            'id' => $id = (string) Str::uuid7(), 'plan_id' => $planId, 'version' => 1, 'prices' => '{}', 'limits' => json_encode(['users' => $users]),
+            'entitlements' => '{"budgets": false}', 'effective_from' => '2026-01-01T00:00:00Z',
+        ]);
+
+        return $id;
+    };
+    $settingsVersion = $version('starter', 3);
+    $subscribedVersion = $version('growth', 25);
+    DB::connection('pgsql_owner')->table('tenants')->where('id', $f->tenantId)->update(['settings' => json_encode(['plan_version_id' => $settingsVersion])]);
+    $read = fn (): array => json_decode((string) DB::selectOne('SELECT sysops.current_entitlements() AS e')->e, true);
+    expect($read()['plan_code'])->toBe('starter'); // no subscription yet: the settings fallback
+
+    $sub = fn (string $status) => $platform->table('subscriptions')->insert([
+        'id' => (string) Str::uuid7(), 'tenant_id' => $f->tenantId, 'plan_version_id' => $subscribedVersion, 'collection' => 'offline', 'interval' => 'month',
+        'currency' => 'USD', 'quantity' => 1, 'status' => $status, 'created_at' => now(), 'updated_at' => now(),
+    ]);
+    $sub('cancelled');
+    expect($read()['plan_code'])->toBe('starter'); // a cancelled subscription is not live
+
+    $sub('active');
+    expect($read())->toEqual(['plan_code' => 'growth', 'limits' => ['users' => 25], 'entitlements' => ['budgets' => false]]);
+
+    $platform->table('tenant_entitlement_overrides')->insert(['tenant_id' => $f->tenantId, 'key' => 'users', 'value' => '40', 'reason' => 'x', 'created_at' => now(), 'updated_at' => now()]);
+    expect($read()['limits'])->toEqual(['users' => 40]);
 });
