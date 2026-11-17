@@ -32,6 +32,8 @@ final class Rls
         'migrations', 'jobs', 'job_batches', 'failed_jobs', 'cache', 'cache_locks', 'sessions',
         // platform aggregates (non-sensitive)
         'tenant_kpi_snapshots', 'tenant_deletions',
+        // platform admin (10_SaaS_Admin §6): staff accounts, the admin audit chain and two-person approvals; ledgerly_platform only
+        'admin_users', 'admin_audit_events', 'admin_audit_head', 'admin_approvals',
     ];
 
     public static function enable(Connection $connection, string $table): void
