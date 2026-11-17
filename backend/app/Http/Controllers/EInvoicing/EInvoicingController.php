@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\EInvoicing\EInvoicingRequest;
 use App\Http\Resources\FreeFormDataResource;
 use App\Http\Support\RequestActor;
+use App\Http\Support\WebUser;
 use App\Models\EInvoicing\CompanyEInvoicing;
 use App\Models\EInvoicing\EInvoiceSubmission;
 use App\Models\Organisation\Company;
@@ -37,7 +38,7 @@ final class EInvoicingController extends Controller
     #[Authorize('viewAny', CompanyEInvoicing::class)]
     public function status(Request $request, Company $company, string $document): FreeFormDataResource
     {
-        $manage = $request->user()?->can('manage', CompanyEInvoicing::class) === true;
+        $manage = WebUser::of($request)?->can('manage', CompanyEInvoicing::class) === true;
         $s = EInvoiceSubmission::query()->where('company_id', $company->id)->where('invoice_id', $document)->orderByDesc('document_version')->first();
         $settings = CompanyEInvoicing::query()->where('company_id', $company->id)->first();
 

@@ -8,10 +8,10 @@ use App\Http\Controllers\Admin\Auth\AdminLoginController;
 use App\Http\Controllers\Admin\Auth\AdminPasswordSetController;
 use App\Http\Controllers\Admin\Auth\AdminSessionController;
 use App\Http\Controllers\Admin\Auth\AdminTwoFactorController;
-use App\Http\Controllers\Admin\Staff\StaffController;
 use App\Http\Controllers\Admin\Plans\AddonsController;
 use App\Http\Controllers\Admin\Plans\CouponsController;
 use App\Http\Controllers\Admin\Plans\PlansController;
+use App\Http\Controllers\Admin\Staff\StaffController;
 use Illuminate\Support\Facades\Route;
 
 /*
