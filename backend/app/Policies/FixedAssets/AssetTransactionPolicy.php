@@ -36,6 +36,11 @@ final class AssetTransactionPolicy
         return $this->context->personCan($principal, 'fixed_assets.dispose') || $this->context->personCan($principal, 'fixed_assets.revalue');
     }
 
+    public function update(Authenticatable $principal, AssetTransaction $tx): bool
+    {
+        return $this->submit($principal, $tx);
+    }
+
     public function submit(Authenticatable $principal, AssetTransaction $tx): bool
     {
         return $tx->status === DocumentStatus::Draft && $this->context->personCan($principal, AssetPermissions::FOR_KIND[$tx->kind], $tx->company_id);

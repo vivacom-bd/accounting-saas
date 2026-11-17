@@ -34,7 +34,14 @@ final class AssetTransactionRequest extends CompanyRequest
             'values' => ['required_if:kind,revaluation', 'nullable', 'array', 'max:500'],
             'values.*.asset_id' => ['required', 'uuid', $this->inCompany('fixed_assets')],
             'values.*.value' => ['required', 'integer', 'min:1'],
+            /** The version the edit is based on; a PUT only. */
+            'version' => [$this->isMethod('PUT') ? 'required' : 'prohibited', 'integer', 'min:0'],
         ];
+    }
+
+    public function version(): int
+    {
+        return (int) $this->validated()['version'];
     }
 
     public function toInput(): AssetTransactionInput

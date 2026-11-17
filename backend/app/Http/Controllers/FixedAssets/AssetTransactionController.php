@@ -7,6 +7,7 @@ namespace App\Http\Controllers\FixedAssets;
 use App\Actions\FixedAssets\CreateAssetTransaction;
 use App\Actions\FixedAssets\Inputs\ReverseAssetDocumentInput;
 use App\Actions\FixedAssets\ReverseAssetTransaction;
+use App\Actions\FixedAssets\UpdateAssetTransaction;
 use App\Actions\Workflow\ApproveDocument;
 use App\Actions\Workflow\Inputs\DocumentRef;
 use App\Actions\Workflow\Inputs\ReturnDocumentInput;
@@ -71,6 +72,15 @@ final class AssetTransactionController extends Controller
         $tx = $action->handle(RequestActor::from($request, $company->id), $request->toInput());
 
         return (new AssetTransactionResource($this->fresh($tx->id)))->response()->setStatusCode(201);
+    }
+
+    /** Edits a draft in place and works its figures out again; the kind cannot change. `version` is required. */
+    #[Authorize('update', 'assetTransaction')]
+    public function update(AssetTransactionRequest $request, Company $company, AssetTransaction $assetTransaction, UpdateAssetTransaction $action): AssetTransactionResource
+    {
+        $action->handle(RequestActor::from($request, $company->id), $assetTransaction->id, $request->toInput(), $request->version());
+
+        return new AssetTransactionResource($this->fresh($assetTransaction->id));
     }
 
     #[Authorize('submit', 'assetTransaction')]

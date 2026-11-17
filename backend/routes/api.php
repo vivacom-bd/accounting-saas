@@ -320,6 +320,7 @@ Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent', 'c
         Route::post('depreciation-runs', [DepreciationRunController::class, 'store'])->name('depreciation-runs.store');
         Route::get('depreciation-runs/preview', [DepreciationRunController::class, 'preview'])->name('depreciation-runs.preview');
         Route::get('depreciation-runs/{depreciationRun}', [DepreciationRunController::class, 'show'])->whereUuid('depreciationRun')->name('depreciation-runs.show');
+        Route::put('depreciation-runs/{depreciationRun}', [DepreciationRunController::class, 'update'])->whereUuid('depreciationRun')->name('depreciation-runs.update');
         foreach (['submit', 'approve', 'return', 'void', 'reverse'] as $verb) {
             Route::post("depreciation-runs/{depreciationRun}/{$verb}", [DepreciationRunController::class, $verb])->whereUuid('depreciationRun')->name("depreciation-runs.{$verb}");
         }
@@ -327,6 +328,7 @@ Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent', 'c
         Route::post('asset-transactions', [AssetTransactionController::class, 'store'])->name('asset-transactions.store');
         Route::post('asset-transactions/preview', [AssetTransactionController::class, 'preview'])->name('asset-transactions.preview');
         Route::get('asset-transactions/{assetTransaction}', [AssetTransactionController::class, 'show'])->whereUuid('assetTransaction')->name('asset-transactions.show');
+        Route::put('asset-transactions/{assetTransaction}', [AssetTransactionController::class, 'update'])->whereUuid('assetTransaction')->name('asset-transactions.update');
         foreach (['submit', 'approve', 'return', 'void', 'reverse'] as $verb) {
             Route::post("asset-transactions/{assetTransaction}/{$verb}", [AssetTransactionController::class, $verb])->whereUuid('assetTransaction')->name("asset-transactions.{$verb}");
         }

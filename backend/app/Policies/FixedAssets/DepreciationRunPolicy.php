@@ -34,6 +34,11 @@ final class DepreciationRunPolicy
         return $this->context->personCan($principal, 'fixed_assets.run_depreciation');
     }
 
+    public function update(Authenticatable $principal, DepreciationRun $run): bool
+    {
+        return $run->status === DocumentStatus::Draft && $this->context->personCan($principal, 'fixed_assets.run_depreciation', $run->company_id);
+    }
+
     public function submit(Authenticatable $principal, DepreciationRun $run): bool
     {
         return $run->status === DocumentStatus::Draft && $this->context->personCan($principal, 'fixed_assets.run_depreciation', $run->company_id);

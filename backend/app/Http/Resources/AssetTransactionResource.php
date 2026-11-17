@@ -43,7 +43,7 @@ final class AssetTransactionResource extends JsonResource
             'posted_at' => Json::time($this->posted_at),
             'version' => $this->lock_version,
             'lines' => AssetTransactionLineResource::collection($this->whenLoaded('lines')),
-            'can' => Json::can($request, $this->resource, ['submit' => 'submit', 'approve' => 'approve', 'return' => 'return', 'void' => 'void', 'reverse' => 'reverse']),
+            'can' => Json::can($request, $this->resource, ['update' => 'update', 'submit' => 'submit', 'approve' => 'approve', 'return' => 'return', 'void' => 'void', 'reverse' => 'reverse']),
         ];
     }
 }

@@ -7,6 +7,7 @@ namespace App\Http\Controllers\FixedAssets;
 use App\Actions\FixedAssets\CreateDepreciationRun;
 use App\Actions\FixedAssets\Inputs\ReverseAssetDocumentInput;
 use App\Actions\FixedAssets\ReverseDepreciationRun;
+use App\Actions\FixedAssets\UpdateDepreciationRun;
 use App\Actions\Workflow\ApproveDocument;
 use App\Actions\Workflow\Inputs\DocumentRef;
 use App\Actions\Workflow\Inputs\ReturnDocumentInput;
@@ -69,6 +70,15 @@ final class DepreciationRunController extends Controller
         $run = $action->handle(RequestActor::from($request, $company->id), $request->toInput());
 
         return (new DepreciationRunResource($this->fresh($run->id)))->response()->setStatusCode(201);
+    }
+
+    /** Edits a draft in place (another period, units or note); the figures are worked out again. `version` is required. */
+    #[Authorize('update', 'depreciationRun')]
+    public function update(DepreciationRunRequest $request, Company $company, DepreciationRun $depreciationRun, UpdateDepreciationRun $action): DepreciationRunResource
+    {
+        $action->handle(RequestActor::from($request, $company->id), $depreciationRun->id, $request->toInput(), $request->version());
+
+        return new DepreciationRunResource($this->fresh($depreciationRun->id));
     }
 
     #[Authorize('submit', 'depreciationRun')]

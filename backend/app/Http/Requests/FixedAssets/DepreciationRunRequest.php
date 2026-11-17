@@ -19,6 +19,8 @@ final class DepreciationRunRequest extends CompanyRequest
             'units' => ['nullable', 'array', 'max:500'],
             'units.*' => ['integer', 'min:0'],
             'memo' => ['nullable', 'string', 'max:2000'],
+            /** The version the edit is based on; a PUT only. */
+            'version' => [$this->isMethod('PUT') ? 'required' : 'prohibited', 'integer', 'min:0'],
         ];
     }
 
@@ -36,6 +38,11 @@ final class DepreciationRunRequest extends CompanyRequest
         }
 
         return $out;
+    }
+
+    public function version(): int
+    {
+        return (int) $this->validated()['version'];
     }
 
     public function toInput(): DepreciationRunInput
