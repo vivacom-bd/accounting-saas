@@ -37,9 +37,9 @@ export function useBudgetYears() {
 }
 
 /** The dashboard note: null when there is no approved budget (the dashboard then shows nothing), and nothing at all on any error. */
-export function useBudgetCard() {
+export function useBudgetCard(enabled = true) {
   const company = useRouteCompany();
-  return useQuery({ queryKey: ['budgets', company.id, 'card'], queryFn: () => api.fetchDashboardCard(company.id), retry: false, staleTime: 30_000 });
+  return useQuery({ queryKey: ['budgets', company.id, 'card'], queryFn: () => api.fetchDashboardCard(company.id), enabled, retry: false, staleTime: 30_000 });
 }
 
 export function useBudgetActions() {

@@ -43,19 +43,21 @@ export const LiveDashboard: React.FC = () => {
   const monthly = useMonthlyPnl(company, d.today, yearStart.data);
   const cash = useClosingCash(company, d.today, yearStart.data);
   // The budget note appears only when an approved budget exists; on no budget, no permission or any error there is nothing to show.
-  const budgetCard = useBudgetCard();
+  const budgetCard = useBudgetCard(d.ready && d.allowed.budget);
   const activity = useRecentActivity(company);
   const setup = useSetupState(company.id, me.data?.id ?? '');
   const [showChecklist, setShowChecklist] = useState(true);
   const co = `/${company.slug}`;
 
-  const ar = panelState(d.ar);
-  const ap = panelState(d.ap);
-  const profit = panelState(d.profit);
-  const banks = panelState(d.banks);
-  const approvals = panelState(d.approvals, d.mayApprove);
-  const overdueInv = panelState(d.overdueInvoices);
-  const overdueBill = panelState(d.overdueBills);
+  // Each panel is hidden, and its source never called, unless the person holds the permission that source checks (plan 3c.26c).
+  const ar = panelState(d.ar, d.may('ar'));
+  const ap = panelState(d.ap, d.may('ap'));
+  const profit = panelState(d.profit, d.may('profit'));
+  const banks = panelState(d.banks, d.may('banks'));
+  const approvals = panelState(d.approvals, d.may('approvals'));
+  const overdueInv = panelState(d.overdueInvoices, d.may('overdueInvoices'));
+  const overdueBill = panelState(d.overdueBills, d.may('overdueBills'));
+  const activityState = panelState(activity, d.may('activity'));
 
   // ---- Key figures: a figure is shown while loading ("…"), on error ("Unavailable"), and left out when not for this role.
   const figure = (state: PanelState, f: Omit<Figure, 'value' | 'note'> & { value: () => string; note: () => React.ReactNode }): Figure | null => {
@@ -64,7 +66,7 @@ export const LiveDashboard: React.FC = () => {
     if (state === 'error') return { ...f, value: 'Unavailable', note: 'Could not load', valueClass: 'text-text-muted' };
     return { ...f, value: f.value(), note: f.note() };
   };
-  const cashState = panelState(cash);
+  const cashState = panelState(cash, d.may('cash'));
   const figures = [
     // The cash-flow report's closing cash; shown only when the server says it ties to the books.
     cashState === 'ready' && !cash.data ? null : figure(cashState, {
@@ -184,7 +186,7 @@ export const LiveDashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        {(() => {
+        {!d.may('trend') ? null : (() => {
           if (yearStart.isError || monthly.error) return panelState({ isPending: false, isError: true, error: monthly.error ?? yearStart.error }) === 'hidden' ? null : (
             <Card className="lg:col-span-7"><CardHeader title="Income vs expenses" /><Retry error={monthly.error ?? yearStart.error} onRetry={() => { void yearStart.refetch(); monthly.results.forEach((r) => void r.refetch()); }} /></Card>
           );
@@ -196,9 +198,9 @@ export const LiveDashboard: React.FC = () => {
           const bars = first < 0 ? all : all.slice(first);
           return bars.length > 0 ? <LiveIncomeExpense className="lg:col-span-7" months={bars} currency={bars[0].pnl.currency} to={`${co}/reports/profit-and-loss`} /> : null;
         })()}
-        {panelState(activity) === 'loading' && <Card className="lg:col-span-5"><CardHeader title="Recent activity" /><p role="status" className="px-5 pb-5 text-[13px] text-text-muted">Loading…</p></Card>}
-        {panelState(activity) === 'error' && <Card className="lg:col-span-5"><CardHeader title="Recent activity" /><Retry error={activity.error} onRetry={() => void activity.refetch()} /></Card>}
-        {panelState(activity) === 'ready' && <LiveActivity className="lg:col-span-5" rows={activity.data ?? []} co={co} />}
+        {activityState === 'loading' && <Card className="lg:col-span-5"><CardHeader title="Recent activity" /><p role="status" className="px-5 pb-5 text-[13px] text-text-muted">Loading…</p></Card>}
+        {activityState === 'error' && <Card className="lg:col-span-5"><CardHeader title="Recent activity" /><Retry error={activity.error} onRetry={() => void activity.refetch()} /></Card>}
+        {activityState === 'ready' && <LiveActivity className="lg:col-span-5" rows={activity.data ?? []} co={co} />}
       </div>
 
       {banks !== 'hidden' && (

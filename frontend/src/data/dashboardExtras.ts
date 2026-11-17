@@ -1,11 +1,9 @@
 /** Extra dashboard panels (live mode): monthly income and expense, cash and bank, recent activity. Each is its own query, so a 403 or a failure leaves only that panel out. */
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { fetchClosingCash, fetchMonthPnl, fetchRecentAudit } from '@/api/live/dashboardExtras';
-import { fetchFiscalYearStart } from '@/api/live/dashboard';
-import { fiscalYearStart } from '@/api/adapters/onboarding';
 import { toAuditRow } from '@/api/adapters/admin';
 import type { Company } from '@/types';
-import { useAccess } from './menu';
+import { useDashboardAccess, yearStartFor } from './dashboard';
 
 const opts = { retry: false, staleTime: 30_000 } as const;
 const MONTHS_SHOWN = 6;
@@ -31,16 +29,20 @@ export function monthRanges(today: string, yearStart: string): MonthRange[] {
   return out;
 }
 
+/** The fiscal year start, asked for only by panels that need it (the monthly chart and cash), so a person with neither never reads fiscal years. */
 export function useYearStart(company: Company, today: string) {
+  const { allowed, ready, canViewPeriods } = useDashboardAccess();
   return useQuery({
-    queryKey: ['dashboard', company.id, 'year-start', today],
-    queryFn: async () => (await fetchFiscalYearStart(company.id, today)) ?? fiscalYearStart(company.fiscal_year_start_month, today),
+    queryKey: ['dashboard', company.id, 'year-start', today, canViewPeriods],
+    queryFn: () => yearStartFor(company, today, canViewPeriods),
+    enabled: ready && (allowed.trend || allowed.cash),
     ...opts,
   });
 }
 
 export function useMonthlyPnl(company: Company, today: string, yearStart: string | undefined) {
-  const ranges = yearStart ? monthRanges(today, yearStart) : [];
+  const { allowed, ready } = useDashboardAccess();
+  const ranges = yearStart && ready && allowed.trend ? monthRanges(today, yearStart) : [];
   const results = useQueries({
     queries: ranges.map((r) => ({ queryKey: ['dashboard', company.id, 'pnl-month', r.from, r.to], queryFn: () => fetchMonthPnl(company.id, r.from, r.to), ...opts })),
   });
@@ -48,19 +50,20 @@ export function useMonthlyPnl(company: Company, today: string, yearStart: string
 }
 
 export function useClosingCash(company: Company, today: string, yearStart: string | undefined) {
+  const { allowed, ready } = useDashboardAccess();
   return useQuery({
     queryKey: ['dashboard', company.id, 'closing-cash', today],
     queryFn: () => fetchClosingCash(company.id, yearStart as string, today),
-    enabled: Boolean(yearStart),
+    enabled: ready && allowed.cash && Boolean(yearStart),
     ...opts,
   });
 }
 
 export function useRecentActivity(company: Company) {
   // The audit trail needs `audit.view`; without it the call is a guaranteed 403 (plan 3c.24).
-  const access = useAccess();
+  const { allowed, ready } = useDashboardAccess();
   return useQuery({
-    enabled: access.ready && access.can('audit.view'),
+    enabled: ready && allowed.activity,
     queryKey: ['dashboard', company.id, 'recent-audit'],
     queryFn: async () => (await fetchRecentAudit(company.id, 8)).map(toAuditRow),
     ...opts,
