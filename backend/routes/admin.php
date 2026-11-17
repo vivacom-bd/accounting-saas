@@ -46,6 +46,8 @@ Route::middleware('admin.auth')->group(function (): void {
     Route::middleware('admin.can:audit.view')->group(function (): void {
         Route::get('audit', [AdminAuditController::class, 'index'])->name('audit.index');
         Route::post('audit/verify', [AdminAuditController::class, 'verify'])->name('audit.verify');
+    });
+
     // Plan catalogue (Task 9)
     Route::middleware('admin.can:plans.view')->group(function (): void {
         Route::get('plans', [PlansController::class, 'index'])->name('plans.index');
