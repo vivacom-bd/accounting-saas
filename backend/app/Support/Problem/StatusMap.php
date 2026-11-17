@@ -72,6 +72,8 @@ final class StatusMap
         'last_owner' => 409,
         'admin_ip_self_lockout' => 422,
         'invalid_token' => 422,
+        // Tenant lifecycle (plan Task 5).
+        'lifecycle_transition_invalid' => 422,
     ];
 
     public static function status(string $code): int

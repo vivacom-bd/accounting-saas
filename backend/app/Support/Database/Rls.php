@@ -34,6 +34,8 @@ final class Rls
         'tenant_kpi_snapshots', 'tenant_deletions',
         // platform admin (10_SaaS_Admin §6): staff accounts, the admin audit chain and two-person approvals; ledgerly_platform only
         'admin_users', 'admin_audit_events', 'admin_audit_head', 'admin_approvals',
+        // tenant lifecycle history (plan Task 5); ledgerly_platform only, like tenant_deletions above
+        'tenant_lifecycle_events',
     ];
 
     public static function enable(Connection $connection, string $table): void
