@@ -51,7 +51,11 @@ final class AssetSourceStatus
         return $this->journals($journalAssets) + $this->bills($billAssets);
     }
 
-    /** Sets `sourceWarning` on each asset in one go, so a list does not ask per asset. @param iterable<FixedAsset> $assets */
+    /**
+     * Sets `sourceWarning` on each asset in one go, so a list does not ask per asset.
+     *
+     * @param  iterable<FixedAsset>  $assets
+     */
     public function attach(iterable $assets): void
     {
         $assets = is_array($assets) ? $assets : iterator_to_array($assets, false);
@@ -102,7 +106,8 @@ final class AssetSourceStatus
         }
         $lines = InvoiceLine::query()->whereIn('id', array_values(array_unique($assetLine)))->get()->keyBy('id');
         $bills = Invoice::query()->whereIn('id', $lines->pluck('invoice_id')->unique()->all())->get()->keyBy('id');
-        $credited = $this->creditedOnAccount($bills->where('status', DocumentStatus::Posted)->keys()->all());
+        $posted = array_values(array_map(static fn (Invoice $b): string => $b->id, $bills->where('status', DocumentStatus::Posted)->all()));
+        $credited = $this->creditedOnAccount($posted);
 
         $out = [];
         foreach ($assetLine as $assetId => $lineId) {

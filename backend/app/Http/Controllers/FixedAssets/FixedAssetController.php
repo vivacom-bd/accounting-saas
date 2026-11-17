@@ -36,7 +36,13 @@ final class FixedAssetController extends Controller
             $request->query('q') ? (string) $request->query('q') : null,
         );
         $page = CursorPage::fetch($query, $request, 'number');
-        app(AssetSourceStatus::class)->attach($page->items);
+        $assetsOnPage = [];
+        foreach ($page->items as $item) {
+            if ($item instanceof FixedAsset) {
+                $assetsOnPage[] = $item;
+            }
+        }
+        app(AssetSourceStatus::class)->attach($assetsOnPage);
 
         return FixedAssetResource::collection($page->items)->additional(['meta' => ['next_cursor' => $page->nextCursor, 'prev_cursor' => $page->prevCursor, 'limit' => $page->limit]]);
     }
