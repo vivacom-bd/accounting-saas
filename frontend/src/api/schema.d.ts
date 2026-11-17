@@ -69,6 +69,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/companies/{company}/accounts/{account}/balance-sheet-class": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Sets or clears the balance sheet class (current or non-current) of an asset or liability account; presentation only */
+        put: operations["accounts.balance-sheet-class"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/companies/{company}/accounts/{account}/dimension-rules": {
         parameters: {
             query?: never;
@@ -1470,6 +1487,135 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/consolidation/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["consolidation.groups.index"];
+        put?: never;
+        post: operations["consolidation.groups.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/groups/{group}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["consolidation.groups.show"];
+        put: operations["consolidation.groups.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/groups/{group}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["consolidation.groups.members.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/members/{member}/ownership": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["consolidation.members.ownership"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/groups/{group}/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["consolidation.accounts.index"];
+        put?: never;
+        post: operations["consolidation.accounts.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/groups/{group}/accounts/{groupAccount}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["consolidation.accounts.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/members/{member}/mapping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["consolidation.members.mapping"];
+        put: operations["consolidation.members.map"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/groups/{group}/unmapped": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Accounts with a balance or movement and no mapping; any of them blocks a run */
+        get: operations["consolidation.groups.unmapped"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/companies/{company}/contacts": {
         parameters: {
             query?: never;
@@ -2133,6 +2279,55 @@ export interface paths {
         get: operations["dunning.preview"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/einvoicing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["einvoicing.show"];
+        put: operations["einvoicing.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/invoices/{document}/einvoice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Where a posted sales document stands with the authority; `not_required` when it was never queued */
+        get: operations["invoices.einvoice"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/invoices/{document}/einvoice/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["invoices.einvoice.retry"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5275,6 +5470,150 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/companies/{company}/tax-pack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tax-pack.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/tax-pack/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["tax-pack.apply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/tax-pack/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["tax-pack.settings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/tax-pack/sections/{section}/codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["tax-pack.section-codes"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/tax-periods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tax-periods.index"];
+        put?: never;
+        post: operations["tax-periods.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/tax-periods/{taxPeriod}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tax-periods.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/tax-periods/{taxPeriod}/amounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["tax-periods.amounts"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/tax-periods/{taxPeriod}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["tax-periods.file"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/tax-periods/{taxPeriod}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["tax-periods.reopen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/auth/two-factor-challenge": {
         parameters: {
             query?: never;
@@ -5619,10 +5958,147 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/companies/{company}/write-off-recoveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["write-off-recoveries.index"];
+        put?: never;
+        post: operations["write-off-recoveries.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/write-off-recoveries/{writeOffRecovery}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["write-off-recoveries.show"];
+        put: operations["write-off-recoveries.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/write-off-recoveries/{writeOffRecovery}/posting-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["write-off-recoveries.preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/write-off-recoveries/{writeOffRecovery}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["write-off-recoveries.submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/write-off-recoveries/{writeOffRecovery}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["write-off-recoveries.approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/write-off-recoveries/{writeOffRecovery}/return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["write-off-recoveries.return"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/write-off-recoveries/{writeOffRecovery}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["write-off-recoveries.void"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/companies/{company}/write-off-recoveries/{writeOffRecovery}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["write-off-recoveries.reverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AccountBalanceSheetClassRequest
+         * @description PUT /accounts/{account}/balance-sheet-class: `{"class": "non_current" | "current" | null, "version": 3}`; null returns to the default rules.
+         */
+        AccountBalanceSheetClassRequest: {
+            /** @enum {string|null} */
+            class: "current" | "non_current" | null;
+            version: number;
+        };
         /**
          * AccountDimensionRulesRequest
          * @description `{"rules": [{"dimension_id": "...", "rule": "required|optional|forbidden"}]}`: the complete set for the account.
@@ -5677,6 +6153,13 @@ export interface components {
             /** @description IFRS Accounting Taxonomy element name (ifrs-full), shown for reference only. */
             ifrs_element: string | null;
             description: string | null;
+            /** @description The company's own balance sheet class for an asset or liability (the `bs:*` tag); null when the account follows the rules. */
+            balance_sheet_class: string | null;
+            /**
+             * @description What the rules say without a tag: current, non_current, or null (unknown, shown as current). Assets and liabilities only.
+             * @enum {string|null}
+             */
+            balance_sheet_default: "current" | "non_current" | null;
             version: number;
             /** @description dimension id → required|optional|forbidden */
             dimension_rules?: {
@@ -5726,6 +6209,23 @@ export interface components {
             can: {
                 [key: string]: boolean;
             };
+        };
+        /**
+         * App.Http.Requests.Imports.MappingRequest
+         * @description Sets the mapping of an import: `columns` ({field: file header}), optional `defaults` ({field: constant} for empty cells), and
+         *     optionally `options` (replaces the current ones: `number_locale`, `date_format`, and the kind's own, see the upload).
+         *     Carries the `version` the client last read. Setting the mapping clears any earlier preview.
+         */
+        "App.Http.Requests.Imports.MappingRequest": {
+            version: number;
+            columns: string[];
+            defaults?: (string | null)[] | null;
+            options?: {
+                /** @enum {string|null} */
+                number_locale?: "us" | "eu" | "plain" | null;
+                /** @enum {string|null} */
+                date_format?: "Y-m-d" | "d/m/Y" | "m/d/Y" | "d.m.Y" | "d-m-Y" | "Ymd" | "d/m/y" | "m/d/y" | null;
+            } | null;
         };
         /**
          * App.Http.Requests.Procurement.ReasonRequest
@@ -5856,6 +6356,20 @@ export interface components {
             } | {
                 id: string;
                 number: string | null;
+                recovery_date: string | null;
+                contact_id: string;
+                reference: string | null;
+                memo: string;
+                amount: {
+                    amount: number;
+                    currency: string;
+                };
+                created_by: string | null;
+                submitted_by: string | null;
+                version: number;
+            } | {
+                id: string;
+                number: string | null;
                 write_off_date: string | null;
                 contact_id: string;
                 reference: string | null;
@@ -5919,7 +6433,7 @@ export interface components {
          */
         ApprovalWorkflowRequest: {
             /** @enum {string} */
-            document_type: "journal" | "invoice" | "bill" | "settlement" | "payment_run" | "purchase_requisition" | "purchase_order" | "fund_transfer" | "write_off" | "provision_run" | "depreciation_run" | "asset_transaction";
+            document_type: "journal" | "invoice" | "bill" | "settlement" | "payment_run" | "purchase_requisition" | "purchase_order" | "fund_transfer" | "write_off" | "write_off_recovery" | "provision_run" | "depreciation_run" | "asset_transaction";
             name: string;
             /** @enum {string} */
             source: "any" | "user" | "api";
@@ -6369,6 +6883,13 @@ export interface components {
             duplicate_lines_skipped: number;
             already_imported: boolean;
             warnings: string[];
+            /** @description Rows left out on purpose, each with its line, receipt, status and reason; empty for formats that skip nothing. */
+            skipped_rows: {
+                line: number;
+                reference: string | null;
+                status: string | null;
+                reason: string;
+            }[];
         };
         /** BankStatementLineResource */
         BankStatementLineResource: {
@@ -6574,7 +7095,7 @@ export interface components {
         BulkApproveRequest: {
             documents: {
                 /** @enum {string} */
-                type: "journal" | "invoice" | "bill" | "settlement" | "payment_run" | "purchase_requisition" | "purchase_order" | "purchase_order_revision" | "fund_transfer" | "write_off" | "provision_run" | "depreciation_run" | "asset_transaction";
+                type: "journal" | "invoice" | "bill" | "settlement" | "payment_run" | "purchase_requisition" | "purchase_order" | "purchase_order_revision" | "fund_transfer" | "write_off" | "write_off_recovery" | "provision_run" | "depreciation_run" | "asset_transaction";
                 /** Format: uuid */
                 id: string;
             }[];
@@ -6748,6 +7269,50 @@ export interface components {
             can: {
                 [key: string]: boolean;
             };
+        };
+        /** ConsolidationGroupAccountResource */
+        ConsolidationGroupAccountResource: {
+            id: string;
+            code: string;
+            name: string;
+            account_type: string;
+            account_subtype: string;
+            role: string | null;
+            is_active: boolean;
+        };
+        /** ConsolidationGroupResource */
+        ConsolidationGroupResource: {
+            id: string;
+            name: string;
+            presentation_currency: string;
+            parent_company_id: string;
+            ic_tolerance: {
+                amount: number;
+                currency: string;
+            };
+            status: string;
+            version: number;
+            members?: components["schemas"]["ConsolidationMemberResource"][];
+            can: {
+                [key: string]: boolean;
+            };
+        };
+        /** ConsolidationMapResource */
+        ConsolidationMapResource: {
+            id: string;
+            member_id: string;
+            account_id: string;
+            group_account_id: string;
+        };
+        /** ConsolidationMemberResource */
+        ConsolidationMemberResource: {
+            id: string;
+            company_id: string;
+            company_name: string;
+            role: string;
+            acquisition_date: string | null;
+            status: string;
+            ownership: string[];
         };
         /**
          * ContactRequest
@@ -7177,6 +7742,17 @@ export interface components {
             };
         };
         /**
+         * EInvoicingRequest
+         * @description PUT /einvoicing: `enabled`, the `adapter` key, the seller's `tax_id` and `branch`, and the `version` of the settings when they exist.
+         */
+        EInvoicingRequest: {
+            enabled: boolean;
+            adapter?: string | null;
+            tax_id?: string | null;
+            branch?: string | null;
+            version?: number | null;
+        };
+        /**
          * ExchangeRateRequest
          * @description A manual rate: 1 `from_currency` = `rate` `to_currency` on `rate_date`. The rate is a decimal string (D1: up to 8 decimals).
          */
@@ -7517,6 +8093,30 @@ export interface components {
                 [key: string]: boolean;
             };
         };
+        /**
+         * GroupAccountRequest
+         * @description A group account: code, name, type and subtype (the subtype drives the balance sheet class).
+         */
+        GroupAccountRequest: {
+            code: string;
+            name: string;
+            /** @enum {string} */
+            account_type: "asset" | "liability" | "equity" | "income" | "expense";
+            account_subtype: string;
+        };
+        /**
+         * GroupRequest
+         * @description Create a group (name, currency, parent) or update it (name, tolerance, version).
+         */
+        GroupRequest: {
+            name: string;
+            presentation_currency: string;
+            /** Format: uuid */
+            parent_company_id: string;
+            /** @description Largest intercompany difference, in minor units of the presentation currency, that matches without a second person's acceptance. */
+            ic_tolerance?: number | null;
+            version?: number;
+        };
         /** ImportResource */
         ImportResource: {
             id: string;
@@ -7600,7 +8200,7 @@ export interface components {
         };
         /**
          * ImportStatementRequest
-         * @description Multipart statement upload: `file` (at most 2 MB), `format` (csv|ofx|camt|auto, default auto), `mapping` for CSV (a JSON object, or
+         * @description Multipart statement upload: `file` (at most 2 MB), `format` (csv|ofx|camt|mpesa|auto, default auto; mpesa is never guessed), `mapping` for CSV (a JSON object, or
          *     a field per key; see CsvStatementParser), `save_mapping`, and optional `opening_balance` / `closing_balance` in minor units when the
          *     file does not state them.
          */
@@ -7611,7 +8211,7 @@ export interface components {
              */
             file: string;
             /** @enum {string|null} */
-            format?: "auto" | "csv" | "ofx" | "camt" | null;
+            format?: "auto" | "csv" | "ofx" | "camt" | "mpesa" | null;
             mapping?: {
                 [key: string]: string;
             };
@@ -7862,6 +8462,12 @@ export interface components {
             version: number;
             /** @description The list answers summaries; one document comes with its lines. */
             lines?: components["schemas"]["InvoiceLineResource"][];
+            /** @description Write-offs against a customer invoice, with what has come back since (posted ones only count in the totals). */
+            write_offs?: components["schemas"]["InvoiceWriteOffResource"][];
+            written_off?: {
+                amount: number;
+                currency: string;
+            };
             can: {
                 [key: string]: boolean;
             };
@@ -7880,6 +8486,22 @@ export interface components {
             /** @description How many times the page or its PDF was opened. */
             view_count: number;
             last_viewed_at: string | null;
+        };
+        /** InvoiceWriteOffResource */
+        InvoiceWriteOffResource: {
+            id: string;
+            number: string | null;
+            /** @enum {string} */
+            status: "draft" | "pending_approval" | "posted" | "reversed" | "void";
+            write_off_date: string | null;
+            amount: {
+                amount: number;
+                currency: string;
+            };
+            recovered: {
+                amount: number;
+                currency: string;
+            };
         };
         /**
          * ItemRequest
@@ -8046,20 +8668,15 @@ export interface components {
         };
         /**
          * MappingRequest
-         * @description Sets the mapping of an import: `columns` ({field: file header}), optional `defaults` ({field: constant} for empty cells), and
-         *     optionally `options` (replaces the current ones: `number_locale`, `date_format`, and the kind's own, see the upload).
-         *     Carries the `version` the client last read. Setting the mapping clears any earlier preview.
+         * @description Member accounts and the group account each maps to.
          */
         MappingRequest: {
-            version: number;
-            columns: string[];
-            defaults?: (string | null)[] | null;
-            options?: {
-                /** @enum {string|null} */
-                number_locale?: "us" | "eu" | "plain" | null;
-                /** @enum {string|null} */
-                date_format?: "Y-m-d" | "d/m/Y" | "m/d/Y" | "d.m.Y" | "d-m-Y" | "Ymd" | "d/m/y" | "m/d/y" | null;
-            } | null;
+            mappings: {
+                /** Format: uuid */
+                account_id: string;
+                /** Format: uuid */
+                group_account_id: string;
+            }[];
         };
         /**
          * MatchRequest
@@ -8071,6 +8688,17 @@ export interface components {
             settlement_ids?: string[] | null;
             /** Format: uuid */
             payment_run_id?: string | null;
+        };
+        /**
+         * MemberRequest
+         * @description Add a subsidiary: its company, the acquisition date and the parent's share from then on (basis points).
+         */
+        MemberRequest: {
+            /** Format: uuid */
+            company_id: string;
+            /** Format: date */
+            acquisition_date: string;
+            percent_bp: number;
         };
         /** MemberResource */
         MemberResource: {
@@ -8114,6 +8742,16 @@ export interface components {
                     currency: string;
                 };
             };
+        };
+        /**
+         * OwnershipRequest
+         * @description A row of a subsidiary's ownership history: from the close of `effective_on` the parent holds `percent_bp`.
+         */
+        OwnershipRequest: {
+            /** Format: date */
+            effective_on: string;
+            percent_bp: number;
+            note?: string | null;
         };
         /**
          * PaymentRunRequest
@@ -9210,6 +9848,17 @@ export interface components {
             };
         };
         /**
+         * TaxPeriodRequest
+         * @description One request class for the tax period writes: generate (`authority`, `from`, `months`), save manual amounts (`version`, `amounts`),
+         *     file (`version`, `reference`) and reopen (`version`, `reason`). The route decides which rules apply.
+         */
+        TaxPeriodRequest: {
+            version: number;
+            reason: string;
+        };
+        /** TaxPeriodResource */
+        TaxPeriodResource: unknown[];
+        /**
          * TaxRateRequest
          * @description A new rate of a tax code from a date (inclusive), with the code's `version` it was based on.
          */
@@ -9219,6 +9868,9 @@ export interface components {
             effective_from: string;
             /** Format: date */
             effective_to?: string | null;
+            source?: string | null;
+            /** Format: date */
+            source_as_of?: string | null;
             version: number;
         };
         /** TaxRateResource */
@@ -9228,6 +9880,9 @@ export interface components {
             rate: string;
             effective_from: string | null;
             effective_to: string | null;
+            /** @description Where the rate came from and when it was checked; null when nobody said. */
+            source: string | null;
+            source_as_of: string | null;
         };
         /** TaxScheduleResource */
         TaxScheduleResource: {
@@ -9246,6 +9901,18 @@ export interface components {
         TwoFactorLoginRequest: {
             code?: string | null;
             recovery_code?: string | null;
+        };
+        /** UnmappedBalanceResource */
+        UnmappedBalanceResource: {
+            member_id: string;
+            company_id: string;
+            account_id: string;
+            code: string;
+            name: string;
+            account_type: string;
+            net: number;
+            movement_debit: number;
+            movement_credit: number;
         };
         /**
          * UploadImportRequest
@@ -9336,7 +10003,7 @@ export interface components {
         WebhookEndpointRequest: {
             url: string;
             description?: string | null;
-            events: ("*" | "journal.posted" | "journal.reversed" | "invoice.posted" | "invoice.reversed" | "bill.posted" | "bill.reversed" | "settlement.posted" | "settlement.reversed" | "payment_run.posted" | "credit_application.created" | "credit_application.reversed" | "document.submitted" | "document.approved" | "document.returned" | "document.voided" | "period.soft_closed" | "period.closed" | "period.reopened" | "fiscal_year.closed" | "fiscal_year.locked" | "bank_statement.imported" | "bank_match.created" | "bank_match.removed" | "bank_transaction.created" | "bank_reconciliation.finished" | "bank_reconciliation.reopened" | "recurring.occurrence_created" | "import.created" | "import.applied" | "import.failed" | "purchase_requisition.approved" | "purchase_requisition.rejected" | "purchase_order.approved" | "purchase_order.revised" | "purchase_order.cancelled" | "purchase_order.closed" | "goods_receipt.recorded" | "goods_receipt.reversed" | "bill.match_overridden" | "fund_transfer.posted" | "fund_transfer.received" | "fund_transfer.reversed" | "write_off.posted" | "write_off.reversed" | "provision_run.posted" | "provision_run.reversed" | "invoice.credit_limit_overridden")[];
+            events: ("*" | "journal.posted" | "journal.reversed" | "invoice.posted" | "invoice.reversed" | "bill.posted" | "bill.reversed" | "settlement.posted" | "settlement.reversed" | "payment_run.posted" | "credit_application.created" | "credit_application.reversed" | "document.submitted" | "document.approved" | "document.returned" | "document.voided" | "period.soft_closed" | "period.closed" | "period.reopened" | "fiscal_year.closed" | "fiscal_year.locked" | "bank_statement.imported" | "bank_match.created" | "bank_match.removed" | "bank_transaction.created" | "bank_reconciliation.finished" | "bank_reconciliation.reopened" | "recurring.occurrence_created" | "import.created" | "import.applied" | "import.failed" | "purchase_requisition.approved" | "purchase_requisition.rejected" | "purchase_order.approved" | "purchase_order.revised" | "purchase_order.cancelled" | "purchase_order.closed" | "goods_receipt.recorded" | "goods_receipt.reversed" | "bill.match_overridden" | "fund_transfer.posted" | "fund_transfer.received" | "fund_transfer.reversed" | "write_off.posted" | "write_off.reversed" | "write_off_recovery.posted" | "write_off_recovery.reversed" | "provision_run.posted" | "provision_run.reversed" | "invoice.credit_limit_overridden")[];
             version?: number;
         };
         /** WebhookEndpointResource */
@@ -9374,6 +10041,54 @@ export interface components {
                 currency: string;
             };
             issued_on: string | null;
+        };
+        /**
+         * WriteOffRecoveryRequest
+         * @description Create (POST) or replace (PUT, with `version`) a draft recovery: one posted write-off, the amount in the invoice's currency (up to what is not yet recovered) and the reason.
+         */
+        WriteOffRecoveryRequest: {
+            /** Format: uuid */
+            write_off_id: string;
+            /** Format: date */
+            recovery_date: string;
+            amount_fc: number;
+            reason: string;
+            reference?: string | null;
+            memo?: string | null;
+            version?: number;
+        };
+        /** WriteOffRecoveryResource */
+        WriteOffRecoveryResource: {
+            id: string;
+            number: string | null;
+            /** @enum {string} */
+            status: "draft" | "pending_approval" | "posted" | "reversed" | "void";
+            write_off_id: string;
+            invoice_id: string;
+            contact_id: string;
+            recovery_date: string | null;
+            amount: {
+                amount: number;
+                currency: string;
+            };
+            base_amount: {
+                amount: number;
+                currency: string;
+            };
+            reason: string;
+            reference: string | null;
+            memo: string | null;
+            journal_id: string | null;
+            reversal_journal_id: string | null;
+            created_by: string | null;
+            submitted_by: string | null;
+            approved_by: string | null;
+            posted_by: string | null;
+            posted_at: string | null;
+            version: number;
+            can: {
+                [key: string]: boolean;
+            };
         };
         /**
          * WriteOffRequest
@@ -9416,6 +10131,10 @@ export interface components {
                 currency: string;
             };
             recovered: {
+                amount: number;
+                currency: string;
+            };
+            recoverable: {
                 amount: number;
                 currency: string;
             };
@@ -9689,6 +10408,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AccountVisibilityRequest"];
+            };
+        };
+        responses: {
+            /** @description `AccountResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AccountResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "accounts.balance-sheet-class": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The account ID */
+                account: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountBalanceSheetClassRequest"];
             };
         };
         responses: {
@@ -13139,6 +13893,375 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
         };
     };
+    "consolidation.groups.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `ConsolidationGroupResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: (components["schemas"]["ConsolidationGroupResource"] & Record<string, never>)[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "consolidation.groups.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GroupRequest"];
+            };
+        };
+        responses: {
+            /** @description `ConsolidationGroupResource` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationGroupResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "consolidation.groups.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The group ID */
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ConsolidationGroupResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationGroupResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "consolidation.groups.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The group ID */
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GroupRequest"];
+            };
+        };
+        responses: {
+            /** @description `ConsolidationGroupResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationGroupResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "consolidation.groups.members.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The group ID */
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemberRequest"];
+            };
+        };
+        responses: {
+            /** @description `ConsolidationGroupResource` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationGroupResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "consolidation.members.ownership": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The member ID */
+                member: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnershipRequest"];
+            };
+        };
+        responses: {
+            /** @description `ConsolidationGroupResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationGroupResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "consolidation.accounts.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The group ID */
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `ConsolidationGroupAccountResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationGroupAccountResource"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "consolidation.accounts.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The group ID */
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GroupAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description `ConsolidationGroupAccountResource` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationGroupAccountResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "consolidation.accounts.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The group ID */
+                group: string;
+                /** @description The group account ID */
+                groupAccount: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GroupAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description `ConsolidationGroupAccountResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationGroupAccountResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "consolidation.members.mapping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The member ID */
+                member: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `ConsolidationMapResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationMapResource"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "consolidation.members.map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The member ID */
+                member: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MappingRequest"];
+            };
+        };
+        responses: {
+            /** @description Array of `ConsolidationMapResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationMapResource"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "consolidation.groups.unmapped": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path: {
+                /** @description The group ID */
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `UnmappedBalanceResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["UnmappedBalanceResource"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "contacts.index": {
         parameters: {
             query?: {
@@ -14840,6 +15963,117 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "einvoicing.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `FreeFormDataResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FreeFormDataResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "einvoicing.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EInvoicingRequest"];
+            };
+        };
+        responses: {
+            /** @description `FreeFormDataResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FreeFormDataResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "invoices.einvoice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                document: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `FreeFormDataResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FreeFormDataResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "invoices.einvoice.retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                document: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `FreeFormDataResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FreeFormDataResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
     "fx-rates.index": {
         parameters: {
             query?: {
@@ -16297,7 +17531,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["MappingRequest"];
+                "application/json": components["schemas"]["App.Http.Requests.Imports.MappingRequest"];
             };
         };
         responses: {
@@ -19401,6 +20635,9 @@ export interface operations {
                         data: {
                             buckets: unknown[];
                             configured: boolean;
+                            can: {
+                                manage_rates: boolean;
+                            };
                         };
                     };
                 };
@@ -23646,6 +24883,312 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "tax-pack.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `FreeFormDataResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FreeFormDataResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "tax-pack.apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `FreeFormDataResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FreeFormDataResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "tax-pack.settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `FreeFormDataResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FreeFormDataResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "tax-pack.section-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                section: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `FreeFormDataResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FreeFormDataResource"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "tax-periods.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `TaxPeriodResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TaxPeriodResource"][];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "tax-periods.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxPeriodRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: unknown[];
+                        meta: {
+                            created: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "tax-periods.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The tax period ID */
+                taxPeriod: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `TaxPeriodResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TaxPeriodResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "tax-periods.amounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The tax period ID */
+                taxPeriod: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxPeriodRequest"];
+            };
+        };
+        responses: {
+            /** @description `TaxPeriodResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TaxPeriodResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "tax-periods.file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The tax period ID */
+                taxPeriod: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxPeriodRequest"];
+            };
+        };
+        responses: {
+            /** @description `TaxPeriodResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TaxPeriodResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "tax-periods.reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The tax period ID */
+                taxPeriod: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxPeriodRequest"];
+            };
+        };
+        responses: {
+            /** @description `TaxPeriodResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TaxPeriodResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "two-factor.login.store": {
         parameters: {
             query?: never;
@@ -24415,6 +25958,352 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["WriteOffResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "write-off-recoveries.index": {
+        parameters: {
+            query?: {
+                status?: "draft" | "pending_approval" | "posted" | "reversed" | "void" | "issued" | null;
+                contact_id?: string | null;
+                from?: string | null;
+                to?: string | null;
+                /** @description Opaque, from `meta.next_cursor` or `meta.prev_cursor`. */
+                cursor?: string;
+                /** @description Page size, 1 to 200; default 50. */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `WriteOffRecoveryResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["WriteOffRecoveryResource"][];
+                        meta: {
+                            next_cursor: string | null;
+                            prev_cursor: string | null;
+                            limit: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "write-off-recoveries.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WriteOffRecoveryRequest"];
+            };
+        };
+        responses: {
+            /** @description `WriteOffRecoveryResource` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["WriteOffRecoveryResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "write-off-recoveries.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The write off recovery ID */
+                writeOffRecovery: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `WriteOffRecoveryResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["WriteOffRecoveryResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "write-off-recoveries.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The write off recovery ID */
+                writeOffRecovery: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WriteOffRecoveryRequest"];
+            };
+        };
+        responses: {
+            /** @description `WriteOffRecoveryResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["WriteOffRecoveryResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "write-off-recoveries.preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The write off recovery ID */
+                writeOffRecovery: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `InvoicePostingPreviewResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["InvoicePostingPreviewResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "write-off-recoveries.submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The write off recovery ID */
+                writeOffRecovery: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["TransitionRequest"];
+            };
+        };
+        responses: {
+            /** @description `WriteOffRecoveryResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["WriteOffRecoveryResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "write-off-recoveries.approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The write off recovery ID */
+                writeOffRecovery: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["TransitionRequest"];
+            };
+        };
+        responses: {
+            /** @description `WriteOffRecoveryResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["WriteOffRecoveryResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "write-off-recoveries.return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The write off recovery ID */
+                writeOffRecovery: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReturnJournalRequest"];
+            };
+        };
+        responses: {
+            /** @description `WriteOffRecoveryResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["WriteOffRecoveryResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "write-off-recoveries.void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The write off recovery ID */
+                writeOffRecovery: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["VoidJournalRequest"];
+            };
+        };
+        responses: {
+            /** @description `WriteOffRecoveryResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["WriteOffRecoveryResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "write-off-recoveries.reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The company ID */
+                company: string;
+                /** @description The write off recovery ID */
+                writeOffRecovery: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReverseJournalRequest"];
+            };
+        };
+        responses: {
+            /** @description `WriteOffRecoveryResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["WriteOffRecoveryResource"];
                     };
                 };
             };

@@ -6,7 +6,7 @@
     },
     "servers": [
         {
-            "url": "http://137.184.74.217:18080/api"
+            "url": "http://localhost:8000/api"
         }
     ],
     "paths": {
@@ -496,6 +496,87 @@
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/AccountVisibilityRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`AccountResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/AccountResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "dimension_rules"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/accounts/{account}/balance-sheet-class": {
+            "put": {
+                "operationId": "accounts.balance-sheet-class",
+                "summary": "Sets or clears the balance sheet class (current or non-current) of an asset or liability account; presentation only",
+                "tags": [
+                    "Account"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "account",
+                        "in": "path",
+                        "required": true,
+                        "description": "The account ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AccountBalanceSheetClassRequest"
                             }
                         }
                     }
@@ -5387,7 +5468,9 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
-                                                        "lines"
+                                                        "lines",
+                                                        "write_offs",
+                                                        "written_off"
                                                     ]
                                                 }
                                             ]
@@ -5457,7 +5540,9 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
-                                                        "lines"
+                                                        "lines",
+                                                        "write_offs",
+                                                        "written_off"
                                                     ]
                                                 }
                                             ]
@@ -5532,7 +5617,9 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
-                                                        "lines"
+                                                        "lines",
+                                                        "write_offs",
+                                                        "written_off"
                                                     ]
                                                 }
                                             ]
@@ -5810,7 +5897,9 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
-                                                        "lines"
+                                                        "lines",
+                                                        "write_offs",
+                                                        "written_off"
                                                     ]
                                                 }
                                             ]
@@ -5890,7 +5979,9 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
-                                                        "lines"
+                                                        "lines",
+                                                        "write_offs",
+                                                        "written_off"
                                                     ]
                                                 }
                                             ]
@@ -5969,7 +6060,9 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
-                                                        "lines"
+                                                        "lines",
+                                                        "write_offs",
+                                                        "written_off"
                                                     ]
                                                 }
                                             ]
@@ -6048,7 +6141,9 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
-                                                        "lines"
+                                                        "lines",
+                                                        "write_offs",
+                                                        "written_off"
                                                     ]
                                                 }
                                             ]
@@ -8186,6 +8281,743 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/groups": {
+            "get": {
+                "operationId": "consolidation.groups.index",
+                "tags": [
+                    "ConsolidationGroup"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `ConsolidationGroupResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/ConsolidationGroupResource"
+                                                    },
+                                                    {
+                                                        "type": "object",
+                                                        "required": [
+                                                            "members"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "consolidation.groups.store",
+                "tags": [
+                    "ConsolidationGroup"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GroupRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`ConsolidationGroupResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/ConsolidationGroupResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "members"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/groups/{group}": {
+            "get": {
+                "operationId": "consolidation.groups.show",
+                "tags": [
+                    "ConsolidationGroup"
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "description": "The group ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationGroupResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/ConsolidationGroupResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "members"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "consolidation.groups.update",
+                "tags": [
+                    "ConsolidationGroup"
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "description": "The group ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GroupRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationGroupResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/ConsolidationGroupResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "members"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/groups/{group}/members": {
+            "post": {
+                "operationId": "consolidation.groups.members.store",
+                "tags": [
+                    "ConsolidationGroup"
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "description": "The group ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MemberRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`ConsolidationGroupResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/ConsolidationGroupResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "members"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/members/{member}/ownership": {
+            "put": {
+                "operationId": "consolidation.members.ownership",
+                "tags": [
+                    "ConsolidationGroup"
+                ],
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OwnershipRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationGroupResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/ConsolidationGroupResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "members"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/groups/{group}/accounts": {
+            "get": {
+                "operationId": "consolidation.accounts.index",
+                "tags": [
+                    "ConsolidationGroup"
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "description": "The group ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `ConsolidationGroupAccountResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ConsolidationGroupAccountResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "consolidation.accounts.store",
+                "tags": [
+                    "ConsolidationGroup"
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "description": "The group ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GroupAccountRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`ConsolidationGroupAccountResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ConsolidationGroupAccountResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/groups/{group}/accounts/{groupAccount}": {
+            "put": {
+                "operationId": "consolidation.accounts.update",
+                "tags": [
+                    "ConsolidationGroup"
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "description": "The group ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "groupAccount",
+                        "in": "path",
+                        "required": true,
+                        "description": "The group account ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GroupAccountRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationGroupAccountResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ConsolidationGroupAccountResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/members/{member}/mapping": {
+            "get": {
+                "operationId": "consolidation.members.mapping",
+                "tags": [
+                    "ConsolidationGroup"
+                ],
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `ConsolidationMapResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ConsolidationMapResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "consolidation.members.map",
+                "tags": [
+                    "ConsolidationGroup"
+                ],
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MappingRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Array of `ConsolidationMapResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ConsolidationMapResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/groups/{group}/unmapped": {
+            "get": {
+                "operationId": "consolidation.groups.unmapped",
+                "summary": "Accounts with a balance or movement and no mapping; any of them blocks a run",
+                "tags": [
+                    "ConsolidationGroup"
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "description": "The group ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `UnmappedBalanceResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/UnmappedBalanceResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -12273,6 +13105,194 @@
                 }
             }
         },
+        "/v1/companies/{company}/einvoicing": {
+            "get": {
+                "operationId": "einvoicing.show",
+                "tags": [
+                    "EInvoicing"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`FreeFormDataResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FreeFormDataResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "einvoicing.update",
+                "tags": [
+                    "EInvoicing"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EInvoicingRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`FreeFormDataResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FreeFormDataResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/invoices/{document}/einvoice": {
+            "get": {
+                "operationId": "invoices.einvoice",
+                "summary": "Where a posted sales document stands with the authority; `not_required` when it was never queued",
+                "tags": [
+                    "EInvoicing"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`FreeFormDataResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FreeFormDataResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/invoices/{document}/einvoice/retry": {
+            "post": {
+                "operationId": "invoices.einvoice.retry",
+                "tags": [
+                    "EInvoicing"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`FreeFormDataResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FreeFormDataResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/companies/{company}/fx-rates": {
             "get": {
                 "operationId": "fx-rates.index",
@@ -15673,7 +16693,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/MappingRequest"
+                                "$ref": "#/components/schemas/App.Http.Requests.Imports.MappingRequest"
                             }
                         }
                     }
@@ -16547,7 +17567,9 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
-                                                        "lines"
+                                                        "lines",
+                                                        "write_offs",
+                                                        "written_off"
                                                     ]
                                                 }
                                             ]
@@ -16617,7 +17639,9 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
-                                                        "lines"
+                                                        "lines",
+                                                        "write_offs",
+                                                        "written_off"
                                                     ]
                                                 }
                                             ]
@@ -16692,7 +17716,9 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
-                                                        "lines"
+                                                        "lines",
+                                                        "write_offs",
+                                                        "written_off"
                                                     ]
                                                 }
                                             ]
@@ -16989,7 +18015,9 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
-                                                        "lines"
+                                                        "lines",
+                                                        "write_offs",
+                                                        "written_off"
                                                     ]
                                                 }
                                             ]
@@ -17069,7 +18097,9 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
-                                                        "lines"
+                                                        "lines",
+                                                        "write_offs",
+                                                        "written_off"
                                                     ]
                                                 }
                                             ]
@@ -17148,7 +18178,9 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
-                                                        "lines"
+                                                        "lines",
+                                                        "write_offs",
+                                                        "written_off"
                                                     ]
                                                 }
                                             ]
@@ -17227,7 +18259,9 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
-                                                        "lines"
+                                                        "lines",
+                                                        "write_offs",
+                                                        "written_off"
                                                     ]
                                                 }
                                             ]
@@ -24610,11 +25644,23 @@
                                                 },
                                                 "configured": {
                                                     "type": "boolean"
+                                                },
+                                                "can": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "manage_rates": {
+                                                            "type": "boolean"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "manage_rates"
+                                                    ]
                                                 }
                                             },
                                             "required": [
                                                 "buckets",
-                                                "configured"
+                                                "configured",
+                                                "can"
                                             ]
                                         }
                                     },
@@ -37620,6 +38666,573 @@
                 }
             }
         },
+        "/v1/companies/{company}/tax-pack": {
+            "get": {
+                "operationId": "tax-pack.show",
+                "tags": [
+                    "TaxPack"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`FreeFormDataResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FreeFormDataResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/tax-pack/apply": {
+            "post": {
+                "operationId": "tax-pack.apply",
+                "tags": [
+                    "TaxPack"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`FreeFormDataResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FreeFormDataResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/tax-pack/settings": {
+            "put": {
+                "operationId": "tax-pack.settings",
+                "tags": [
+                    "TaxPack"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`FreeFormDataResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FreeFormDataResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/tax-pack/sections/{section}/codes": {
+            "put": {
+                "operationId": "tax-pack.section-codes",
+                "tags": [
+                    "TaxPack"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "section",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`FreeFormDataResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FreeFormDataResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/tax-periods": {
+            "get": {
+                "operationId": "tax-periods.index",
+                "tags": [
+                    "TaxPeriod"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `TaxPeriodResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TaxPeriodResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "tax-periods.store",
+                "tags": [
+                    "TaxPeriod"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaxPeriodRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {}
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "created": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "created"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/tax-periods/{taxPeriod}": {
+            "get": {
+                "operationId": "tax-periods.show",
+                "tags": [
+                    "TaxPeriod"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "taxPeriod",
+                        "in": "path",
+                        "required": true,
+                        "description": "The tax period ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`TaxPeriodResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TaxPeriodResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/tax-periods/{taxPeriod}/amounts": {
+            "put": {
+                "operationId": "tax-periods.amounts",
+                "tags": [
+                    "TaxPeriod"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "taxPeriod",
+                        "in": "path",
+                        "required": true,
+                        "description": "The tax period ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaxPeriodRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`TaxPeriodResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TaxPeriodResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/tax-periods/{taxPeriod}/file": {
+            "post": {
+                "operationId": "tax-periods.file",
+                "tags": [
+                    "TaxPeriod"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "taxPeriod",
+                        "in": "path",
+                        "required": true,
+                        "description": "The tax period ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaxPeriodRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`TaxPeriodResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TaxPeriodResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/tax-periods/{taxPeriod}/reopen": {
+            "post": {
+                "operationId": "tax-periods.reopen",
+                "tags": [
+                    "TaxPeriod"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "taxPeriod",
+                        "in": "path",
+                        "required": true,
+                        "description": "The tax period ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaxPeriodRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`TaxPeriodResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TaxPeriodResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/auth/two-factor-challenge": {
             "post": {
                 "operationId": "two-factor.login.store",
@@ -39208,10 +40821,771 @@
                     }
                 }
             }
+        },
+        "/v1/companies/{company}/write-off-recoveries": {
+            "get": {
+                "operationId": "write-off-recoveries.index",
+                "tags": [
+                    "WriteOffRecovery"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "draft",
+                                "pending_approval",
+                                "posted",
+                                "reversed",
+                                "void",
+                                "issued",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "contact_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Opaque, from `meta.next_cursor` or `meta.prev_cursor`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Page size, 1 to 200; default 50.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `WriteOffRecoveryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/WriteOffRecoveryResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "limit": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "next_cursor",
+                                                "prev_cursor",
+                                                "limit"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "write-off-recoveries.store",
+                "tags": [
+                    "WriteOffRecovery"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WriteOffRecoveryRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`WriteOffRecoveryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WriteOffRecoveryResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/write-off-recoveries/{writeOffRecovery}": {
+            "get": {
+                "operationId": "write-off-recoveries.show",
+                "tags": [
+                    "WriteOffRecovery"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "writeOffRecovery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The write off recovery ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`WriteOffRecoveryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WriteOffRecoveryResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "write-off-recoveries.update",
+                "tags": [
+                    "WriteOffRecovery"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "writeOffRecovery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The write off recovery ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WriteOffRecoveryRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`WriteOffRecoveryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WriteOffRecoveryResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/write-off-recoveries/{writeOffRecovery}/posting-preview": {
+            "post": {
+                "operationId": "write-off-recoveries.preview",
+                "tags": [
+                    "WriteOffRecovery"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "writeOffRecovery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The write off recovery ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`InvoicePostingPreviewResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/InvoicePostingPreviewResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/write-off-recoveries/{writeOffRecovery}/submit": {
+            "post": {
+                "operationId": "write-off-recoveries.submit",
+                "tags": [
+                    "WriteOffRecovery"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "writeOffRecovery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The write off recovery ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TransitionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`WriteOffRecoveryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WriteOffRecoveryResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/write-off-recoveries/{writeOffRecovery}/approve": {
+            "post": {
+                "operationId": "write-off-recoveries.approve",
+                "tags": [
+                    "WriteOffRecovery"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "writeOffRecovery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The write off recovery ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TransitionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`WriteOffRecoveryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WriteOffRecoveryResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/write-off-recoveries/{writeOffRecovery}/return": {
+            "post": {
+                "operationId": "write-off-recoveries.return",
+                "tags": [
+                    "WriteOffRecovery"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "writeOffRecovery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The write off recovery ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReturnJournalRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`WriteOffRecoveryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WriteOffRecoveryResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/write-off-recoveries/{writeOffRecovery}/void": {
+            "post": {
+                "operationId": "write-off-recoveries.void",
+                "tags": [
+                    "WriteOffRecovery"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "writeOffRecovery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The write off recovery ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VoidJournalRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`WriteOffRecoveryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WriteOffRecoveryResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/write-off-recoveries/{writeOffRecovery}/reverse": {
+            "post": {
+                "operationId": "write-off-recoveries.reverse",
+                "tags": [
+                    "WriteOffRecovery"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "writeOffRecovery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The write off recovery ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReverseJournalRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`WriteOffRecoveryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WriteOffRecoveryResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
         }
     },
     "components": {
         "schemas": {
+            "AccountBalanceSheetClassRequest": {
+                "type": "object",
+                "description": "PUT /accounts/{account}/balance-sheet-class: `{\"class\": \"non_current\" | \"current\" | null, \"version\": 3}`; null returns to the default rules.",
+                "properties": {
+                    "class": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "current",
+                            "non_current",
+                            null
+                        ]
+                    },
+                    "version": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "class",
+                    "version"
+                ],
+                "title": "AccountBalanceSheetClassRequest"
+            },
             "AccountDimensionRulesRequest": {
                 "type": "object",
                 "description": "`{\"rules\": [{\"dimension_id\": \"...\", \"rule\": \"required|optional|forbidden\"}]}`: the complete set for the account.",
@@ -39431,6 +41805,25 @@
                             "null"
                         ]
                     },
+                    "balance_sheet_class": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The company's own balance sheet class for an asset or liability (the `bs:*` tag); null when the account follows the rules."
+                    },
+                    "balance_sheet_default": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "What the rules say without a tag: current, non_current, or null (unknown, shown as current). Assets and liabilities only.",
+                        "enum": [
+                            "current",
+                            "non_current",
+                            null
+                        ]
+                    },
                     "version": {
                         "type": "integer"
                     },
@@ -39465,6 +41858,8 @@
                     "is_hidden",
                     "ifrs_element",
                     "description",
+                    "balance_sheet_class",
+                    "balance_sheet_default",
                     "version",
                     "can"
                 ],
@@ -39672,6 +42067,79 @@
                     "can"
                 ],
                 "title": "ApiClientResource"
+            },
+            "App.Http.Requests.Imports.MappingRequest": {
+                "type": "object",
+                "description": "Sets the mapping of an import: `columns` ({field: file header}), optional `defaults` ({field: constant} for empty cells), and\noptionally `options` (replaces the current ones: `number_locale`, `date_format`, and the kind's own, see the upload).\nCarries the `version` the client last read. Setting the mapping clears any earlier preview.",
+                "properties": {
+                    "version": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "columns": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 255
+                        },
+                        "minItems": 1
+                    },
+                    "defaults": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 255
+                        }
+                    },
+                    "options": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "number_locale": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "us",
+                                    "eu",
+                                    "plain",
+                                    null
+                                ]
+                            },
+                            "date_format": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "Y-m-d",
+                                    "d/m/Y",
+                                    "m/d/Y",
+                                    "d.m.Y",
+                                    "d-m-Y",
+                                    "Ymd",
+                                    "d/m/y",
+                                    "m/d/y",
+                                    null
+                                ]
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "version",
+                    "columns"
+                ],
+                "title": "App.Http.Requests.Imports.MappingRequest"
             },
             "App.Http.Requests.Procurement.ReasonRequest": {
                 "type": "object",
@@ -40295,6 +42763,80 @@
                                             "null"
                                         ]
                                     },
+                                    "recovery_date": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "contact_id": {
+                                        "type": "string"
+                                    },
+                                    "reference": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "memo": {
+                                        "type": "string"
+                                    },
+                                    "amount": {
+                                        "type": "object",
+                                        "properties": {
+                                            "amount": {
+                                                "type": "integer"
+                                            },
+                                            "currency": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "amount",
+                                            "currency"
+                                        ]
+                                    },
+                                    "created_by": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "submitted_by": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "version": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "id",
+                                    "number",
+                                    "recovery_date",
+                                    "contact_id",
+                                    "reference",
+                                    "memo",
+                                    "amount",
+                                    "created_by",
+                                    "submitted_by",
+                                    "version"
+                                ]
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string"
+                                    },
+                                    "number": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
                                     "write_off_date": {
                                         "type": [
                                             "string",
@@ -40631,6 +43173,7 @@
                             "purchase_order",
                             "fund_transfer",
                             "write_off",
+                            "write_off_recovery",
                             "provision_run",
                             "depreciation_run",
                             "asset_transaction"
@@ -42482,6 +45025,39 @@
                         "items": {
                             "type": "string"
                         }
+                    },
+                    "skipped_rows": {
+                        "type": "array",
+                        "description": "Rows left out on purpose, each with its line, receipt, status and reason; empty for formats that skip nothing.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "line": {
+                                    "type": "integer"
+                                },
+                                "reference": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "status": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "reason": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "line",
+                                "reference",
+                                "status",
+                                "reason"
+                            ]
+                        }
                     }
                 },
                 "required": [
@@ -42489,7 +45065,8 @@
                     "lines_imported",
                     "duplicate_lines_skipped",
                     "already_imported",
-                    "warnings"
+                    "warnings",
+                    "skipped_rows"
                 ],
                 "title": "BankStatementImportResource"
             },
@@ -43291,6 +45868,7 @@
                                         "purchase_order_revision",
                                         "fund_transfer",
                                         "write_off",
+                                        "write_off_recovery",
                                         "provision_run",
                                         "depreciation_run",
                                         "asset_transaction"
@@ -43855,6 +46433,172 @@
                     "can"
                 ],
                 "title": "CompanySettingsResource"
+            },
+            "ConsolidationGroupAccountResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "account_type": {
+                        "type": "string"
+                    },
+                    "account_subtype": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "id",
+                    "code",
+                    "name",
+                    "account_type",
+                    "account_subtype",
+                    "role",
+                    "is_active"
+                ],
+                "title": "ConsolidationGroupAccountResource"
+            },
+            "ConsolidationGroupResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "presentation_currency": {
+                        "type": "string"
+                    },
+                    "parent_company_id": {
+                        "type": "string"
+                    },
+                    "ic_tolerance": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "integer"
+                    },
+                    "members": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ConsolidationMemberResource"
+                        }
+                    },
+                    "can": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "presentation_currency",
+                    "parent_company_id",
+                    "ic_tolerance",
+                    "status",
+                    "version",
+                    "can"
+                ],
+                "title": "ConsolidationGroupResource"
+            },
+            "ConsolidationMapResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "member_id": {
+                        "type": "string"
+                    },
+                    "account_id": {
+                        "type": "string"
+                    },
+                    "group_account_id": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "member_id",
+                    "account_id",
+                    "group_account_id"
+                ],
+                "title": "ConsolidationMapResource"
+            },
+            "ConsolidationMemberResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "company_id": {
+                        "type": "string"
+                    },
+                    "company_name": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "acquisition_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "ownership": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "company_id",
+                    "company_name",
+                    "role",
+                    "acquisition_date",
+                    "status",
+                    "ownership"
+                ],
+                "title": "ConsolidationMemberResource"
             },
             "ContactRequest": {
                 "type": "object",
@@ -45439,6 +48183,47 @@
                 ],
                 "title": "DunningSettingsResource"
             },
+            "EInvoicingRequest": {
+                "type": "object",
+                "description": "PUT /einvoicing: `enabled`, the `adapter` key, the seller's `tax_id` and `branch`, and the `version` of the settings when they exist.",
+                "properties": {
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "adapter": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 40
+                    },
+                    "tax_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 40
+                    },
+                    "branch": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 40
+                    },
+                    "version": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "enabled"
+                ],
+                "title": "EInvoicingRequest"
+            },
             "ExchangeRateRequest": {
                 "type": "object",
                 "description": "A manual rate: 1 `from_currency` = `rate` `to_currency` on `rate_date`. The rate is a decimal string (D1: up to 8 decimals).",
@@ -46858,6 +49643,78 @@
                 ],
                 "title": "GoodsReceiptResource"
             },
+            "GroupAccountRequest": {
+                "type": "object",
+                "description": "A group account: code, name, type and subtype (the subtype drives the balance sheet class).",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "maxLength": 32
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 160
+                    },
+                    "account_type": {
+                        "type": "string",
+                        "enum": [
+                            "asset",
+                            "liability",
+                            "equity",
+                            "income",
+                            "expense"
+                        ]
+                    },
+                    "account_subtype": {
+                        "type": "string",
+                        "maxLength": 64
+                    }
+                },
+                "required": [
+                    "code",
+                    "name",
+                    "account_type",
+                    "account_subtype"
+                ],
+                "title": "GroupAccountRequest"
+            },
+            "GroupRequest": {
+                "type": "object",
+                "description": "Create a group (name, currency, parent) or update it (name, tolerance, version).",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 160
+                    },
+                    "presentation_currency": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 3
+                    },
+                    "parent_company_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "ic_tolerance": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Largest intercompany difference, in minor units of the presentation currency, that matches without a second person's acceptance.",
+                        "minimum": 0
+                    },
+                    "version": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "name",
+                    "presentation_currency",
+                    "parent_company_id"
+                ],
+                "title": "GroupRequest"
+            },
             "ImportResource": {
                 "type": "object",
                 "properties": {
@@ -47191,7 +50048,7 @@
             },
             "ImportStatementRequest": {
                 "type": "object",
-                "description": "Multipart statement upload: `file` (at most 2 MB), `format` (csv|ofx|camt|auto, default auto), `mapping` for CSV (a JSON object, or\na field per key; see CsvStatementParser), `save_mapping`, and optional `opening_balance` / `closing_balance` in minor units when the\nfile does not state them.",
+                "description": "Multipart statement upload: `file` (at most 2 MB), `format` (csv|ofx|camt|mpesa|auto, default auto; mpesa is never guessed), `mapping` for CSV (a JSON object, or\na field per key; see CsvStatementParser), `save_mapping`, and optional `opening_balance` / `closing_balance` in minor units when the\nfile does not state them.",
                 "properties": {
                     "file": {
                         "type": "string",
@@ -47209,6 +50066,7 @@
                             "csv",
                             "ofx",
                             "camt",
+                            "mpesa",
                             null
                         ]
                     },
@@ -48207,6 +51065,28 @@
                             "$ref": "#/components/schemas/InvoiceLineResource"
                         }
                     },
+                    "write_offs": {
+                        "type": "array",
+                        "description": "Write-offs against a customer invoice, with what has come back since (posted ones only count in the totals).",
+                        "items": {
+                            "$ref": "#/components/schemas/InvoiceWriteOffResource"
+                        }
+                    },
+                    "written_off": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
                     "can": {
                         "type": "object",
                         "additionalProperties": {
@@ -48316,6 +51196,75 @@
                     "last_viewed_at"
                 ],
                 "title": "InvoiceShareLinkResource"
+            },
+            "InvoiceWriteOffResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "pending_approval",
+                            "posted",
+                            "reversed",
+                            "void"
+                        ]
+                    },
+                    "write_off_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "amount": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
+                    "recovered": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "number",
+                    "status",
+                    "write_off_date",
+                    "amount",
+                    "recovered"
+                ],
+                "title": "InvoiceWriteOffResource"
             },
             "ItemRequest": {
                 "type": "object",
@@ -48974,74 +51923,33 @@
             },
             "MappingRequest": {
                 "type": "object",
-                "description": "Sets the mapping of an import: `columns` ({field: file header}), optional `defaults` ({field: constant} for empty cells), and\noptionally `options` (replaces the current ones: `number_locale`, `date_format`, and the kind's own, see the upload).\nCarries the `version` the client last read. Setting the mapping clears any earlier preview.",
+                "description": "Member accounts and the group account each maps to.",
                 "properties": {
-                    "version": {
-                        "type": "integer",
-                        "minimum": 0
-                    },
-                    "columns": {
+                    "mappings": {
                         "type": "array",
                         "items": {
-                            "type": "string",
-                            "maxLength": 255
-                        },
-                        "minItems": 1
-                    },
-                    "defaults": {
-                        "type": [
-                            "array",
-                            "null"
-                        ],
-                        "items": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "maxLength": 255
-                        }
-                    },
-                    "options": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
-                        "properties": {
-                            "number_locale": {
-                                "type": [
-                                    "string",
-                                    "null"
-                                ],
-                                "enum": [
-                                    "us",
-                                    "eu",
-                                    "plain",
-                                    null
-                                ]
+                            "type": "object",
+                            "properties": {
+                                "account_id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                "group_account_id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                }
                             },
-                            "date_format": {
-                                "type": [
-                                    "string",
-                                    "null"
-                                ],
-                                "enum": [
-                                    "Y-m-d",
-                                    "d/m/Y",
-                                    "m/d/Y",
-                                    "d.m.Y",
-                                    "d-m-Y",
-                                    "Ymd",
-                                    "d/m/y",
-                                    "m/d/y",
-                                    null
-                                ]
-                            }
-                        }
+                            "required": [
+                                "account_id",
+                                "group_account_id"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 1000
                     }
                 },
                 "required": [
-                    "version",
-                    "columns"
+                    "mappings"
                 ],
                 "title": "MappingRequest"
             },
@@ -49092,6 +52000,31 @@
                     "statement_line_ids"
                 ],
                 "title": "MatchRequest"
+            },
+            "MemberRequest": {
+                "type": "object",
+                "description": "Add a subsidiary: its company, the acquisition date and the parent's share from then on (basis points).",
+                "properties": {
+                    "company_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "acquisition_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "percent_bp": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10000
+                    }
+                },
+                "required": [
+                    "company_id",
+                    "acquisition_date",
+                    "percent_bp"
+                ],
+                "title": "MemberRequest"
             },
             "MemberResource": {
                 "type": "object",
@@ -49248,6 +52181,33 @@
                     "meta"
                 ],
                 "title": "OpenCommitmentsResource"
+            },
+            "OwnershipRequest": {
+                "type": "object",
+                "description": "A row of a subsidiary's ownership history: from the close of `effective_on` the parent holds `percent_bp`.",
+                "properties": {
+                    "effective_on": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "percent_bp": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 10000
+                    },
+                    "note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "effective_on",
+                    "percent_bp"
+                ],
+                "title": "OwnershipRequest"
             },
             "PaymentRunRequest": {
                 "type": "object",
@@ -53478,6 +56438,31 @@
                 ],
                 "title": "TaxGroupResource"
             },
+            "TaxPeriodRequest": {
+                "type": "object",
+                "description": "One request class for the tax period writes: generate (`authority`, `from`, `months`), save manual amounts (`version`, `amounts`),\nfile (`version`, `reference`) and reopen (`version`, `reason`). The route decides which rules apply.",
+                "properties": {
+                    "version": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "reason": {
+                        "type": "string",
+                        "minLength": 5,
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "version",
+                    "reason"
+                ],
+                "title": "TaxPeriodRequest"
+            },
+            "TaxPeriodResource": {
+                "type": "array",
+                "items": {},
+                "title": "TaxPeriodResource"
+            },
             "TaxRateRequest": {
                 "type": "object",
                 "description": "A new rate of a tax code from a date (inclusive), with the code's `version` it was based on.",
@@ -53491,6 +56476,20 @@
                         "format": "date"
                     },
                     "effective_to": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date"
+                    },
+                    "source": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "source_as_of": {
                         "type": [
                             "string",
                             "null"
@@ -53530,13 +56529,28 @@
                             "string",
                             "null"
                         ]
+                    },
+                    "source": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Where the rate came from and when it was checked; null when nobody said."
+                    },
+                    "source_as_of": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     }
                 },
                 "required": [
                     "id",
                     "rate",
                     "effective_from",
-                    "effective_to"
+                    "effective_to",
+                    "source",
+                    "source_as_of"
                 ],
                 "title": "TaxRateResource"
             },
@@ -53596,6 +56610,50 @@
                     }
                 },
                 "title": "TwoFactorLoginRequest"
+            },
+            "UnmappedBalanceResource": {
+                "type": "object",
+                "properties": {
+                    "member_id": {
+                        "type": "string"
+                    },
+                    "company_id": {
+                        "type": "string"
+                    },
+                    "account_id": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "account_type": {
+                        "type": "string"
+                    },
+                    "net": {
+                        "type": "integer"
+                    },
+                    "movement_debit": {
+                        "type": "integer"
+                    },
+                    "movement_credit": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "member_id",
+                    "company_id",
+                    "account_id",
+                    "code",
+                    "name",
+                    "account_type",
+                    "net",
+                    "movement_debit",
+                    "movement_credit"
+                ],
+                "title": "UnmappedBalanceResource"
             },
             "UploadImportRequest": {
                 "type": "object",
@@ -53980,6 +57038,8 @@
                                 "fund_transfer.reversed",
                                 "write_off.posted",
                                 "write_off.reversed",
+                                "write_off_recovery.posted",
+                                "write_off_recovery.reversed",
                                 "provision_run.posted",
                                 "provision_run.reversed",
                                 "invoice.credit_limit_overridden"
@@ -54151,6 +57211,214 @@
                 ],
                 "title": "WhtCertificateResource"
             },
+            "WriteOffRecoveryRequest": {
+                "type": "object",
+                "description": "Create (POST) or replace (PUT, with `version`) a draft recovery: one posted write-off, the amount in the invoice's currency (up to what is not yet recovered) and the reason.",
+                "properties": {
+                    "write_off_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "recovery_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "amount_fc": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 999999999999999
+                    },
+                    "reason": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 2000
+                    },
+                    "reference": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "memo": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 5000
+                    },
+                    "version": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "write_off_id",
+                    "recovery_date",
+                    "amount_fc",
+                    "reason"
+                ],
+                "title": "WriteOffRecoveryRequest"
+            },
+            "WriteOffRecoveryResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "pending_approval",
+                            "posted",
+                            "reversed",
+                            "void"
+                        ]
+                    },
+                    "write_off_id": {
+                        "type": "string"
+                    },
+                    "invoice_id": {
+                        "type": "string"
+                    },
+                    "contact_id": {
+                        "type": "string"
+                    },
+                    "recovery_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "amount": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
+                    "base_amount": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
+                    "reason": {
+                        "type": "string"
+                    },
+                    "reference": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "memo": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "journal_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "reversal_journal_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "submitted_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "approved_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "posted_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "posted_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "version": {
+                        "type": "integer"
+                    },
+                    "can": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "number",
+                    "status",
+                    "write_off_id",
+                    "invoice_id",
+                    "contact_id",
+                    "recovery_date",
+                    "amount",
+                    "base_amount",
+                    "reason",
+                    "reference",
+                    "memo",
+                    "journal_id",
+                    "reversal_journal_id",
+                    "created_by",
+                    "submitted_by",
+                    "approved_by",
+                    "posted_by",
+                    "posted_at",
+                    "version",
+                    "can"
+                ],
+                "title": "WriteOffRecoveryResource"
+            },
             "WriteOffRequest": {
                 "type": "object",
                 "description": "Create (POST) or replace (PUT, with `version`) a draft write-off: one posted invoice, the amount in its currency (up to what is open) and the reason.",
@@ -54309,6 +57577,21 @@
                             "currency"
                         ]
                     },
+                    "recoverable": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
                     "reason": {
                         "type": "string"
                     },
@@ -54392,6 +57675,7 @@
                     "allowance_used",
                     "expense",
                     "recovered",
+                    "recoverable",
                     "reason",
                     "reference",
                     "memo",
