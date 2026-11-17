@@ -9,10 +9,11 @@ import { ApiError, NetworkError, problemToError } from './errors';
 import { IDEMPOTENCY_HEADER, createIntent, isMutating, type Intent } from './idempotency';
 
 type HttpMethod = 'get' | 'post' | 'put' | 'delete' | 'patch';
-type PathsWith<M extends HttpMethod> = {
-  [P in keyof paths]: paths[P] extends { [K in M]: infer O } ? ([O] extends [never] ? never : O extends undefined ? never : P) : never;
-}[keyof paths];
-type OperationOf<P extends keyof paths, M extends HttpMethod> = paths[P] extends { [K in M]: infer O } ? NonNullable<O> : never;
+/** The client is generic over a generated `paths` type: the tenant API by default, the admin API via adminHttp.ts. */
+type PathsWith<Ps, M extends HttpMethod> = {
+  [P in keyof Ps]: Ps[P] extends { [K in M]: infer O } ? ([O] extends [never] ? never : O extends undefined ? never : P) : never;
+}[keyof Ps];
+type OperationOf<Ps, P extends keyof Ps, M extends HttpMethod> = Ps[P] extends { [K in M]: infer O } ? NonNullable<O> : never;
 
 type PathParamsOf<O> = O extends { parameters: { path: infer X } } ? X : never;
 type QueryOf<O> = O extends { parameters: { query?: infer Q } } ? NonNullable<Q> : never;
@@ -53,6 +54,12 @@ export interface HttpClientConfig {
   fetch: typeof fetch;
   /** Reads a cookie value (decoded). Injected for tests; default reads document.cookie. */
   readCookie: (name: string) => string | undefined;
+  /** Where the API lives under `baseUrl`. Default `/api` (tenant); the admin client uses `/api/admin`. */
+  apiPrefix?: string;
+  /** Endpoint that sets the CSRF cookie, under `baseUrl`. Default `/sanctum/csrf-cookie`. */
+  csrfPath?: string;
+  /** Cookie holding the CSRF token. Default `XSRF-TOKEN`; the admin SPA has its own so the two never mix. */
+  csrfCookie?: string;
   /** Called on every 401, after the ApiError is built and before it is thrown. */
   onUnauthenticated?: (error: ApiError) => void;
 }
@@ -68,13 +75,13 @@ export function readBrowserCookie(name: string): string | undefined {
 
 const API_PREFIX = '/api';
 
-export function buildUrl(baseUrl: string, path: string, params?: Record<string, unknown>, query?: Record<string, unknown>): string {
+export function buildUrl(baseUrl: string, path: string, params?: Record<string, unknown>, query?: Record<string, unknown>, prefix: string = API_PREFIX): string {
   let p = path.replace(/\{(\w+)\}/g, (_, name: string) => {
     const v = params?.[name];
     if (v === undefined || v === null) throw new Error(`Missing path parameter "${name}" for ${path}`);
     return encodeURIComponent(String(v));
   });
-  p = `${baseUrl}${API_PREFIX}${p}`;
+  p = `${baseUrl}${prefix}${p}`;
   if (query) {
     const qs = new URLSearchParams();
     for (const [k, v] of Object.entries(query)) {
@@ -87,16 +94,20 @@ export function buildUrl(baseUrl: string, path: string, params?: Record<string, 
   return p;
 }
 
-export class HttpClient {
+export class HttpClient<Ps = paths> {
   private csrf: Promise<void> | null = null;
 
-  constructor(private readonly cfg: HttpClientConfig) {}
+  private readonly prefix: string;
+
+  constructor(private readonly cfg: HttpClientConfig) {
+    this.prefix = cfg.apiPrefix ?? API_PREFIX;
+  }
 
   /** Fetches /sanctum/csrf-cookie once; later calls share the result until `resetCsrf()`. */
   ensureCsrf(): Promise<void> {
     if (!this.csrf) {
       this.csrf = this.cfg
-        .fetch(`${this.cfg.baseUrl}/sanctum/csrf-cookie`, { credentials: 'include', headers: { Accept: 'application/json' } })
+        .fetch(`${this.cfg.baseUrl}${this.cfg.csrfPath ?? '/sanctum/csrf-cookie'}`, { credentials: 'include', headers: { Accept: 'application/json' } })
         .then((res) => {
           if (!res.ok) throw problemToError(res.status, null, res.headers);
         })
@@ -108,6 +119,10 @@ export class HttpClient {
     return this.csrf;
   }
 
+  private url(path: unknown, params: unknown, query: unknown): string {
+    return buildUrl(this.cfg.baseUrl, String(path), params as Record<string, unknown>, query as Record<string, unknown>, this.prefix);
+  }
+
   resetCsrf(): void {
     this.csrf = null;
   }
@@ -116,7 +131,7 @@ export class HttpClient {
     const headers: Record<string, string> = { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
     if (isMutating(method)) {
       await this.ensureCsrf();
-      const token = this.cfg.readCookie('XSRF-TOKEN');
+      const token = this.cfg.readCookie(this.cfg.csrfCookie ?? 'XSRF-TOKEN');
       if (token) headers['X-XSRF-TOKEN'] = token;
       if (key) headers[IDEMPOTENCY_HEADER] = key;
     }
@@ -173,20 +188,20 @@ export class HttpClient {
 
   /** Escape hatch for endpoints whose generated types are incomplete (e.g. Fortify's register). Path is relative to /api. */
   send<T = unknown>(method: string, apiPath: string, body?: unknown, intent?: Intent): Promise<T> {
-    return this.request<T>(method, `${this.cfg.baseUrl}${API_PREFIX}${apiPath}`, body, intent);
+    return this.request<T>(method, `${this.cfg.baseUrl}${this.prefix}${apiPath}`, body, intent);
   }
 
-  get<P extends PathsWith<'get'>>(path: P, args?: ArgsOf<OperationOf<P, 'get'>>): Promise<SuccessOf<OperationOf<P, 'get'>>> {
-    return this.request('GET', buildUrl(this.cfg.baseUrl, path, args?.path as Record<string, unknown>, args?.query as Record<string, unknown>), undefined, undefined, args?.signal);
+  get<P extends PathsWith<Ps, 'get'>>(path: P, args?: ArgsOf<OperationOf<Ps, P, 'get'>>): Promise<SuccessOf<OperationOf<Ps, P, 'get'>>> {
+    return this.request('GET', this.url(path, args?.path, args?.query), undefined, undefined, args?.signal);
   }
-  post<P extends PathsWith<'post'>>(path: P, args?: ArgsOf<OperationOf<P, 'post'>>): Promise<SuccessOf<OperationOf<P, 'post'>>> {
-    return this.request('POST', buildUrl(this.cfg.baseUrl, path, args?.path as Record<string, unknown>, args?.query as Record<string, unknown>), args?.body, args?.intent, args?.signal);
+  post<P extends PathsWith<Ps, 'post'>>(path: P, args?: ArgsOf<OperationOf<Ps, P, 'post'>>): Promise<SuccessOf<OperationOf<Ps, P, 'post'>>> {
+    return this.request('POST', this.url(path, args?.path, args?.query), args?.body, args?.intent, args?.signal);
   }
-  put<P extends PathsWith<'put'>>(path: P, args?: ArgsOf<OperationOf<P, 'put'>>): Promise<SuccessOf<OperationOf<P, 'put'>>> {
-    return this.request('PUT', buildUrl(this.cfg.baseUrl, path, args?.path as Record<string, unknown>, args?.query as Record<string, unknown>), args?.body, args?.intent, args?.signal);
+  put<P extends PathsWith<Ps, 'put'>>(path: P, args?: ArgsOf<OperationOf<Ps, P, 'put'>>): Promise<SuccessOf<OperationOf<Ps, P, 'put'>>> {
+    return this.request('PUT', this.url(path, args?.path, args?.query), args?.body, args?.intent, args?.signal);
   }
-  delete<P extends PathsWith<'delete'>>(path: P, args?: ArgsOf<OperationOf<P, 'delete'>>): Promise<SuccessOf<OperationOf<P, 'delete'>>> {
-    return this.request('DELETE', buildUrl(this.cfg.baseUrl, path, args?.path as Record<string, unknown>, args?.query as Record<string, unknown>), undefined, args?.intent, args?.signal);
+  delete<P extends PathsWith<Ps, 'delete'>>(path: P, args?: ArgsOf<OperationOf<Ps, P, 'delete'>>): Promise<SuccessOf<OperationOf<Ps, P, 'delete'>>> {
+    return this.request('DELETE', this.url(path, args?.path, args?.query), undefined, args?.intent, args?.signal);
   }
 }
 
