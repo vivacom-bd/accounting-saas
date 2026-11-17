@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Organisation\PermissionCatalogue;
 use App\Domain\Organisation\PermissionMatrix;
+use App\Models\Platform\User;
 use Illuminate\Support\Facades\DB;
 
 beforeEach(function (): void {
@@ -105,9 +106,10 @@ it('locks Owner, fixes standard names, resets edits, and deletes only unheld cus
 it('keeps the last Owner through the API', function (): void {
     $this->asPerson($this->boss);
     $owner = ($this->roles)()['Owner'];
-    // Bea and Olga hold Owner; the original org owner holds it only through CreateCompany in real life, not in this fixture.
-    $this->deleteJson($this->api("members/{$this->owner->id}/roles/{$owner['id']}"), [], $this->key())->assertOk();
-    $this->deleteJson($this->api("members/{$this->boss->id}/roles/{$owner['id']}"), [], $this->key())->assertStatus(422)->assertJson(['code' => 'last_owner']);
+    $this->asPerson(User::query()->findOrFail($this->f->userId));
+    // Olga and Bea hold Owner (only an org owner may revoke it); removing Bea leaves one, who cannot be removed.
+    $this->deleteJson($this->api("members/{$this->boss->id}/roles/{$owner['id']}"), [], $this->key())->assertOk();
+    $this->deleteJson($this->api("members/{$this->owner->id}/roles/{$owner['id']}"), [], $this->key())->assertStatus(422)->assertJson(['code' => 'last_owner']);
 });
 
 it('is for organisation owners and admins only, people only', function (): void {
@@ -128,4 +130,28 @@ it('resets the registry per tenant: a change is visible to the next request with
     $this->asPerson($this->boss)->putJson($this->api("roles/{$roles['Viewer']['id']}"), ['permissions' => [...$roles['Viewer']['permissions'], 'invoices.create']], $this->key())->assertOk();
     $this->asPerson($viewer)->postJson($this->api('invoices'), $this->t->body($this->t->customer, [[10000, '1', 'VAT10']]), $this->key())->assertCreated();
     expect($this->inTenant(fn () => DB::table('audit_events')->where('action', 'company_role.updated')->count()))->toBe(1);
+});
+
+it('lets only an organisation owner assign or revoke the company Owner role', function (): void {
+    $this->asPerson($this->boss);
+    $owner = ($this->roles)()['Owner'];
+    $target = $this->person('Tia Target', ['Accountant']);
+    $adminNoRole = $this->person('Al Admin', [], org: 'admin');
+
+    // An org admin with no company role (and one who is only an Accountant) cannot hand out Owner, nor take it away.
+    foreach ([$adminNoRole, $this->junior] as $admin) {
+        $this->asPerson($admin)->putJson($this->api("members/{$target->id}/roles/{$owner['id']}"), [], $this->key())->assertForbidden();
+        $this->deleteJson($this->api("members/{$this->boss->id}/roles/{$owner['id']}"), [], $this->key())->assertForbidden();
+    }
+    // Even an org admin who holds Owner in the company is not an org owner.
+    $this->asPerson($this->boss)->putJson($this->api("members/{$target->id}/roles/{$owner['id']}"), [], $this->key())->assertForbidden();
+
+    // Org admins keep managing other roles.
+    $viewer = collect(($this->roles)())->firstWhere('name', 'Viewer');
+    $this->asPerson($adminNoRole)->putJson($this->api("members/{$target->id}/roles/{$viewer['id']}"), [], $this->key())->assertOk();
+    $this->deleteJson($this->api("members/{$target->id}/roles/{$viewer['id']}"), [], $this->key())->assertOk();
+
+    // The organisation owner can assign and revoke it.
+    $this->asPerson(User::query()->findOrFail($this->f->userId))->putJson($this->api("members/{$target->id}/roles/{$owner['id']}"), [], $this->key())->assertOk();
+    $this->deleteJson($this->api("members/{$target->id}/roles/{$owner['id']}"), [], $this->key())->assertOk();
 });

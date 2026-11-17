@@ -76,7 +76,7 @@ final class CreateCompany
                 $actor->ip, $actor->userAgent, $actor->requestId, $actor->idempotencyKey,
             );
             $this->seedRoles->handle($scoped, $company->id);
-            $this->assignRole->handle($scoped, new CompanyRoleInput((string) $actor->id, $company->id, 'Owner'));
+            $this->assignRole->handle($scoped, new CompanyRoleInput((string) $actor->id, $company->id, 'Owner'), bootstrap: true);
 
             $start = $this->currentYearStart($in->fiscalYearStartMonth, $in->timezone);
             $this->createYear->handle($scoped, new CreateFiscalYearInput($company->id, $start, self::yearName($start, $in->fiscalYearStartMonth)));
