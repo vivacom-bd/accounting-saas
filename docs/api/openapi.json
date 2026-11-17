@@ -2091,6 +2091,85 @@
                         "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
+            },
+            "put": {
+                "operationId": "asset-transactions.update",
+                "summary": "Edits a draft in place and works its figures out again; the kind cannot change. `version` is required",
+                "tags": [
+                    "AssetTransaction"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "assetTransaction",
+                        "in": "path",
+                        "required": true,
+                        "description": "The asset transaction ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssetTransactionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`AssetTransactionResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/AssetTransactionResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "lines"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
             }
         },
         "/v1/companies/{company}/asset-transactions/{assetTransaction}/submit": {
@@ -7655,6 +7734,19 @@
                         }
                     },
                     {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
+                        }
+                    },
+                    {
                         "name": "format",
                         "in": "query",
                         "schema": {
@@ -10682,6 +10774,15 @@
                             ],
                             "maxLength": 2000
                         }
+                    },
+                    {
+                        "name": "version",
+                        "in": "query",
+                        "description": "The version the edit is based on; a PUT only.",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0
+                        }
                     }
                 ],
                 "responses": {
@@ -10781,6 +10882,85 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "depreciation-runs.update",
+                "summary": "Edits a draft in place (another period, units or note); the figures are worked out again. `version` is required",
+                "tags": [
+                    "DepreciationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "depreciationRun",
+                        "in": "path",
+                        "required": true,
+                        "description": "The depreciation run ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DepreciationRunRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`DepreciationRunResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/DepreciationRunResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "lines"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -21164,6 +21344,19 @@
                         }
                     },
                     {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
+                        }
+                    },
+                    {
                         "name": "format",
                         "in": "query",
                         "schema": {
@@ -21597,6 +21790,19 @@
                                 "null"
                             ],
                             "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
                         }
                     },
                     {
@@ -22092,6 +22298,19 @@
                         }
                     },
                     {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
+                        }
+                    },
+                    {
                         "name": "format",
                         "in": "query",
                         "schema": {
@@ -22581,6 +22800,19 @@
                                 "null"
                             ],
                             "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
                         }
                     },
                     {
@@ -23115,6 +23347,19 @@
                         }
                     },
                     {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
+                        }
+                    },
+                    {
                         "name": "format",
                         "in": "query",
                         "schema": {
@@ -23624,6 +23869,19 @@
                                 "null"
                             ],
                             "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
                         }
                     },
                     {
@@ -31442,6 +31700,19 @@
                         }
                     },
                     {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
+                        }
+                    },
+                    {
                         "name": "format",
                         "in": "query",
                         "schema": {
@@ -31869,6 +32140,19 @@
                         }
                     },
                     {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
+                        }
+                    },
+                    {
                         "name": "format",
                         "in": "query",
                         "schema": {
@@ -31901,6 +32185,438 @@
                                     "required": [
                                         "data"
                                     ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/companies/{company}/reports/profit-and-loss-trend": {
+            "get": {
+                "operationId": "reports.profit-and-loss-trend",
+                "summary": "The dashboard's bars: the last `count` (1 to 12, default 6) regular fiscal periods started by `as_of`, each with its profit and loss totals",
+                "tags": [
+                    "Report"
+                ],
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "path",
+                        "required": true,
+                        "description": "The company ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "period_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "as_of",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "basis",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "month",
+                                "ytd",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "view",
+                        "in": "query",
+                        "description": "Trial balance only: `movement` adds opening, debit and credit movement and closing over the period or from..to.",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "balances",
+                                "movement",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "comparison",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "none",
+                                "previous_period",
+                                "previous_year",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "dimensions[]",
+                        "in": "query",
+                        "description": "Dimension id \u2192 a value id or a list of them; withValidator checks the shape.",
+                        "schema": {
+                            "type": [
+                                "array",
+                                "null"
+                            ],
+                            "items": {
+                                "type": "string"
+                            },
+                            "maxItems": 8
+                        }
+                    },
+                    {
+                        "name": "breakdown",
+                        "in": "query",
+                        "description": "Trial balance (as of) and profit and loss: a dimension id whose values become columns, plus an untagged column.",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "hide_zero",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "account_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "exclude_closing",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "contact_side",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "debit",
+                                "credit",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "contact_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "budget_id",
+                        "in": "query",
+                        "description": "Budget vs actual only: the budget version to read; default is the approved one of the period's fiscal year.",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Journal list (3c.20): status, source ('none' = typed by hand), the person and in which role, lines under each journal.",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "draft",
+                                "pending_approval",
+                                "posted",
+                                "reversed",
+                                "void",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "source",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 64
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "user_role",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "created",
+                                "submitted",
+                                "approved",
+                                "posted",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "include_lines",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "bucket",
+                        "in": "query",
+                        "description": "Drill from the aging (the bucket of a cell) and from the tax return (a row: side and tax code, `none` for lines without one).",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "current",
+                                "days_1_30",
+                                "days_31_60",
+                                "days_61_90",
+                                "days_over_90",
+                                "open",
+                                "credits",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "side",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "sales",
+                                "purchases",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "tax_code_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "pattern": "^(none|[0-9a-f-]{36})$"
+                        }
+                    },
+                    {
+                        "name": "reconciliation_id",
+                        "in": "query",
+                        "description": "Bank reconciliation report: the finished reconciliation.",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "action",
+                        "in": "query",
+                        "description": "Audit trail (3c.20): same filters as the audit log.",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 64
+                        }
+                    },
+                    {
+                        "name": "actor_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "subject_type",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 64
+                        }
+                    },
+                    {
+                        "name": "subject_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
+                        }
+                    },
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "xlsx",
+                                "csv",
+                                "pdf",
+                                null
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`FreeFormDataResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FreeFormDataResource"
                                 }
                             }
                         }
@@ -32293,6 +33009,19 @@
                                 "null"
                             ],
                             "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
                         }
                     },
                     {
@@ -32723,6 +33452,19 @@
                         }
                     },
                     {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
+                        }
+                    },
+                    {
                         "name": "format",
                         "in": "query",
                         "schema": {
@@ -33148,6 +33890,19 @@
                                 "null"
                             ],
                             "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
                         }
                     },
                     {
@@ -33628,6 +34383,19 @@
                         }
                     },
                     {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
+                        }
+                    },
+                    {
                         "name": "format",
                         "in": "query",
                         "schema": {
@@ -34052,6 +34820,19 @@
                                 "null"
                             ],
                             "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
                         }
                     },
                     {
@@ -34482,6 +35263,19 @@
                         }
                     },
                     {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
+                        }
+                    },
+                    {
                         "name": "format",
                         "in": "query",
                         "schema": {
@@ -34909,6 +35703,19 @@
                         }
                     },
                     {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
+                        }
+                    },
+                    {
                         "name": "format",
                         "in": "query",
                         "schema": {
@@ -35333,6 +36140,19 @@
                                 "null"
                             ],
                             "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
                         }
                     },
                     {
@@ -35764,6 +36584,19 @@
                         }
                     },
                     {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
+                        }
+                    },
+                    {
                         "name": "format",
                         "in": "query",
                         "schema": {
@@ -36189,6 +37022,19 @@
                                 "null"
                             ],
                             "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
                         }
                     },
                     {
@@ -36873,6 +37719,19 @@
                                 "null"
                             ],
                             "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "count",
+                        "in": "query",
+                        "description": "Profit and loss trend: how many fiscal periods to return.",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 12
                         }
                     },
                     {
@@ -44835,6 +45694,11 @@
                             ]
                         },
                         "maxItems": 500
+                    },
+                    "version": {
+                        "type": "integer",
+                        "description": "The version the edit is based on; a PUT only.",
+                        "minimum": 0
                     }
                 },
                 "required": [
@@ -49028,6 +49892,40 @@
                     },
                     "catch_up_months": {
                         "type": "integer"
+                    },
+                    "source_warning": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Set when the asset's source bill or journal was reversed, voided or credited in full; the run still posts.",
+                        "properties": {
+                            "code": {
+                                "type": "string"
+                            },
+                            "message": {
+                                "type": "string"
+                            },
+                            "document_type": {
+                                "type": "string"
+                            },
+                            "document_id": {
+                                "type": "string"
+                            },
+                            "document_number": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "code",
+                            "message",
+                            "document_type",
+                            "document_id",
+                            "document_number"
+                        ]
                     }
                 },
                 "required": [
@@ -49039,7 +49937,8 @@
                     "amount",
                     "months",
                     "units",
-                    "catch_up_months"
+                    "catch_up_months",
+                    "source_warning"
                 ],
                 "title": "DepreciationRunLineResource"
             },
@@ -49069,6 +49968,11 @@
                             "null"
                         ],
                         "maxLength": 2000
+                    },
+                    "version": {
+                        "type": "integer",
+                        "description": "The version the edit is based on; a PUT only.",
+                        "minimum": 0
                     }
                 },
                 "required": [
@@ -50517,6 +51421,40 @@
                             "null"
                         ]
                     },
+                    "source_warning": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Set when the bill or journal the asset was capitalised from was reversed, voided or credited in full; null while the source stands.",
+                        "properties": {
+                            "code": {
+                                "type": "string"
+                            },
+                            "message": {
+                                "type": "string"
+                            },
+                            "document_type": {
+                                "type": "string"
+                            },
+                            "document_id": {
+                                "type": "string"
+                            },
+                            "document_number": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "code",
+                            "message",
+                            "document_type",
+                            "document_id",
+                            "document_number"
+                        ]
+                    },
                     "tax_class_id": {
                         "type": [
                             "string",
@@ -50568,6 +51506,7 @@
                     "source_type",
                     "source_id",
                     "source_journal_id",
+                    "source_warning",
                     "tax_class_id",
                     "dimensions",
                     "version",
@@ -58450,7 +59389,8 @@
                             "opening_balances",
                             "invoices",
                             "bank_lines",
-                            "budget_lines"
+                            "budget_lines",
+                            "fixed_assets_opening"
                         ]
                     },
                     "file": {
