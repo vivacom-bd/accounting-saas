@@ -5,6 +5,8 @@
  */
 
 import { MoneyInput } from '@/components/domain/MoneyInput';
+import { selectByMode } from '@/data/select';
+import { LiveTenantDetail } from './LiveTenantDetail';
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAdminStore } from '@/mock/store/adminStore';
@@ -30,7 +32,7 @@ import {
   FileDown,
 } from 'lucide-react';
 
-export const TenantDetail: React.FC = () => {
+export const MockTenantDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -1161,3 +1163,6 @@ export const TenantDetail: React.FC = () => {
     </div>
   );
 };
+
+/** Live mode shows the API-backed page; mock mode keeps the demo screen. */
+export const TenantDetail = selectByMode<React.ComponentType>({ mock: MockTenantDetail, live: LiveTenantDetail });

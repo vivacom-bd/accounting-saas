@@ -4,6 +4,8 @@
  * and contextual actions (Impersonate, Change Plan, Extend Trial, Suspend).
  */
 
+import { selectByMode } from '@/data/select';
+import { LiveTenantsList } from './LiveTenantsList';
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAdminStore } from '@/mock/store/adminStore';
@@ -20,7 +22,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 
-export const TenantsList: React.FC = () => {
+export const MockTenantsList: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { tenants, suspendTenant, reactivateTenant, startImpersonation } = useAdminStore();
@@ -498,3 +500,6 @@ export const TenantsList: React.FC = () => {
     </div>
   );
 };
+
+/** Live mode shows the API-backed page; mock mode keeps the demo screen. */
+export const TenantsList = selectByMode({ mock: MockTenantsList, live: LiveTenantsList });
