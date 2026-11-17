@@ -40,6 +40,8 @@ final class Rls
         'plans', 'plan_versions', 'plan_addons', 'coupons',
         // staff notes on a tenant (plan Task 7); ledgerly_platform only (read, add, pin)
         'tenant_notes',
+        // GDPR request queue (plan Task 18); ledgerly_platform only, subject email stored hashed
+        'gdpr_requests',
     ];
 
     public static function enable(Connection $connection, string $table): void

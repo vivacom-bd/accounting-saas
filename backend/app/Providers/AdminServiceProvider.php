@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Actions\Admin\Compliance\LegalHoldReleaseExecutor;
+use App\Actions\Admin\Compliance\TenantDeleteExecutor;
 use App\Http\Middleware\Admin\UseAdminSession;
 use App\Http\Support\AdminSession;
 use Dedoc\Scramble\Scramble;
@@ -23,6 +25,12 @@ use Illuminate\Support\ServiceProvider;
  */
 final class AdminServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        // Approval executors (additive: each feature appends its own tag call). Compliance, plan Task 18.
+        $this->app->tag([TenantDeleteExecutor::class, LegalHoldReleaseExecutor::class], 'admin.approval_executors');
+    }
+
     public function boot(): void
     {
         // A session store of its own, over the same kind of handler as tenant sessions (config admin.session_driver).
