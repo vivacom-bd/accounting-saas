@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Actions\Admin\Tenants;
 
 use App\Actions\Admin\Tenants\Inputs\ProvisionTenantInput;
+use App\Actions\Billing\Subscribe;
 use App\Actions\Organisation\IssueInvitation;
 use App\Actions\Platform\ChangeTenantLifecycle;
 use App\Contracts\Clock;
+use App\Contracts\IdGenerator;
+use App\Domain\Billing\Prices;
 use App\Domain\Platform\LifecycleState;
 use App\Domain\Shared\DomainRuleViolation;
 use App\Models\Billing\Plan;
@@ -35,8 +38,9 @@ use Illuminate\Database\UniqueConstraintViolationException;
  * invitation and runs the normal onboarding.
  *
  * Idempotent on `$in->tenantId` (derived from the request's Idempotency-Key): a retry finds the tenant, completes the
- * platform part if the first attempt died between the two commits, and answers with the same tenant. Until subscriptions
- * exist (Task 11) the chosen plan version is kept in `tenants.settings.plan_version_id`.
+ * platform part if the first attempt died between the two commits, and answers with the same tenant. The platform part also
+ * starts the tenant's offline subscription through `Subscribe` (once). The chosen plan version stays in
+ * `tenants.settings.plan_version_id` as the fallback source for entitlements.
  */
 final class ProvisionTenant
 {
@@ -48,6 +52,8 @@ final class ProvisionTenant
         private readonly IssueInvitation $invitations,
         private readonly ChangeTenantLifecycle $lifecycle,
         private readonly AdminAuditWriter $audit,
+        private readonly IdGenerator $ids,
+        private readonly Subscribe $subscribe,
     ) {}
 
     public function handle(AdminActor $admin, ProvisionTenantInput $in): ProvisionedTenant
@@ -75,6 +81,7 @@ final class ProvisionTenant
     private function createTenant(AdminActor $admin, ProvisionTenantInput $in): bool
     {
         $version = $this->planVersion($in->planCode);
+        $this->currencyFor($version, $in); // refuse an unpriced currency or interval before anything is written
         $now = $this->clock->now();
         $trial = $in->billing === 'trial';
         $trialEndsAt = $trial ? $now->modify('+'.($in->trialDays ?? $version->trial_days).' days') : null;
@@ -127,6 +134,25 @@ final class ProvisionTenant
         return $version ?? throw DomainRuleViolation::single('plan_not_found', 'Choose a plan that is on sale.');
     }
 
+    /** The currency the subscription bills in: the request's, else the first of USD, KES, EUR the plan version prices. */
+    private function currencyFor(PlanVersion $version, ProvisionTenantInput $in): string
+    {
+        if (! in_array($in->interval, ['month', 'year'], true)) {
+            throw DomainRuleViolation::single('subscription_invalid', 'Choose a monthly or yearly interval.');
+        }
+        $priced = array_keys($version->prices);
+        // jsonb does not keep key order, so "first" means the first of the billing currencies the plan prices (USD, KES, EUR).
+        $currency = $in->currency ?? array_values(array_intersect(Prices::CURRENCIES, $priced))[0] ?? null;
+        if (! is_string($currency) || ! in_array($currency, $priced, true)) {
+            throw DomainRuleViolation::single('subscription_price_missing', 'This plan has no price in that currency.');
+        }
+        if ($in->customAmount === null && Prices::of($version->prices, $currency, $in->interval === 'year' ? 'annual' : 'monthly') === null) {
+            throw DomainRuleViolation::single('subscription_price_missing', 'This plan is priced by quote; give a custom amount.');
+        }
+
+        return $currency;
+    }
+
     private function load(string $tenantId, bool $created): ProvisionedTenant
     {
         $row = AdminTransaction::connection()->table('tenants')->where('id', $tenantId)->first()
@@ -176,6 +202,44 @@ final class ProvisionTenant
                 ],
                 $in->note,
             );
+            if (! $done) {
+                $this->recordFirstEvents($admin, $in, $result);
+            }
+            $this->startSubscription($admin, $in);
         });
+    }
+
+    /** One subscription per provisioned tenant, ever: a retry (or a cancelled one later) never starts another. */
+    private function startSubscription(AdminActor $admin, ProvisionTenantInput $in): void
+    {
+        if (AdminTransaction::connection()->table('subscriptions')->where('tenant_id', $in->tenantId)->exists()) {
+            return;
+        }
+        $version = $this->planVersion($in->planCode);
+        ($this->subscribe)(
+            $admin, $in->tenantId, $in->planCode, $in->interval, $this->currencyFor($version, $in), 'offline', $in->customAmount,
+            null, 'Provisioned from admin',
+        );
+    }
+
+    private function recordFirstEvents(AdminActor $admin, ProvisionTenantInput $in, ProvisionedTenant $result): void
+    {
+        $state = LifecycleState::from($result->status);
+        $this->lifecycle->recordInitial($admin, $in->tenantId, $state, 'Provisioned from admin', $this->clock->now());
+        $this->audit->record(
+            $admin, 'tenant.provisioned', $in->tenantId, 'tenant', $in->tenantId, null,
+            [
+                'name' => $result->name, 'slug' => $result->slug, 'country' => $result->country, 'lifecycle' => $result->status,
+                'plan' => $result->planCode, 'billing' => $in->billing, 'owner_email' => $result->ownerEmail,
+                'trial_ends_at' => $result->trialEndsAt?->format(DATE_ATOM),
+            ],
+            $in->note,
+        );
+        if ($in->note !== null && trim($in->note) !== '') {
+            AdminTransaction::connection()->table('tenant_notes')->insert([
+                'id' => $this->ids->next(), 'tenant_id' => $in->tenantId, 'admin_id' => $admin->id, 'body' => trim($in->note), 'pinned' => false,
+                'created_at' => $this->clock->now()->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s.uP'),
+            ]);
+        }
     }
 }

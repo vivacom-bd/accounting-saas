@@ -30,11 +30,12 @@ function provActor(): AdminActor
     return new AdminActor($admin->id, AdminRole::Sales, '127.0.0.1', 'pest', 'req-1');
 }
 
-function provPlan(string $code = 'starter', int $trialDays = 14): string
+/** @param  array<string, array{monthly: int|null, annual: int|null}>|null  $prices */
+function provPlan(string $code = 'starter', int $trialDays = 14, ?array $prices = null): string
 {
     $plan = app(CreatePlan::class)(
         provActor(), $code, ucfirst($code), null, 1,
-        ['USD' => ['monthly' => 4900, 'annual' => 47000], 'KES' => ['monthly' => 640000, 'annual' => 6140000], 'EUR' => ['monthly' => 4500, 'annual' => 43200]],
+        $prices ?? ['USD' => ['monthly' => 4900, 'annual' => 47000], 'KES' => ['monthly' => 640000, 'annual' => 6140000], 'EUR' => ['monthly' => 4500, 'annual' => 43200]],
         ['companies' => 1, 'users' => 3, 'api_clients' => 1, 'journal_lines_per_month' => 1000, 'storage_mb' => 2048, 'api_calls_per_day' => null],
         ['multi_currency' => false, 'independent_approvals' => false, 'fixed_assets' => false, 'budgets' => false,
             'api_access' => true, 'consolidation' => false, 'audit_chain_export' => true, 'custom_roles' => false],
@@ -187,4 +188,81 @@ it('rejects an unknown plan and creates nothing', function (): void {
 
     expect(fn () => app(ProvisionTenant::class)->handle(provActor(), provInput(['planCode' => 'nope'])))->toThrow(DomainRuleViolation::class);
     expect(provPlatformDb()->table('tenants')->count())->toBe(0);
+});
+
+it('starts a trialing subscription for a trial tenant', function (): void {
+    Notification::fake();
+    $versionId = provPlan();
+    $in = provInput();
+
+    app(ProvisionTenant::class)->handle(provActor(), $in);
+
+    $sub = provPlatformDb()->table('subscriptions')->where('tenant_id', $in->tenantId)->get();
+    expect($sub)->toHaveCount(1)
+        ->and($sub[0]->status)->toBe('trialing')->and($sub[0]->plan_version_id)->toBe($versionId)
+        ->and($sub[0]->collection)->toBe('offline')->and($sub[0]->interval)->toBe('month')->and($sub[0]->currency)->toBe('USD');
+    expect(provPlatformDb()->table('tenants')->where('id', $in->tenantId)->value('lifecycle'))->toBe('trial');
+});
+
+it('starts an active offline subscription in the requested currency and interval', function (): void {
+    Notification::fake();
+    $versionId = provPlan();
+    $in = provInput(['billing' => 'offline', 'currency' => 'KES', 'interval' => 'year']);
+
+    app(ProvisionTenant::class)->handle(provActor(), $in);
+
+    $sub = provPlatformDb()->table('subscriptions')->where('tenant_id', $in->tenantId)->first();
+    expect($sub->status)->toBe('active')->and($sub->collection)->toBe('offline')->and($sub->interval)->toBe('year')
+        ->and($sub->currency)->toBe('KES')->and($sub->plan_version_id)->toBe($versionId);
+    expect(json_decode((string) provPlatformDb()->table('tenants')->where('id', $in->tenantId)->value('settings'), true)['plan_version_id'])->toBe($versionId);
+    expect(provPlatformDb()->table('subscription_events')->where('tenant_id', $in->tenantId)->value('kind'))->toBe('new');
+});
+
+it('does not start a second subscription when the request is retried', function (): void {
+    Notification::fake();
+    provPlan();
+    $in = provInput(['billing' => 'offline']);
+    $admin = provActor();
+
+    app(ProvisionTenant::class)->handle($admin, $in);
+    app(ProvisionTenant::class)->handle($admin, $in);
+
+    expect(provPlatformDb()->table('subscriptions')->where('tenant_id', $in->tenantId)->count())->toBe(1);
+    expect(provPlatformDb()->table('subscription_events')->where('tenant_id', $in->tenantId)->count())->toBe(1);
+});
+
+it('completes the subscription on a retry when the first attempt died before it', function (): void {
+    Notification::fake();
+    provPlan();
+    $in = provInput(['billing' => 'offline']);
+    $admin = provActor();
+    app(ProvisionTenant::class)->handle($admin, $in);
+    provPlatformDb()->table('subscription_events')->where('tenant_id', $in->tenantId)->delete();
+    provPlatformDb()->table('subscriptions')->where('tenant_id', $in->tenantId)->delete();
+
+    app(ProvisionTenant::class)->handle($admin, $in);
+
+    expect(provPlatformDb()->table('subscriptions')->where('tenant_id', $in->tenantId)->count())->toBe(1);
+});
+
+it('refuses a currency the plan has no price in, and creates nothing', function (): void {
+    Notification::fake();
+    provPlan(prices: ['USD' => ['monthly' => 4900, 'annual' => 47000]]);
+    $in = provInput(['billing' => 'offline', 'currency' => 'EUR']);
+
+    expect(fn () => app(ProvisionTenant::class)->handle(provActor(), $in))->toThrow(DomainRuleViolation::class);
+    expect(provPlatformDb()->table('tenants')->count())->toBe(0);
+});
+
+it('needs a custom amount for a plan with a custom quote', function (): void {
+    Notification::fake();
+    provPlan('enterprise', prices: ['USD' => ['monthly' => null, 'annual' => null]]);
+
+    expect(fn () => app(ProvisionTenant::class)->handle(provActor(), provInput(['planCode' => 'enterprise', 'billing' => 'offline'])))
+        ->toThrow(DomainRuleViolation::class);
+    expect(provPlatformDb()->table('tenants')->count())->toBe(0);
+
+    $in = provInput(['planCode' => 'enterprise', 'billing' => 'offline', 'customAmount' => 250000]);
+    app(ProvisionTenant::class)->handle(provActor(), $in);
+    expect((int) provPlatformDb()->table('subscriptions')->where('tenant_id', $in->tenantId)->value('custom_amount'))->toBe(250000);
 });

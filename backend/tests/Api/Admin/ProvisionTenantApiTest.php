@@ -96,3 +96,17 @@ it('validates the body', function (): void {
     $this->postJson('/api/admin/tenants', provBody(['plan_code' => 'ghost']), $key)->assertStatus(422);
     expect(DB::connection('pgsql_platform')->table('tenants')->count())->toBe(0);
 });
+
+it('starts the subscription the body asks for and refuses an unknown interval', function (): void {
+    Notification::fake();
+    provApiPlan($this->clock->now());
+    $this->asAdmin(AdminRole::Sales);
+
+    $id = $this->postJson('/api/admin/tenants', provBody(['billing' => 'offline', 'currency' => 'USD', 'interval' => 'year']), ['Idempotency-Key' => 'prov-sub'])
+        ->assertCreated()->json('data.id');
+    $sub = DB::connection('pgsql_platform')->table('subscriptions')->where('tenant_id', $id)->first();
+    expect($sub->interval)->toBe('year')->and($sub->currency)->toBe('USD')->and($sub->status)->toBe('active');
+
+    $this->postJson('/api/admin/tenants', provBody(['interval' => 'weekly']), ['Idempotency-Key' => 'prov-bad'])->assertStatus(422);
+    $this->postJson('/api/admin/tenants', provBody(['currency' => 'GBP']), ['Idempotency-Key' => 'prov-bad2'])->assertStatus(422);
+});

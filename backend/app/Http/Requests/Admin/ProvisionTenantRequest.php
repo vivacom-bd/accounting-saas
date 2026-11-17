@@ -25,6 +25,9 @@ final class ProvisionTenantRequest extends FormRequest
             'plan_code' => ['required', 'string', 'max:64'],
             'billing' => ['required', 'string', 'in:trial,offline'],
             'trial_days' => ['nullable', 'integer', 'min:1', 'max:90'],
+            'currency' => ['nullable', 'string', 'in:USD,KES,EUR'],
+            'interval' => ['nullable', 'string', 'in:month,year'],
+            'custom_amount' => ['nullable', 'integer', 'min:0'],
             'note' => ['nullable', 'string', 'max:1000'],
         ];
     }

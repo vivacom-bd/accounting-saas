@@ -45,6 +45,9 @@ final class ProvisionTenantController extends Controller
             billing: $request->string('billing')->toString(),
             trialDays: $trialDays === null ? null : (int) $trialDays,
             note: $request->filled('note') ? $request->string('note')->toString() : null,
+            currency: $request->filled('currency') ? $request->string('currency')->toString() : null,
+            interval: $request->filled('interval') ? $request->string('interval')->toString() : 'month',
+            customAmount: $request->filled('custom_amount') ? (int) $request->input('custom_amount') : null,
         ));
 
         return response()->json(['data' => AdminTenantResource::make($result)], $result->created ? 201 : 200);
