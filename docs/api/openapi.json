@@ -40236,6 +40236,34 @@
                 }
             }
         },
+        "/stripe/webhook": {
+            "post": {
+                "operationId": "stripe.webhook",
+                "tags": [
+                    "StripeWebhook"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "received": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "received"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/org/support-access": {
             "get": {
                 "operationId": "org.support-access.show",
@@ -59357,6 +59385,7 @@
                         "additionalProperties": {
                             "type": "boolean"
                         }
+                    },
                     "impersonation": {
                         "type": [
                             "object",
@@ -59388,6 +59417,7 @@
                     "signing_pin_set",
                     "tenants",
                     "features"
+                    "features",
                     "impersonation"
                 ],
                 "title": "SessionResource"
