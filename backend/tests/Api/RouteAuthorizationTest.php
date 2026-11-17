@@ -25,6 +25,7 @@ const EXEMPT_ROUTES = [
     'public.invoices.pdf' => 'online invoice PDF: same token, same single invoice',
     'attachment-uploads.put' => 'local-disk presigned upload: the URL signature and expiry are the credential',
     'attachment-files.show' => 'local-disk signed download: the URL signature and expiry are the credential; only clean files',
+    'announcements.index' => 'staff announcements for the current organisation: read through sysops.active_announcements, bound to app.tenant_id; no per-record policy',
     'auth.impersonate' => 'impersonation sign-in: the single-use 60-second ticket from the admin surface is the credential',
     'auth.impersonation.end' => 'ends the caller\'s own support session; ApplyImpersonation supplies it, nothing else can be ended',
 ];
