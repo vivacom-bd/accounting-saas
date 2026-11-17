@@ -36,6 +36,8 @@ final class Rls
         'admin_users', 'admin_audit_events', 'admin_audit_head', 'admin_approvals',
         // tenant lifecycle history (plan Task 5); ledgerly_platform only, like tenant_deletions above
         'tenant_lifecycle_events',
+        // plan catalogue (10_SaaS_Admin §6, Task 9): platform-owned pricing; tenants reach it through sysops functions only
+        'plans', 'plan_versions', 'plan_addons', 'coupons',
     ];
 
     public static function enable(Connection $connection, string $table): void
