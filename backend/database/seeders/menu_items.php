@@ -42,6 +42,7 @@ return [
     ['key' => 'banking', 'title' => 'Banking', 'items' => [
         ['key' => 'bank_accounts', 'label' => 'Bank accounts', 'icon' => 'credit-card', 'route' => 'banking', 'permissions' => ['banking.view']],
         ['key' => 'bank_rules', 'label' => 'Bank rules', 'icon' => 'wand', 'route' => 'banking/rules', 'permissions' => ['banking.view']],
+        ['key' => 'fund_transfers', 'label' => 'Transfers', 'icon' => 'arrow-right-left', 'route' => 'banking/transfers', 'permissions' => ['transfers.view']],
     ]],
     ['key' => 'reports', 'title' => 'Reports', 'items' => [
         ['key' => 'report_profit_and_loss', 'label' => 'Profit & loss', 'icon' => 'bar-chart', 'route' => 'reports/profit-and-loss', 'permissions' => ['reports.view']],
@@ -62,6 +63,8 @@ return [
         ['key' => 'accounts', 'label' => 'Chart of accounts', 'icon' => 'layers', 'route' => 'accounts', 'permissions' => ['accounts.view']],
         ['key' => 'fixed_assets', 'label' => 'Fixed assets', 'icon' => 'package', 'route' => 'assets', 'permissions' => ['fixed_assets.view'], 'module' => 'fixed_assets'],
         ['key' => 'budgets', 'label' => 'Budgets', 'icon' => 'bar-chart', 'route' => 'budgets', 'permissions' => ['budgets.view']],
+        ['key' => 'write_offs', 'label' => 'Write-offs', 'icon' => 'eraser', 'route' => 'write-offs', 'permissions' => ['write_offs.view']],
+        ['key' => 'provisioning', 'label' => 'Bad-debt provisioning', 'icon' => 'percent', 'route' => 'accounting/provisioning', 'permissions' => ['provisions.view']],
         ['key' => 'fx_rates', 'label' => 'Exchange rates', 'icon' => 'coins', 'route' => 'fx-rates', 'permissions' => ['fx.view']],
         ['key' => 'periods', 'label' => 'Periods & close', 'icon' => 'calendar', 'route' => 'periods', 'permissions' => ['periods.view']],
         ['key' => 'tax', 'label' => 'Tax codes', 'icon' => 'percent', 'route' => 'tax', 'permissions' => ['tax.view']],

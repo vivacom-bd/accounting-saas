@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, FileSpreadsheet, CreditCard, BookMarked, BarChart3, CheckSquare, Settings,
   Building, ShieldCheck, Package, Layers, Coins, FileText, Calendar, History, RefreshCw, Upload, ClipboardList,
-  Repeat, Wand2, Percent, ShoppingCart, PackageCheck, Circle,
+  Repeat, Wand2, Percent, ShoppingCart, PackageCheck, Circle, ArrowRightLeft, Eraser,
 } from 'lucide-react';
 import type { NavIcon } from './nav';
 
@@ -22,6 +22,8 @@ const ICONS: Record<string, NavIcon> = {
   'bar-chart': BarChart3,
   'credit-card': CreditCard,
   wand: Wand2,
+  'arrow-right-left': ArrowRightLeft,
+  eraser: Eraser,
   'book-marked': BookMarked,
   'refresh-cw': RefreshCw,
   layers: Layers,
