@@ -1206,6 +1206,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/org/billing/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["org.billing.usage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/companies/{company}/budgets": {
         parameters: {
             query?: never;
@@ -7383,6 +7399,18 @@ export interface components {
                 decided_by: string | null;
                 created_at: string | null;
             } | null;
+        };
+        /** BillingUsageResource */
+        BillingUsageResource: {
+            plan_code: string | null;
+            meters: {
+                key: string;
+                limit: number | null;
+                used: number;
+                ratio: number | null;
+                /** @enum {string} */
+                level: "ok" | "warn" | "over";
+            }[];
         };
         /**
          * BudgetLinesRequest
@@ -13813,6 +13841,30 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "org.billing.usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `BillingUsageResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["BillingUsageResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
         };
     };
     "budgets.index": {

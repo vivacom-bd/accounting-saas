@@ -6460,6 +6460,40 @@
                 }
             }
         },
+        "/v1/org/billing/usage": {
+            "get": {
+                "operationId": "org.billing.usage",
+                "tags": [
+                    "BillingUsage"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`BillingUsageResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/BillingUsageResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/companies/{company}/budgets": {
             "get": {
                 "operationId": "budgets.index",
@@ -47895,6 +47929,63 @@
                     "last_result"
                 ],
                 "title": "BillMatchResource"
+            },
+            "BillingUsageResource": {
+                "type": "object",
+                "properties": {
+                    "plan_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "meters": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "key": {
+                                    "type": "string"
+                                },
+                                "limit": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "used": {
+                                    "type": "integer"
+                                },
+                                "ratio": {
+                                    "type": [
+                                        "number",
+                                        "null"
+                                    ]
+                                },
+                                "level": {
+                                    "type": "string",
+                                    "enum": [
+                                        "ok",
+                                        "warn",
+                                        "over"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "key",
+                                "limit",
+                                "used",
+                                "ratio",
+                                "level"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "plan_code",
+                    "meters"
+                ],
+                "title": "BillingUsageResource"
             },
             "BudgetLinesRequest": {
                 "type": "object",

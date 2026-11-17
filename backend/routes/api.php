@@ -36,6 +36,7 @@ use App\Http\Controllers\Ledger\DimensionController;
 use App\Http\Controllers\Ledger\JournalController;
 use App\Http\Controllers\Notifications\NotificationController;
 use App\Http\Controllers\Organisation\ApiClientController;
+use App\Http\Controllers\Organisation\BillingUsageController;
 use App\Http\Controllers\Organisation\CompanyController;
 use App\Http\Controllers\Organisation\CompanyLogoController;
 use App\Http\Controllers\Organisation\CompanySettingsController;
@@ -128,6 +129,9 @@ Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent'])->
     Route::post('api-clients', [ApiClientController::class, 'store'])->name('api-clients.store');
     Route::post('api-clients/{apiClient}/tokens', [ApiClientController::class, 'issueToken'])->whereUuid('apiClient')->name('api-clients.tokens.store');
     Route::post('api-clients/{apiClient}/revoke', [ApiClientController::class, 'revoke'])->whereUuid('apiClient')->name('api-clients.revoke');
+
+    // Plan and usage meters of the organisation (plan Task 10): owners and admins, people only
+    Route::get('org/billing/usage', [BillingUsageController::class, 'show'])->name('org.billing.usage');
 
     // The organisation page: profile and the companies the person can open (plan 3c.26)
     Route::get('organisation', [OrganisationController::class, 'show'])->name('organisation.show');

@@ -11,6 +11,7 @@ use App\Models\Organisation\Invitation;
 use App\Models\Organisation\Role;
 use App\Models\Platform\TenantUser;
 use App\Models\Platform\User;
+use App\Services\Billing\Entitlements;
 use App\Support\Actor;
 use App\Support\ActorType;
 use App\Support\UnitOfWork\AuditBuffer;
@@ -31,6 +32,7 @@ final class AcceptInvitation
         private readonly UnitOfWork $uow,
         private readonly Clock $clock,
         private readonly PermissionRegistrar $registrar,
+        private readonly Entitlements $entitlements,
     ) {}
 
     public function handle(Actor $actor, AcceptInvitationInput $in): Invitation
@@ -55,6 +57,8 @@ final class AcceptInvitation
                 throw DomainRuleViolation::single('membership_disabled', 'Your access to this organisation has been disabled. Ask an owner to restore it.');
             }
             if ($membership === null) {
+                // The limit may have shrunk since the invitation went out: this invitation's own seat is not counted twice.
+                $this->entitlements->assertCanAddOne($actor->tenantId, 'users', fn (): int => $this->entitlements->userSeats($invitation->id));
                 (new TenantUser)->forceFill([
                     'tenant_id' => $actor->tenantId, 'user_id' => $user->id, 'role' => $invitation->role,
                     'status' => 'active', 'invited_by' => $invitation->invited_by, 'joined_at' => $now,

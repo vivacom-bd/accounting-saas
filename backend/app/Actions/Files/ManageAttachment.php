@@ -9,6 +9,7 @@ use App\Actions\Ledger\SetupGuard;
 use App\Contracts\AttachmentStore;
 use App\Contracts\Clock;
 use App\Contracts\IdGenerator;
+use App\Contracts\UsageMeter;
 use App\Domain\Files\SafeFilename;
 use App\Domain\Shared\DomainRuleViolation;
 use App\Models\BaseModel;
@@ -35,6 +36,7 @@ final class ManageAttachment
         private readonly Clock $clock,
         private readonly SetupGuard $guard,
         private readonly AttachmentStore $store,
+        private readonly UsageMeter $usage,
     ) {}
 
     public function requestUpload(Actor $actor, UploadIntentInput $in): Attachment
@@ -85,6 +87,8 @@ final class ManageAttachment
 
             $attachment->forceFill(['completed_at' => $this->clock->now(), 'lock_version' => $attachment->lock_version + 1])->save();
             $attachment->refresh();
+            // Storage counts the verified bytes, once per attachment; a rolled-back completion takes its count with it.
+            $this->usage->bump('storage_bytes', $attachment->size, 'attachment:'.$attachment->id);
             $audit->add('attachment.uploaded', $attachment, after: $attachment, context: ['added_after_posting' => $attachment->added_after_posting]);
             $this->uow->afterCommit(fn () => ScanQueue::push($attachment->tenant_id, $attachment->company_id, $attachment->id));
 
@@ -106,6 +110,9 @@ final class ManageAttachment
             $before = $attachment->attributesToArray();
             $path = $attachment->path;
             $attachment->delete();
+            if ($attachment->completed_at !== null) {
+                $this->usage->bump('storage_bytes', -$attachment->size, 'attachment-deleted:'.$attachment->id);
+            }
             $audit->add('attachment.deleted', $attachment, before: $before);
             $this->uow->afterCommit(fn () => $this->store->delete($path));
         });

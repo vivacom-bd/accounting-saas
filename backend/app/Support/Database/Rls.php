@@ -36,6 +36,8 @@ final class Rls
         'admin_users', 'admin_audit_events', 'admin_audit_head', 'admin_approvals',
         // tenant lifecycle history (plan Task 5); ledgerly_platform only, like tenant_deletions above
         'tenant_lifecycle_events',
+        // entitlement overrides and usage counters (plan Task 10); no app-role grants, reached through sysops functions only
+        'tenant_entitlement_overrides', 'usage_daily', 'usage_dedup',
         // plan catalogue (10_SaaS_Admin §6, Task 9): platform-owned pricing; tenants reach it through sysops functions only
         'plans', 'plan_versions', 'plan_addons', 'coupons',
     ];

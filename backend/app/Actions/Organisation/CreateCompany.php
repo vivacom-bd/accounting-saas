@@ -14,6 +14,7 @@ use App\Domain\Shared\DomainRuleViolation;
 use App\Models\Organisation\Company;
 use App\Models\Organisation\CompanySettings;
 use App\Models\Platform\Currency;
+use App\Services\Billing\Entitlements;
 use App\Support\Actor;
 use App\Support\UnitOfWork\AuditBuffer;
 use App\Support\UnitOfWork\LockSet;
@@ -41,12 +42,15 @@ final class CreateCompany
         private readonly SeedCompanyRoles $seedRoles,
         private readonly AssignCompanyRole $assignRole,
         private readonly CreateFiscalYear $createYear,
+        private readonly Entitlements $entitlements,
     ) {}
 
     public function handle(Actor $actor, CreateCompanyInput $in): Company
     {
         return $this->uow->run($actor, function (LockSet $locks, AuditBuffer $audit, Outbox $outbox) use ($actor, $in) {
             OrganisationAdmin::require($actor, 'Only organisation owners and admins can create companies.');
+
+            $this->entitlements->assertCanAddOne($actor->tenantId, 'companies', fn (): int => Company::query()->where('status', 'active')->count());
 
             $currency = mb_strtoupper($in->baseCurrency);
             if (! Currency::query()->whereKey($currency)->exists()) {
