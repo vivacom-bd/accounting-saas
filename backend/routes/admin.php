@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\Plans\AddonsController;
 use App\Http\Controllers\Admin\Plans\CouponsController;
 use App\Http\Controllers\Admin\Plans\PlansController;
 use App\Http\Controllers\Admin\Staff\StaffController;
+use App\Http\Controllers\Admin\Support\ImpersonationsController;
 use App\Http\Controllers\Admin\Tenants\ProvisionTenantController;
 use App\Http\Controllers\Admin\Tenants\ResendOwnerInvitationController;
 use App\Http\Controllers\Admin\Tenants\TenantMembersController;
@@ -86,6 +87,14 @@ Route::middleware('admin.auth')->group(function (): void {
         Route::post('tenants/{tenant}/notes', [TenantNotesController::class, 'store'])->name('tenants.notes.store');
         Route::post('tenants/{tenant}/notes/{note}/pin', [TenantNotesController::class, 'pin'])->name('tenants.notes.pin');
     });
+    // Impersonation (Task 14): consented, time-boxed; write mode needs a second staff member's approval
+    Route::middleware('admin.can:impersonate.read')->group(function (): void {
+        Route::get('impersonations', [ImpersonationsController::class, 'index'])->name('impersonations.index');
+        Route::post('impersonations', [ImpersonationsController::class, 'store'])->name('impersonations.store');
+        Route::post('impersonations/{id}/end', [ImpersonationsController::class, 'end'])->name('impersonations.end');
+    });
+    Route::post('impersonations/write-requests', [ImpersonationsController::class, 'requestWrite'])->middleware('admin.can:impersonate.write.request')->name('impersonations.write-requests.store');
+
     Route::middleware('admin.can:tenants.lifecycle')->group(function (): void {
         Route::post('tenants/{tenant}/lifecycle', [TenantsController::class, 'lifecycle'])->name('tenants.lifecycle');
         Route::post('tenants/{tenant}/users/{user}/reset-two-factor', [TenantMembersController::class, 'resetTwoFactor'])->name('tenants.users.reset-two-factor');

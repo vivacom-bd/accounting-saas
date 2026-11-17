@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Audit\AuditController;
+use App\Http\Controllers\Auth\ImpersonationLoginController;
 use App\Http\Controllers\Auth\SessionController;
 use App\Http\Controllers\Banking\BankAccountController;
 use App\Http\Controllers\Banking\BankMatchingController;
@@ -45,6 +46,7 @@ use App\Http\Controllers\Organisation\MemberController;
 use App\Http\Controllers\Organisation\MenuController;
 use App\Http\Controllers\Organisation\NumberingController;
 use App\Http\Controllers\Organisation\OrganisationController;
+use App\Http\Controllers\Organisation\SupportAccessController;
 use App\Http\Controllers\Practice\PracticeController;
 use App\Http\Controllers\Procurement\GoodsReceiptController;
 use App\Http\Controllers\Procurement\ProcurementReportController;
@@ -107,6 +109,11 @@ Route::prefix('public')->middleware(PublicPageHeaders::class)->group(function ()
     Route::get('invoices/{token}/pdf', [PublicInvoiceController::class, 'pdf'])->middleware('throttle:public-invoice-pdf')->name('public.invoices.pdf');
 });
 
+// Impersonation (plan Task 14): the single-use ticket from the admin surface is the credential; it signs this browser in
+// as the user in a session of its own. The banner ends it. App\Http\Middleware\ApplyImpersonation governs the session.
+Route::post('auth/impersonate', [ImpersonationLoginController::class, 'store'])->middleware('throttle:10,1')->name('auth.impersonate');
+Route::post('auth/impersonation/end', [ImpersonationLoginController::class, 'destroy'])->middleware('auth:sanctum')->name('auth.impersonation.end');
+
 // Signed-in SPA user, before a tenant is chosen (13 §7).
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('me', [SessionController::class, 'me'])->name('session.me');
@@ -135,6 +142,11 @@ Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent'])->
 
     // People and roles of the organisation (owners and admins)
     Route::get('members', [MemberController::class, 'index'])->name('members.index');
+
+    // Support access (plan Task 14, G4): owners and admins, people only, let platform support impersonate for 24/72/168 h
+    Route::get('org/support-access', [SupportAccessController::class, 'show'])->name('org.support-access.show');
+    Route::post('org/support-access', [SupportAccessController::class, 'store'])->name('org.support-access.store');
+    Route::post('org/support-access/revoke', [SupportAccessController::class, 'revoke'])->name('org.support-access.revoke');
 
     // Webhook endpoints are organisation-level (13 §15, §7): owners and admins, people only.
     Route::get('webhook-endpoints', [WebhookEndpointController::class, 'index'])->name('webhook-endpoints.index');

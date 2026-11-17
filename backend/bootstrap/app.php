@@ -8,6 +8,7 @@ use App\Http\Middleware\Admin\RequireAdminTwoFactor;
 use App\Http\Middleware\Admin\UseAdminSession;
 use App\Http\Middleware\Admin\UsePlatformConnection;
 use App\Http\Middleware\Admin\ValidateAdminCsrfToken;
+use App\Http\Middleware\ApplyImpersonation;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureTenantWritable;
 use App\Http\Middleware\RequireConfirmedPassword;
@@ -20,6 +21,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -59,6 +61,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Only prepends anchored on SubstituteBindings: Laravel applies appends before prepends, so an
         // "append after ResolveTenant" would find no anchor and fall to the end. Each prepend lands
         // directly before SubstituteBindings, so declaration order is the resulting order.
+        // Impersonated tenant sessions (plan Task 14): after authentication, before the tenant is resolved.
+        $middleware->api(append: [ApplyImpersonation::class]);
+        $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: ApplyImpersonation::class);
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: ResolveTenant::class);
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: ResolveCompany::class);
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: RequireIdempotencyKey::class);
@@ -90,6 +95,9 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
         $exceptions->render(fn (DomainRuleViolation $e, Request $request) => ProblemRenderer::domain($e, $request));
+        // A write inside a read-only transaction (read impersonation, plan Task 14): the database refused it.
+        $exceptions->render(fn (QueryException $e, Request $request) => $request->is('api/*') && $e->getCode() === '25006'
+            ? ProblemRenderer::domain(DomainRuleViolation::single('tenant_read_only', 'This is a read-only support session. Changes are not allowed.'), $request) : null);
         $exceptions->render(fn (ValidationException $e, Request $request) => $request->is('api/*')
             ? ProblemRenderer::validation($e, $request) : null);
         // Policies throw AuthorizationException; the handler hands callbacks its HTTP form.

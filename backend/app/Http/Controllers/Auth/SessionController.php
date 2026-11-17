@@ -6,9 +6,11 @@ namespace App\Http\Controllers\Auth;
 
 use App\Domain\Shared\DomainRuleViolation;
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\ApplyImpersonation;
 use App\Http\Middleware\ResolveTenant;
 use App\Http\Resources\SessionResource;
 use App\Models\Platform\User;
+use App\Support\Impersonation\Impersonation;
 use App\Support\Tenancy\OrganisationRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,10 +25,14 @@ final class SessionController extends Controller
     {
         $user = $this->user($request);
         $current = $request->session()->get(ResolveTenant::SESSION_KEY);
+        // A support session sees only the organisation it was opened for (plan Task 14).
+        $impersonation = $request->attributes->get(ApplyImpersonation::ATTRIBUTE);
+        $impersonation = $impersonation instanceof Impersonation ? $impersonation : null;
 
         $tenants = DB::table('tenant_users')
             ->join('tenants', 'tenants.id', '=', 'tenant_users.tenant_id')
             ->where('tenant_users.user_id', $user->id)
+            ->when($impersonation !== null, fn ($q) => $q->where('tenant_users.tenant_id', $impersonation?->tenantId))
             ->where('tenant_users.status', 'active')
             ->whereNotIn('tenants.lifecycle', ['cancelled', 'deleted'])
             ->orderBy('tenants.name')
@@ -48,6 +54,7 @@ final class SessionController extends Controller
             'two_factor_enabled' => $user->two_factor_confirmed_at !== null,
             'signing_pin_set' => $user->signing_pin_hash !== null,
             'tenants' => $tenants,
+            'impersonation' => $impersonation?->banner(),
         ]);
     }
 

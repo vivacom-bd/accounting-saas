@@ -40,6 +40,8 @@ final class Rls
         'plans', 'plan_versions', 'plan_addons', 'coupons',
         // staff notes on a tenant (plan Task 7); ledgerly_platform only (read, add, pin)
         'tenant_notes',
+        // impersonation sessions (plan Task 14); ledgerly_platform adds and ends them, the app role only through sysops
+        'impersonation_sessions',
     ];
 
     public static function enable(Connection $connection, string $table): void

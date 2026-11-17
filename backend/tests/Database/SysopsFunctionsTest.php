@@ -35,8 +35,8 @@ it('defines each function as SECURITY DEFINER, owned by sysops, with a fixed sea
         WHERE n.nspname = 'sysops' AND p.proname NOT LIKE 'admin\_%' ORDER BY p.proname
     SQL);
 
-    // The platform-only admin_* functions are covered by AdminSysopsTest.
-    expect(array_column($functions, 'name'))->toBe(['claim_outbox_batch', 'einvoice_submissions_due', 'invitation_by_token_hash', 'invoice_link_by_token_hash', 'kpi_dirty_tenants', 'mark_kpi_dirty', 'practice_overview', 'purge_idempotency_keys', 'store_kpi_snapshots', 'tenants_due_for', 'webhook_deliveries_due']);
+    // The platform-only admin_* functions are covered by AdminSysopsTest; the impersonation ones there too (plan Task 14).
+    expect(array_column($functions, 'name'))->toBe(['claim_outbox_batch', 'einvoice_submissions_due', 'end_impersonation', 'end_tenant_impersonations', 'impersonation_by_ticket', 'impersonation_state', 'invitation_by_token_hash', 'invoice_link_by_token_hash', 'kpi_dirty_tenants', 'mark_kpi_dirty', 'practice_overview', 'purge_idempotency_keys', 'store_kpi_snapshots', 'tenants_due_for', 'webhook_deliveries_due']);
     foreach ($functions as $fn) {
         expect($fn->definer)->toBeTrue()
             ->and($fn->owner)->toBe('ledgerly_sysops')

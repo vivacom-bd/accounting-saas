@@ -8,6 +8,7 @@ use App\Actions\Organisation\RenameOrganisation;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\FreeFormDataResource;
 use App\Http\Support\RequestActor;
+use App\Http\Support\RequestUser;
 use App\Models\Platform\Tenant;
 use App\Queries\Organisation\OrganisationProfile;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ final class OrganisationController extends Controller
     {
         $principal = $request->user() ?? abort(401);
 
-        return new FreeFormDataResource($profile($principal) + ['can' => ['update' => $principal->can('update', Tenant::class)]]);
+        return new FreeFormDataResource($profile($principal) + ['can' => ['update' => RequestUser::principal($request)?->can('update', Tenant::class) ?? false]]);
     }
 
     #[Authorize('update', Tenant::class)]

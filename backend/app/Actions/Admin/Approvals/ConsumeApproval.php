@@ -29,7 +29,7 @@ final class ConsumeApproval
                 || $approval->kind !== $kind
                 || $approval->requested_by !== $requester->id
                 || $approval->effectiveStatus($now) !== 'approved'
-                || array_intersect_key($approval->subject, $mustMatch) !== $mustMatch
+                || ! self::matches($approval->subject, $mustMatch)
             ) {
                 throw DomainRuleViolation::single('approval_required', 'A matching, approved request is required first.');
             }
@@ -40,5 +40,20 @@ final class ConsumeApproval
 
             return $approval->refresh();
         });
+    }
+
+    /**
+     * Every $mustMatch field present in the subject with the same value, whatever the key order (jsonb reorders keys).
+     *
+     * @param  array<string, mixed>  $subject
+     * @param  array<string, mixed>  $mustMatch
+     */
+    private static function matches(array $subject, array $mustMatch): bool
+    {
+        $have = array_intersect_key($subject, $mustMatch);
+        ksort($have);
+        ksort($mustMatch);
+
+        return $have === $mustMatch;
     }
 }

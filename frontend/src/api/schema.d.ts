@@ -3101,6 +3101,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/auth/impersonate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Exchanges the ticket for a tenant session as the user (204). Whoever this browser was signed in as is signed out
+         *     first and the old session discarded, so an impersonation never mixes with another session; the session id is new,
+         *     the login is never remembered, and the session is pinned to the impersonation's tenant
+         */
+        post: operations["auth.impersonate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/impersonation/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ends the impersonation from the banner and signs the session out (204) */
+        post: operations["auth.impersonation.end"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/companies/{company}/imports": {
         parameters: {
             query?: never;
@@ -5677,6 +5715,38 @@ export interface paths {
         get: operations["statement-run.sends"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/org/support-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["org.support-access.show"];
+        put?: never;
+        post: operations["org.support-access.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/org/support-access/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["org.support-access.revoke"];
         delete?: never;
         options?: never;
         head?: never;
@@ -8850,7 +8920,7 @@ export interface components {
             role: string;
             company_role: string | null;
             company_ids: string[];
-            invited_by: string;
+            invited_by: string | null;
             expires_at: string;
             can: {
                 [key: string]: boolean;
@@ -10282,6 +10352,11 @@ export interface components {
                     create_companies: boolean;
                 };
             }[];
+            impersonation: {
+                admin_name: string;
+                mode: string;
+                ends_at: string;
+            } | null;
         };
         /** SetSigningPinRequest */
         SetSigningPinRequest: {
@@ -10435,6 +10510,17 @@ export interface components {
             comment?: string | null;
             /** @description Needs `invoices.override_credit_limit`, and someone who did not create or submit the invoice. Ignored when the limit holds. */
             credit_limit_override_reason?: string | null;
+        };
+        /** SupportAccessResource */
+        SupportAccessResource: {
+            open: boolean;
+            grant: {
+                id: string;
+                hours: number;
+                expires_at: string;
+                granted_by: string;
+                created_at: string;
+            } | null;
         };
         /**
          * TaxCodeRequest
@@ -18751,6 +18837,50 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "auth.impersonate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    ticket: string;
+                };
+            };
+        };
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "auth.impersonation.end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
     "imports.index": {
         parameters: {
             query?: {
@@ -26056,6 +26186,86 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "org.support-access.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `SupportAccessResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SupportAccessResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+        };
+    };
+    "org.support-access.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {integer} */
+                    hours: "24" | "72" | "168";
+                };
+            };
+        };
+        responses: {
+            /** @description `SupportAccessResource` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SupportAccessResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "org.support-access.revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `SupportAccessResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SupportAccessResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
         };
     };
     "tax-codes.index": {

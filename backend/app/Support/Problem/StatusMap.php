@@ -85,6 +85,12 @@ final class StatusMap
         'two_factor_not_enabled' => 422,
         'last_org_owner' => 409,
         'membership_pending' => 409,
+        // Support access and impersonation (plan Task 14).
+        'support_access_closed' => 403,
+        'impersonation_expired' => 401,
+        'impersonation_ticket_invalid' => 401,
+        'impersonation_forbidden' => 403,
+        'impersonation_cannot_sign' => 403,
     ];
 
     public static function status(string $code): int
