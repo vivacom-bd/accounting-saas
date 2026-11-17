@@ -89,7 +89,7 @@ it('logs in with password then totp', function (): void {
         ->assertJsonPath('data.email', 'ops@ledgerly.test')
         ->assertJsonPath('data.name', 'Ops Owner')
         ->assertJsonPath('data.role', 'owner')
-        ->assertJsonPath('data.can', fn (array $can) => in_array('staff.manage', $can, true) && count($can) === 20);
+        ->assertJsonPath('data.can', fn (array $can) => in_array('staff.manage', $can, true) && count($can) === 21);
 
     expect(adminAuditActions())->toBe(['auth.two_factor_failed', 'auth.login'])
         ->and($admin->fresh()?->last_login_at)->not->toBeNull()

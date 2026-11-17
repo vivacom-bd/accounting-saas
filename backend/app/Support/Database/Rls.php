@@ -40,6 +40,8 @@ final class Rls
         'plans', 'plan_versions', 'plan_addons', 'coupons',
         // staff notes on a tenant (plan Task 7); ledgerly_platform only (read, add, pin)
         'tenant_notes',
+        // support tools (plan Task 15): the mail log (written through sysops.record_mail_sent) and staff announcements
+        'mail_log', 'announcements',
     ];
 
     public static function enable(Connection $connection, string $table): void

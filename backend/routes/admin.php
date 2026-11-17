@@ -12,6 +12,8 @@ use App\Http\Controllers\Admin\Plans\AddonsController;
 use App\Http\Controllers\Admin\Plans\CouponsController;
 use App\Http\Controllers\Admin\Plans\PlansController;
 use App\Http\Controllers\Admin\Staff\StaffController;
+use App\Http\Controllers\Admin\Support\AnnouncementsController;
+use App\Http\Controllers\Admin\Support\SupportController;
 use App\Http\Controllers\Admin\Tenants\ProvisionTenantController;
 use App\Http\Controllers\Admin\Tenants\ResendOwnerInvitationController;
 use App\Http\Controllers\Admin\Tenants\TenantMembersController;
@@ -90,5 +92,23 @@ Route::middleware('admin.auth')->group(function (): void {
         Route::post('tenants/{tenant}/lifecycle', [TenantsController::class, 'lifecycle'])->name('tenants.lifecycle');
         Route::post('tenants/{tenant}/users/{user}/reset-two-factor', [TenantMembersController::class, 'resetTwoFactor'])->name('tenants.users.reset-two-factor');
         Route::post('tenants/{tenant}/users/{user}/disable', [TenantMembersController::class, 'disable'])->name('tenants.users.disable');
+    });
+
+    // Support tools (Task 15)
+    Route::get('search', [SupportController::class, 'search'])->middleware('admin.can:tenants.view')->name('search');
+    Route::middleware('admin.can:ops.view')->group(function (): void {
+        Route::get('jobs/failed', [SupportController::class, 'failedJobs'])->name('jobs.failed.index');
+        Route::get('mail-log', [SupportController::class, 'mailLog'])->name('mail-log.index');
+        Route::get('tenants/{tenant}/webhook-deliveries', [SupportController::class, 'webhookDeliveries'])->name('tenants.webhook-deliveries');
+    });
+    Route::middleware('admin.can:ops.manage')->group(function (): void {
+        Route::post('jobs/failed/{uuid}/retry', [SupportController::class, 'retry'])->whereUuid('uuid')->name('jobs.failed.retry');
+        Route::delete('jobs/failed/{uuid}', [SupportController::class, 'forget'])->whereUuid('uuid')->name('jobs.failed.forget');
+    });
+    Route::middleware('admin.can:announcements.manage')->group(function (): void {
+        Route::get('announcements', [AnnouncementsController::class, 'index'])->name('announcements.index');
+        Route::post('announcements', [AnnouncementsController::class, 'store'])->name('announcements.store');
+        Route::put('announcements/{id}', [AnnouncementsController::class, 'update'])->whereUuid('id')->name('announcements.update');
+        Route::delete('announcements/{id}', [AnnouncementsController::class, 'destroy'])->whereUuid('id')->name('announcements.destroy');
     });
 });

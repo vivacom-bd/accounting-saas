@@ -36,14 +36,15 @@ it('defines each function as SECURITY DEFINER, owned by sysops, with a fixed sea
     SQL);
 
     // The platform-only admin_* functions are covered by AdminSysopsTest.
-    expect(array_column($functions, 'name'))->toBe(['claim_outbox_batch', 'einvoice_submissions_due', 'invitation_by_token_hash', 'invoice_link_by_token_hash', 'kpi_dirty_tenants', 'mark_kpi_dirty', 'practice_overview', 'purge_idempotency_keys', 'store_kpi_snapshots', 'tenants_due_for', 'webhook_deliveries_due']);
+    expect(array_column($functions, 'name'))->toBe(['active_announcements', 'claim_outbox_batch', 'einvoice_submissions_due', 'invitation_by_token_hash', 'invoice_link_by_token_hash', 'kpi_dirty_tenants', 'mark_kpi_dirty', 'practice_overview', 'purge_idempotency_keys', 'record_mail_sent', 'store_kpi_snapshots', 'tenants_due_for', 'webhook_deliveries_due']);
     foreach ($functions as $fn) {
         expect($fn->definer)->toBeTrue()
             ->and($fn->owner)->toBe('ledgerly_sysops')
             ->and($fn->config)->toBe('search_path=pg_catalog, pg_temp')
             ->and($fn->app_can)->toBeTrue()
             ->and($fn->report_can)->toBeFalse()
-            ->and($fn->platform_can)->toBeFalse();
+            // staff send mail too: the mail log writer is the one app-role function the platform role may also call
+            ->and($fn->platform_can)->toBe($fn->name === 'record_mail_sent');
     }
 });
 

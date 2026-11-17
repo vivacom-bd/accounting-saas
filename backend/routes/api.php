@@ -35,6 +35,7 @@ use App\Http\Controllers\Ledger\ChartTemplateController;
 use App\Http\Controllers\Ledger\DimensionController;
 use App\Http\Controllers\Ledger\JournalController;
 use App\Http\Controllers\Notifications\NotificationController;
+use App\Http\Controllers\Organisation\AnnouncementController;
 use App\Http\Controllers\Organisation\ApiClientController;
 use App\Http\Controllers\Organisation\CompanyController;
 use App\Http\Controllers\Organisation\CompanyLogoController;
@@ -119,6 +120,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent'])->group(function (): void {
     Route::get('companies', [CompanyController::class, 'index'])->name('companies.index');
     Route::post('companies', [CompanyController::class, 'store'])->name('companies.store');
+    Route::get('announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     Route::get('invitations', [InvitationController::class, 'index'])->name('invitations.index');
     Route::post('invitations', [InvitationController::class, 'store'])->name('invitations.store');
     Route::delete('invitations/{invitation}', [InvitationController::class, 'destroy'])->whereUuid('invitation')->name('invitations.destroy');
