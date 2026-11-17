@@ -19,10 +19,19 @@ export function forgetAdminSession(qc: QueryClient): void {
   qc.removeQueries({ queryKey: ['admin'] });
 }
 
+/**
+ * A 401 from the session request itself is the guard's answer (go to sign-in), not news: resetting then would
+ * refetch, get 401 again and loop forever. Only a refusal on another call while the session looked valid resets.
+ */
+export function shouldResetAdminSession(qc: QueryClient): boolean {
+  const state = qc.getQueryState(adminSessionKey);
+  return state?.status === 'success' && state.fetchStatus !== 'fetching';
+}
+
 export function installAdminSessionGuard(): void {
   setAdminUnauthenticatedListener(() => {
     // Back to "unknown": the guard asks the API again and routes by its answer (login, two-factor, blocked).
-    void queryClient.resetQueries({ queryKey: adminSessionKey });
+    if (shouldResetAdminSession(queryClient)) void queryClient.resetQueries({ queryKey: adminSessionKey });
   });
 }
 
