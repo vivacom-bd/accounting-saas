@@ -30,3 +30,7 @@ types:
 	mkdir -p docs/api frontend/src/api
 	cd backend && php artisan scramble:export --path=../docs/api/openapi.json --fail-on-unknown
 	$(OPENAPI_TS) docs/api/openapi.json -o frontend/src/api/schema.d.ts
+	# Platform admin API (T9): its own document, served from /api/admin. Not --fail-on-unknown: some admin
+	# responses are still untyped arrays; those fields come out as `unknown` in the generated types.
+	cd backend && php artisan scramble:export --api=admin --path=../docs/api/admin-openapi.json
+	$(OPENAPI_TS) docs/api/admin-openapi.json -o frontend/src/api/schema-admin.d.ts

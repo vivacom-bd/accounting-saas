@@ -32,6 +32,21 @@ it('exports the OpenAPI document without unknown types', function (): void {
         ->toHaveKey('two_factor');
 });
 
+it('exports a separate admin document served from /api/admin (T9)', function (): void {
+    $path = tempnam(sys_get_temp_dir(), 'openapi-admin-');
+    $exit = Artisan::call('scramble:export', ['--api' => 'admin', '--path' => $path]);
+    $output = Artisan::output();
+    $doc = json_decode((string) file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
+    @unlink($path);
+
+    expect($exit)->toBe(0, $output);
+    $paths = array_keys($doc['paths']);
+    // Paths are relative to the document's server (`/api/admin`), as the tenant document's are to `/api`.
+    expect($doc['servers'][0]['url'])->toEndWith('/api/admin')
+        ->and($paths)->toContain('/session', '/auth/login', '/auth/two-factor', '/tenants')
+        ->and(array_filter($paths, fn (string $p) => str_starts_with($p, '/v1')))->toBe([]);
+});
+
 it('documents can hints and period waivers as the objects they are', function (): void {
     $path = tempnam(sys_get_temp_dir(), 'openapi-');
     Artisan::call('scramble:export', ['--path' => $path]);
