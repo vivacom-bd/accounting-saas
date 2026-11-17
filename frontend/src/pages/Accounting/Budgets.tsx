@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ColumnDef } from '@tanstack/react-table';
 import { useLedgerStore } from '@/mock/store';
 import { DataTable } from '@/components/domain/DataTable';
-import { formatMoney } from '@/lib/format';
+import { formatMoney, parseMoneyToMinorUnits } from '@/lib/format';
 import { PageHeader } from '@/components/domain/PageHeader';
 import { toast } from 'sonner';
 import { Layers, Download, Upload, ArrowRight } from 'lucide-react';
@@ -137,7 +137,7 @@ export const Budgets: React.FC = () => {
   }, [varianceRows]);
 
   const handleCellBlur = (accountId: string, periodId: string, valueStr: string) => {
-    const parsed = Math.round((parseFloat(valueStr) || 0) * 100);
+    const parsed = parseMoneyToMinorUnits(valueStr, currentCompany.base_currency);
     if (selectedBudget) {
       updateBudgetAmount(selectedBudget.id, accountId, periodId, parsed);
     }

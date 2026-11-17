@@ -1,4 +1,5 @@
 import { selectByMode } from '@/data/select';
+import { MoneyInput } from '@/components/domain/MoneyInput';
 import { BankAccountsLive } from './live/BankAccountsLive';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -382,13 +383,7 @@ const MockBankAccountsList: React.FC = () => {
               <label className="text-[11px] font-medium text-text-secondary">
                 Opening statement balance ($)
               </label>
-              <input
-                type="number"
-                step="100"
-                value={formData.opening_balance / 100}
-                onChange={(e) => setFormData({ ...formData, opening_balance: Number(e.target.value) * 100 })}
-                className="h-8 px-2.5 rounded-sm border border-border bg-surface text-text-primary font-mono text-right focus:outline-none focus:border-accent"
-              />
+              <MoneyInput size="sm" value={formData.opening_balance} onChange={(v) => setFormData({ ...formData, opening_balance: v })} currency={formData.currency} />
             </div>
 
             <DialogFooter className="mt-4 flex items-center justify-end gap-2">

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MoneyInput } from '@/components/domain/MoneyInput';
 import { useNavigate } from 'react-router-dom';
 import { useLedgerStore } from '@/mock/store';
 import { formatMoney } from '@/lib/format';
@@ -405,11 +406,11 @@ export const CompanySettings: React.FC = () => {
                         <Field key={f.key} label={f.label} help={f.help} hint={f.hint}>
                           <div className="relative">
                             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-text-muted">$</span>
-                            <input
-                              type="number"
-                              value={workflows[f.key] / 100}
-                              onChange={(e) => setWorkflows({ ...workflows, [f.key]: Math.round((parseFloat(e.target.value) || 0) * 100) })}
-                              className={`${inputCls} w-full pl-6 text-right font-mono tabular-nums`}
+                            <MoneyInput
+                              value={workflows[f.key]}
+                              onChange={(v) => setWorkflows({ ...workflows, [f.key]: v })}
+                              currency={currentCompany.base_currency}
+                              allowNegative={false}
                             />
                           </div>
                         </Field>

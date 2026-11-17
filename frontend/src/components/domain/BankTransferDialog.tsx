@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MoneyInput } from '@/components/domain/MoneyInput';
 import { useLedgerStore } from '@/mock/store';
 import { formatMoney } from '@/lib/format';
 import { FieldHelp } from '@/components/domain/FieldHelp';
@@ -179,13 +180,7 @@ export const BankTransferDialog: React.FC<BankTransferDialogProps> = ({
                 Amount ($)
                 <FieldHelp help="How much to move out of the first account." example="5000.00" />
               </label>
-              <input
-                type="number"
-                step="0.01"
-                value={(amountFc / 100).toFixed(2)}
-                onChange={(e) => setAmountFc(Math.round((parseFloat(e.target.value) || 0) * 100))}
-                className="h-9 px-2.5 tabular-nums text-right rounded-lg border border-border bg-surface text-text-primary focus:outline-none focus:border-accent text-xs"
-              />
+              <MoneyInput value={amountFc} onChange={setAmountFc} currency={fromBank?.currency ?? currentCompany.base_currency} allowNegative={false} />
             </div>
 
             <div className="flex flex-col gap-1">

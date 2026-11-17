@@ -6,6 +6,7 @@ import { useLedgerStore } from '@/mock/store';
 import { Bill, BillLine } from '@/types';
 import { buildJournalFromBill } from '@/mock/PostingRules';
 import { formatMoney } from '@/lib/format';
+import { MoneyInput } from '@/components/domain/MoneyInput';
 import { paymentStatus, amountDue } from '@/lib/docStatus';
 import { AccountPicker } from '@/components/domain/AccountPicker';
 import { ContactPicker } from '@/components/domain/ContactPicker';
@@ -663,12 +664,13 @@ const MockBillForm: React.FC = () => {
                     />
                   </td>
                   <td className="px-2 text-right">
-                    <input
-                      type="number"
-                      step="0.01"
-                      aria-label="Unit price"
-                      value={(line.unit_price_fc / 100).toFixed(2)}
-                      onChange={(e) => handleUpdateLine(line.id, { unit_price_fc: Math.round((parseFloat(e.target.value) || 0) * 100) })}
+                    <MoneyInput
+                      size="sm"
+                      currency={currency}
+                      allowNegative={false}
+                      ariaLabel="Unit price"
+                      value={line.unit_price_fc}
+                      onChange={(v) => handleUpdateLine(line.id, { unit_price_fc: v })}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey && idx === lines.length - 1) {
                           e.preventDefault();

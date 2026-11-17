@@ -15,6 +15,22 @@ const CURRENCY_MINORS: Record<string, number> = {
   AED: 2,
   SAR: 2,
   JPY: 0,
+  // Three-decimal and zero-decimal currencies (ISO 4217), so typed and shown amounts line up with the server's minor units.
+  KWD: 3,
+  BHD: 3,
+  OMR: 3,
+  JOD: 3,
+  TND: 3,
+  LYD: 3,
+  KRW: 0,
+  VND: 0,
+  UGX: 0,
+  RWF: 0,
+  XAF: 0,
+  XOF: 0,
+  CLP: 0,
+  ISK: 0,
+  PYG: 0,
 };
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
@@ -31,8 +47,8 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
 
 /**
  * A company's date and number format (plan 3c.26b), set once the live company is known. `null` keeps the demo's original en-US look.
- * Keys match the server's FormatPreferences (app/Domain/Shared). This changes the text only; money stays integer minor units, and
- * typed amounts still use a dot for decimals.
+ * Keys match the server's FormatPreferences (app/Domain/Shared). This changes the text only; money stays integer minor units. Typed
+ * amounts are read with the same separators (`parseMoneyText`).
  */
 export interface FormatPrefs {
   date: string;
@@ -138,37 +154,96 @@ export function formatMoney(
   return `${symbol}${formattedNum}`;
 }
 
+const escapeRegExp = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** The separators typed amounts are read with: the company's, or dot-decimal with commas (the demo's look) when none is set. */
+function typedSeparators(): { decimal: string; groups: string[]; canonicalGroup: string } {
+  const key = currentFormats?.number ?? 'comma_dot';
+  const sep = NUMBER_SEPARATORS[key] ?? NUMBER_SEPARATORS.comma_dot;
+  if (key === 'space_comma') return { decimal: sep.decimal, groups: [' ', ' ', ' '], canonicalGroup: ' ' };
+  if (key === 'apostrophe_dot') return { decimal: sep.decimal, groups: ["'", '’'], canonicalGroup: "'" };
+  return { decimal: sep.decimal, groups: [sep.group], canonicalGroup: sep.group };
+}
+
+/** Takes one currency symbol or code off the start and end of typed text. */
+function withoutCurrency(text: string, currency: string): string {
+  const tokens = [currency, getCurrencySymbol(currency)].filter((t) => t !== '').map(escapeRegExp).join('|');
+  return text
+    .replace(new RegExp(`^(?:${tokens})`, 'i'), '')
+    .replace(/^\p{Sc}+/u, '')
+    .trim()
+    .replace(new RegExp(`(?:${tokens})$`, 'i'), '')
+    .replace(/\p{Sc}+$/u, '')
+    .trim();
+}
+
 /**
- * Parses user input (e.g., "$1,250.50", "-150", "(42.00)") into integer minor units.
+ * Reads typed money as integer minor units using the company's number format: its decimal mark and its group mark, so with
+ * "1.234,56" both "1234,56" and "1.234,56" give 123456, and with "1,234.56" so do "1234.56" and "1,234.56". Digits are handled
+ * as text, never as floats. Returns 0 for blank text and null for anything that is not an amount: stray characters, group marks
+ * in the wrong place, two decimal marks, more decimals than the currency has (unless zeros: nothing is rounded), or a value beyond
+ * safe integers. A leading or trailing minus, a real minus sign or parentheses make it negative.
  */
-export function parseMoneyToMinorUnits(input: string | number, currency = 'USD'): number {
-  if (typeof input === 'number') {
-    return Math.round(input);
+export function parseMoneyText(input: string, currency = 'USD'): number | null {
+  let s = input.trim();
+  if (s === '') return 0;
+
+  let signs = 0;
+  if (s.startsWith('(') && s.endsWith(')')) {
+    signs += 1;
+    s = s.slice(1, -1).trim();
   }
-
-  if (!input || typeof input !== 'string') return 0;
-  let str = input.trim();
-  let isNegative = false;
-
-  // Handle accounting parentheses negative e.g. (100.50)
-  if (str.startsWith('(') && str.endsWith(')')) {
-    isNegative = true;
-    str = str.slice(1, -1).trim();
-  } else if (str.startsWith('-')) {
-    isNegative = true;
-    str = str.slice(1).trim();
+  if (/^[-−]/.test(s)) {
+    signs += 1;
+    s = s.slice(1).trim();
   }
+  if (/[-−]$/.test(s)) {
+    signs += 1;
+    s = s.slice(0, -1).trim();
+  }
+  if (signs > 1) return null;
+  s = withoutCurrency(s, currency);
+  if (s === '') return null;
 
-  // Strip currency symbols and commas
-  const cleaned = str.replace(/[^0-9.]/g, '');
-  if (!cleaned) return 0;
+  const { decimal, groups, canonicalGroup } = typedSeparators();
+  for (const g of groups) if (g !== canonicalGroup) s = s.split(g).join(canonicalGroup);
+  const allowed = new RegExp(`^[0-9${escapeRegExp(decimal)}${escapeRegExp(canonicalGroup)}]+$`);
+  if (!allowed.test(s)) return null;
 
-  const floatVal = parseFloat(cleaned);
-  if (isNaN(floatVal)) return 0;
+  const parts = s.split(decimal);
+  if (parts.length > 2) return null;
+  const [intText, fracText = ''] = parts;
+  if (!/^\d*$/.test(fracText)) return null;
+  const grouped = new RegExp(`^\\d{1,3}(?:${escapeRegExp(canonicalGroup)}\\d{3})+$`);
+  if (intText.includes(canonicalGroup) ? !grouped.test(intText) : !/^\d*$/.test(intText)) return null;
+  const whole = intText.split(canonicalGroup).join('');
+  if (whole === '' && fracText === '') return null;
 
   const minors = getCurrencyMinorUnits(currency);
-  const minorUnits = Math.round(floatVal * Math.pow(10, minors));
-  return isNegative ? -minorUnits : minorUnits;
+  if (fracText.length > minors && /[^0]/.test(fracText.slice(minors))) return null;
+  const digits = (whole + fracText.slice(0, minors).padEnd(minors, '0')).replace(/^0+(?=\d)/, '');
+  const value = Number(digits);
+  if (!Number.isSafeInteger(value)) return null;
+  return signs === 1 && value !== 0 ? -value : value;
+}
+
+/** Integer minor units as editable text: the company's decimal mark, all the currency's decimals, no grouping. */
+export function rawMoneyText(minorUnits: number, currency = 'USD'): string {
+  const minors = getCurrencyMinorUnits(currency);
+  const digits = String(Math.abs(Math.round(minorUnits))).padStart(minors + 1, '0');
+  const whole = minors > 0 ? digits.slice(0, -minors) : digits;
+  const text = minors > 0 ? `${whole}${typedSeparators().decimal}${digits.slice(-minors)}` : whole;
+  return minorUnits < 0 ? `-${text}` : text;
+}
+
+/**
+ * Parses user input (e.g. "$1,250.50", "-150", "(42.00)") into integer minor units with the company's separators; text that is not
+ * an amount reads as 0. Use `parseMoneyText` when invalid input must be told apart from zero.
+ */
+export function parseMoneyToMinorUnits(input: string | number, currency = 'USD'): number {
+  if (typeof input === 'number') return Math.round(input);
+  if (!input || typeof input !== 'string') return 0;
+  return parseMoneyText(input, currency) ?? 0;
 }
 
 /**

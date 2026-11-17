@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MoneyInput } from '@/components/domain/MoneyInput';
 import { useLedgerStore } from '@/mock/store';
 import { Bill } from '@/types';
 import { formatMoney } from '@/lib/format';
@@ -148,14 +149,7 @@ export const SupplierPaymentDialog: React.FC<SupplierPaymentDialogProps> = ({
                 Payment amount ($)
                 <FieldHelp help="Amount disbursed (can be full or partial)." example="4275.00" />
               </label>
-              <input
-                type="number"
-                step="0.01"
-                max={(openBalance / 100).toFixed(2)}
-                value={(amountFc / 100).toFixed(2)}
-                onChange={(e) => setAmountFc(Math.round((parseFloat(e.target.value) || 0) * 100))}
-                className="h-8 px-2.5 font-mono text-right rounded-sm border border-border bg-surface text-text-primary focus:outline-none focus:border-accent text-xs"
-              />
+              <MoneyInput size="sm" value={amountFc} onChange={setAmountFc} currency={bill.currency} allowNegative={false} />
             </div>
           </div>
 

@@ -6,7 +6,7 @@ import { FixedAsset } from '@/types';
 import { PageHeader } from '@/components/domain/PageHeader';
 import { toast } from 'sonner';
 import { DataTable, type RowAction } from '@/components/domain/DataTable';
-import { formatMoney } from '@/lib/format';
+import { formatMoney, parseMoneyToMinorUnits } from '@/lib/format';
 import { SplitPane } from '@/components/domain/SplitPane';
 import { SignDialog } from '@/components/domain/SignDialog';
 import { Plus, Calendar, Building, CheckCircle2, ShieldCheck, TrendingDown, Layers, FileSpreadsheet, Trash2 } from 'lucide-react';
@@ -161,7 +161,7 @@ export const FixedAssets: React.FC = () => {
 
   const handleCreateAsset = (e: React.FormEvent) => {
     e.preventDefault();
-    const costMinor = Math.round((parseFloat(newCost) || 0) * 100);
+    const costMinor = parseMoneyToMinorUnits(newCost, currentCompany.base_currency);
     const months = parseInt(newMonths, 10) || 36;
 
     addFixedAsset({

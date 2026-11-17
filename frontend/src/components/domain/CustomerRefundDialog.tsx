@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MoneyInput } from '@/components/domain/MoneyInput';
 import { useLedgerStore } from '@/mock/store';
 import { Invoice } from '@/types';
 import { formatMoney } from '@/lib/format';
@@ -149,13 +150,7 @@ export const CustomerRefundDialog: React.FC<CustomerRefundDialogProps> = ({
                 Refund amount ($)
                 <FieldHelp help="Sum to disburse back to customer." example="1050.00" />
               </label>
-              <input
-                type="number"
-                step="0.01"
-                value={(amountFc / 100).toFixed(2)}
-                onChange={(e) => setAmountFc(Math.round((parseFloat(e.target.value) || 0) * 100))}
-                className="h-8 px-2.5 font-mono text-right rounded-sm border border-border bg-surface text-text-primary focus:outline-none focus:border-accent text-xs"
-              />
+              <MoneyInput size="sm" value={amountFc} onChange={setAmountFc} currency={invoice.currency} allowNegative={false} />
             </div>
           </div>
 

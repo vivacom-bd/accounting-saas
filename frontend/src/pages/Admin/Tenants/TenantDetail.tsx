@@ -4,6 +4,7 @@
  * apply coupon, refund with two-person approval, impersonate, and GDPR export.
  */
 
+import { MoneyInput } from '@/components/domain/MoneyInput';
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAdminStore } from '@/mock/store/adminStore';
@@ -1124,12 +1125,7 @@ export const TenantDetail: React.FC = () => {
             <div className="space-y-3 text-xs">
               <div>
                 <label className="font-semibold text-text-secondary block mb-1">Refund Amount ($)</label>
-                <input
-                  type="number"
-                  value={(refundAmountMinor / 100).toFixed(2)}
-                  onChange={(e) => setRefundAmountMinor(Math.round(parseFloat(e.target.value || '0') * 100))}
-                  className="w-full h-8 px-2.5 font-mono bg-surface border border-border rounded-md text-xs"
-                />
+                <MoneyInput size="sm" value={refundAmountMinor} onChange={setRefundAmountMinor} currency="USD" allowNegative={false} />
               </div>
 
               <div>
