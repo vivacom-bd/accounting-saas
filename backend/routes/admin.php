@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\Auth\AdminPasswordSetController;
 use App\Http\Controllers\Admin\Auth\AdminSessionController;
 use App\Http\Controllers\Admin\Auth\AdminTwoFactorController;
 use App\Http\Controllers\Admin\Billing\EntitlementOverridesController;
+use App\Http\Controllers\Admin\Billing\BillingStatusController;
+use App\Http\Controllers\Admin\Billing\SubscriptionsController;
 use App\Http\Controllers\Admin\Plans\AddonsController;
 use App\Http\Controllers\Admin\Plans\CouponsController;
 use App\Http\Controllers\Admin\Plans\PlansController;
@@ -97,5 +99,20 @@ Route::middleware('admin.auth')->group(function (): void {
         Route::post('tenants/{tenant}/lifecycle', [TenantsController::class, 'lifecycle'])->name('tenants.lifecycle');
         Route::post('tenants/{tenant}/users/{user}/reset-two-factor', [TenantMembersController::class, 'resetTwoFactor'])->name('tenants.users.reset-two-factor');
         Route::post('tenants/{tenant}/users/{user}/disable', [TenantMembersController::class, 'disable'])->name('tenants.users.disable');
+    // Billing gateway and subscriptions (Task 11)
+    Route::middleware('admin.can:billing.view')->group(function (): void {
+        Route::get('billing/status', BillingStatusController::class)->name('billing.status');
+        Route::get('tenants/{tenant}/subscription', [SubscriptionsController::class, 'show'])->name('tenants.subscription.show');
+        Route::post('tenants/{tenant}/subscription/preview', [SubscriptionsController::class, 'preview'])->name('tenants.subscription.preview');
+    });
+    Route::middleware('admin.can:billing.manage')->group(function (): void {
+        Route::post('tenants/{tenant}/subscription', [SubscriptionsController::class, 'store'])->name('tenants.subscription.store');
+        Route::post('tenants/{tenant}/subscription/change-plan', [SubscriptionsController::class, 'changePlan'])->name('tenants.subscription.change-plan');
+        Route::post('tenants/{tenant}/subscription/cancel', [SubscriptionsController::class, 'cancel'])->name('tenants.subscription.cancel');
+        Route::post('tenants/{tenant}/subscription/resume', [SubscriptionsController::class, 'resume'])->name('tenants.subscription.resume');
+        Route::post('tenants/{tenant}/subscription/pause', [SubscriptionsController::class, 'pause'])->name('tenants.subscription.pause');
+        Route::post('tenants/{tenant}/subscription/extend-trial', [SubscriptionsController::class, 'extendTrial'])->name('tenants.subscription.extend-trial');
+        Route::post('tenants/{tenant}/subscription/convert-trial', [SubscriptionsController::class, 'convertTrial'])->name('tenants.subscription.convert-trial');
+        Route::post('tenants/{tenant}/subscription/apply-coupon', [SubscriptionsController::class, 'applyCoupon'])->name('tenants.subscription.apply-coupon');
     });
 });

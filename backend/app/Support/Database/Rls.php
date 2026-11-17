@@ -42,6 +42,8 @@ final class Rls
         'plans', 'plan_versions', 'plan_addons', 'coupons',
         // staff notes on a tenant (plan Task 7); ledgerly_platform only (read, add, pin)
         'tenant_notes',
+        // subscriptions and MRR movements (plan Task 11); ledgerly_platform only, tenants reach their plan through sysops functions
+        'subscriptions', 'subscription_addons', 'subscription_events', 'stripe_prices',
     ];
 
     public static function enable(Connection $connection, string $table): void

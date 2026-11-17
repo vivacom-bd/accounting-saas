@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Actions\Signing\SetSigningPin;
 use App\Actions\Signing\VerifySigningPin;
 use App\Contracts\AttachmentStore;
+use App\Contracts\BillingGateway;
 use App\Contracts\Clock;
 use App\Contracts\CompanyAccess;
 use App\Contracts\ExchangeRateProvider;
@@ -125,6 +126,8 @@ use App\Policies\Workflow\ApprovalRequestPolicy;
 use App\Policies\Workflow\ApprovalWorkflowPolicy;
 use App\Queries\Practice\PracticeOverview;
 use App\Services\Billing\SysopsUsageMeter;
+use App\Services\Billing\NullBillingGateway;
+use App\Services\Billing\StripeBillingGateway;
 use App\Services\Documents\BrowsershotHtmlToPdf;
 use App\Services\Files\ClamdScanner;
 use App\Services\Files\LocalAttachmentStore;
@@ -172,6 +175,12 @@ class AppServiceProvider extends ServiceProvider
     {
         // Billing webhooks are registered in plan step 4.6; until then Cashier exposes no routes.
         Cashier::ignoreRoutes();
+        // Our own subscriptions table (plan T5): Cashier 16 only publishes its migrations (never runs them) and no
+        // Billable model is used, so there is nothing to ignore; Cashier supplies the Stripe client and nothing else.
+        // Stripe when a secret is configured, otherwise every Stripe action answers billing_not_configured (G2).
+        $this->app->singleton(BillingGateway::class, fn () => (string) config('cashier.secret') !== ''
+            ? new StripeBillingGateway(Cashier::stripe())
+            : new NullBillingGateway);
 
         $this->app->singleton(Clock::class, SystemClock::class);
         $this->app->singleton(UsageMeter::class, SysopsUsageMeter::class);

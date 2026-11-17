@@ -34,3 +34,6 @@ Schedule::command('reports:run-schedules')->hourly()->onOneServer();
 Schedule::command('admin-audit:verify')->dailyAt('03:30')->timezone('UTC')->onOneServer();
 // Tenant lifecycle clocks (plan Task 5, G5/G6): trials and overdue payments that ran out move on, each step dated when due.
 Schedule::command('lifecycle:advance')->dailyAt('00:15')->timezone('UTC')->withoutOverlapping()->onOneServer();
+
+// Offline (invoiced) subscriptions: due cancellations, ended pauses, renewals (plan Task 11).
+Schedule::command('subscriptions:advance')->dailyAt('00:30')->timezone('UTC')->withoutOverlapping()->onOneServer();
