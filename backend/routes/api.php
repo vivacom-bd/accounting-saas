@@ -11,6 +11,7 @@ use App\Http\Controllers\Banking\BankRuleController;
 use App\Http\Controllers\Budgets\BudgetController;
 use App\Http\Controllers\Budgets\BudgetReportController;
 use App\Http\Controllers\Consolidation\ConsolidationGroupController;
+use App\Http\Controllers\Consolidation\ConsolidationRunController;
 use App\Http\Controllers\Documents\DocumentEmailController;
 use App\Http\Controllers\Documents\DocumentPdfController;
 use App\Http\Controllers\Documents\DunningController;
@@ -159,6 +160,20 @@ Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent'])->
         Route::get('members/{member}/mapping', [ConsolidationGroupController::class, 'mapping'])->whereUuid('member')->name('consolidation.members.mapping');
         Route::put('members/{member}/mapping', [ConsolidationGroupController::class, 'map'])->whereUuid('member')->name('consolidation.members.map');
         Route::get('groups/{group}/unmapped', [ConsolidationGroupController::class, 'unmapped'])->whereUuid('group')->name('consolidation.groups.unmapped');
+        Route::put('groups/{group}/rates', [ConsolidationRunController::class, 'setRate'])->whereUuid('group')->name('consolidation.groups.rates');
+        Route::get('groups/{group}/runs', [ConsolidationRunController::class, 'index'])->whereUuid('group')->name('consolidation.runs.index');
+        Route::post('groups/{group}/runs', [ConsolidationRunController::class, 'store'])->whereUuid('group')->name('consolidation.runs.store');
+        Route::get('runs/{run}', [ConsolidationRunController::class, 'show'])->whereUuid('run')->name('consolidation.runs.show');
+        Route::get('runs/{run}/worksheet', [ConsolidationRunController::class, 'worksheet'])->whereUuid('run')->name('consolidation.runs.worksheet');
+        foreach (['approve', 'void', 'reverse'] as $verb) {
+            Route::post("runs/{run}/{$verb}", [ConsolidationRunController::class, $verb])->whereUuid('run')->name("consolidation.runs.{$verb}");
+        }
+        Route::get('groups/{group}/entries', [ConsolidationRunController::class, 'entries'])->whereUuid('group')->name('consolidation.entries.index');
+        Route::post('groups/{group}/entries', [ConsolidationRunController::class, 'storeEntry'])->whereUuid('group')->name('consolidation.entries.store');
+        Route::get('entries/{entry}', [ConsolidationRunController::class, 'showEntry'])->whereUuid('entry')->name('consolidation.entries.show');
+        Route::post('entries/{entry}/approve', [ConsolidationRunController::class, 'approveEntry'])->whereUuid('entry')->name('consolidation.entries.approve');
+        Route::post('entries/{entry}/void', [ConsolidationRunController::class, 'voidEntry'])->whereUuid('entry')->name('consolidation.entries.void');
+        Route::post('entries/{entry}/reverse', [ConsolidationRunController::class, 'reverseEntry'])->whereUuid('entry')->name('consolidation.entries.reverse');
     });
 
     // Signing PIN (ADR-0004): grants are per user and session, so these need the SPA session.

@@ -1616,6 +1616,203 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/consolidation/groups/{group}/rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Sets the average rate for a currency and run period where the default (the mean of the rate in force on each day) does not approximate the transaction rates (D16.4) */
+        put: operations["consolidation.groups.rates"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/groups/{group}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["consolidation.runs.index"];
+        put?: never;
+        /** Computes the period from the members' books and freezes the worksheet; nothing is posted until a second person approves */
+        post: operations["consolidation.runs.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/runs/{run}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["consolidation.runs.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/runs/{run}/worksheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The frozen worksheet: each member in its own currency and translated, every adjustment, the consolidated total */
+        get: operations["consolidation.runs.worksheet"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/runs/{run}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["consolidation.runs.approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/runs/{run}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["consolidation.runs.void"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/runs/{run}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses an approved run by reversing its entries; only the latest approved run of a group */
+        post: operations["consolidation.runs.reverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/groups/{group}/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["consolidation.entries.index"];
+        put?: never;
+        /** A manual group entry, for example unrealised profit in inventory (there is no inventory module to derive it). Posts when a second person approves */
+        post: operations["consolidation.entries.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/entries/{entry}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["consolidation.entries.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/entries/{entry}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["consolidation.entries.approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/entries/{entry}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["consolidation.entries.void"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/consolidation/entries/{entry}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["consolidation.entries.reverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/companies/{company}/contacts": {
         parameters: {
             query?: never;
@@ -6228,6 +6425,14 @@ export interface components {
             };
         };
         /**
+         * App.Http.Requests.Fiscal.ReasonRequest
+         * @description A required free-text explanation: `reason` for a reopen request, `comment` for rejecting one.
+         */
+        "App.Http.Requests.Fiscal.ReasonRequest": {
+            reason?: string | null;
+            comment?: string | null;
+        };
+        /**
          * App.Http.Requests.Imports.MappingRequest
          * @description Sets the mapping of an import: `columns` ({field: file header}), optional `defaults` ({field: constant} for empty cells), and
          *     optionally `options` (replaces the current ones: `number_locale`, `date_format`, and the kind's own, see the upload).
@@ -7287,6 +7492,40 @@ export interface components {
                 [key: string]: boolean;
             };
         };
+        /** ConsolidationEntryLineResource */
+        ConsolidationEntryLineResource: {
+            group_account_id: string;
+            member_id: string | null;
+            debit: number;
+            credit: number;
+            description: string | null;
+        };
+        /** ConsolidationEntryResource */
+        ConsolidationEntryResource: {
+            id: string;
+            group_id: string;
+            run_id: string | null;
+            number: string | null;
+            status: string;
+            kind: string;
+            entry_date: string | null;
+            member_id: string | null;
+            memo: string | null;
+            total: {
+                amount: number;
+                currency: string;
+            };
+            reverses_entry_id: string | null;
+            reversed_by_id: string | null;
+            created_by: string | null;
+            approved_by: string | null;
+            posted_at: string | null;
+            version: number;
+            lines?: components["schemas"]["ConsolidationEntryLineResource"][];
+            can: {
+                [key: string]: boolean;
+            };
+        };
         /** ConsolidationGroupAccountResource */
         ConsolidationGroupAccountResource: {
             id: string;
@@ -7330,6 +7569,80 @@ export interface components {
             acquisition_date: string | null;
             status: string;
             ownership: string[];
+        };
+        /** ConsolidationRateResource */
+        ConsolidationRateResource: {
+            id: string;
+            currency: string;
+            period_from: string | null;
+            period_to: string | null;
+            rate: string;
+            reason: string;
+        };
+        /** ConsolidationRunLineResource */
+        ConsolidationRunLineResource: {
+            /** @description local | translated | adjustment | consolidated */
+            kind: string;
+            member_id: string | null;
+            group_account_id: string;
+            code: string | null;
+            name: string | null;
+            /** @description Where an adjustment came from, such as `entry` (a posted consolidation entry, see `entry_id`). */
+            source: string | null;
+            entry_id: string | null;
+            amount: {
+                amount: number;
+                currency: string;
+            };
+        };
+        /** ConsolidationRunMemberResource */
+        ConsolidationRunMemberResource: {
+            member_id: string;
+            company_id: string;
+            currency: string;
+            window_from: string | null;
+            ledger_version: number;
+            /** @description Presentation-currency units per 1 unit of `currency`; null for a member in the presentation currency. */
+            closing_rate: string | null;
+            average_rate: string | null;
+            /** @description How each rate was found: the closing rate's date; the average's method (`daily_mean` or `override`, with the reason). */
+            rate_detail: string;
+        };
+        /** ConsolidationRunResource */
+        ConsolidationRunResource: {
+            id: string;
+            group_id: string;
+            period_from: string | null;
+            period_to: string | null;
+            currency: string;
+            status: string;
+            stale: boolean;
+            warnings: unknown[];
+            profit: {
+                amount: number;
+                currency: string;
+            };
+            /** @description The period's movement of the translation reserve (other comprehensive income); a credit is negative. */
+            translation_difference: {
+                amount: number;
+                currency: string;
+            };
+            created_by: string | null;
+            approved_by: string | null;
+            approved_at: string | null;
+            reversed_at: string | null;
+            reason: string | null;
+            version: number;
+            can: {
+                [key: string]: boolean;
+            };
+        };
+        /** ConsolidationWorksheetResource */
+        ConsolidationWorksheetResource: {
+            run_id: string;
+            currency: string;
+            members: components["schemas"]["ConsolidationRunMemberResource"][];
+            lines: components["schemas"]["ConsolidationRunLineResource"][];
         };
         /**
          * ContactRequest
@@ -7768,6 +8081,26 @@ export interface components {
             tax_id?: string | null;
             branch?: string | null;
             version?: number | null;
+        };
+        /**
+         * EntryRequest
+         * @description A manual group entry: signed `net` per line (debit positive, credit negative) in the presentation currency.
+         */
+        EntryRequest: {
+            /** Format: date */
+            entry_date: string;
+            /** @enum {string|null} */
+            kind?: "manual" | "unrealised_profit" | null;
+            memo: string;
+            lines: {
+                /** Format: uuid */
+                account_id: string;
+                /** Format: uuid */
+                member_id?: string | null;
+                /** @description Debit positive, credit negative, minor units of the presentation currency. */
+                net: number;
+                description?: string | null;
+            }[];
         };
         /**
          * ExchangeRateRequest
@@ -8832,6 +9165,16 @@ export interface components {
                 [key: string]: boolean;
             };
         };
+        /**
+         * PeriodRangeRequest
+         * @description The period a check or a run covers: results from `from` to `to`, balances at `to`.
+         */
+        PeriodRangeRequest: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+        };
         /** PostingPreviewResource */
         PostingPreviewResource: {
             valid: boolean;
@@ -9211,12 +9554,25 @@ export interface components {
             };
         };
         /**
+         * RateOverrideRequest
+         * @description An average rate for a currency over a period, with the reason the default does not fit.
+         */
+        RateOverrideRequest: {
+            currency: string;
+            /** Format: date */
+            period_from: string;
+            /** Format: date */
+            period_to: string;
+            /** @description Presentation-currency units per 1 unit of `currency`, an exact decimal with at most 8 decimals. */
+            rate: string;
+            reason: string;
+        };
+        /**
          * ReasonRequest
-         * @description A required free-text explanation: `reason` for a reopen request, `comment` for rejecting one.
+         * @description Why a run or entry is reversed or voided.
          */
         ReasonRequest: {
-            reason?: string | null;
-            comment?: string | null;
+            reason: string;
         };
         /**
          * ReceiveFundTransferRequest
@@ -14281,6 +14637,448 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "consolidation.groups.rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The group ID */
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RateOverrideRequest"];
+            };
+        };
+        responses: {
+            /** @description `ConsolidationRateResource` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationRateResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "consolidation.runs.index": {
+        parameters: {
+            query?: {
+                /** @description Opaque, from `meta.next_cursor` or `meta.prev_cursor`. */
+                cursor?: string;
+                /** @description Page size, 1 to 200; default 50. */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description The group ID */
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `ConsolidationRunResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationRunResource"][];
+                        meta: {
+                            next_cursor: string | null;
+                            prev_cursor: string | null;
+                            limit: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "consolidation.runs.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The group ID */
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PeriodRangeRequest"];
+            };
+        };
+        responses: {
+            /** @description `ConsolidationRunResource` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationRunResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "consolidation.runs.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The run ID */
+                run: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ConsolidationRunResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationRunResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "consolidation.runs.worksheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The run ID */
+                run: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ConsolidationWorksheetResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationWorksheetResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "consolidation.runs.approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The run ID */
+                run: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ConsolidationRunResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationRunResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "consolidation.runs.void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The run ID */
+                run: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description `ConsolidationRunResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationRunResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "consolidation.runs.reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The run ID */
+                run: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description `ConsolidationRunResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationRunResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "consolidation.entries.index": {
+        parameters: {
+            query?: {
+                /** @description Opaque, from `meta.next_cursor` or `meta.prev_cursor`. */
+                cursor?: string;
+                /** @description Page size, 1 to 200; default 50. */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description The group ID */
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `ConsolidationEntryResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationEntryResource"][];
+                        meta: {
+                            next_cursor: string | null;
+                            prev_cursor: string | null;
+                            limit: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "consolidation.entries.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The group ID */
+                group: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EntryRequest"];
+            };
+        };
+        responses: {
+            /** @description `ConsolidationEntryResource` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationEntryResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "consolidation.entries.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The entry ID */
+                entry: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ConsolidationEntryResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationEntryResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "consolidation.entries.approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The entry ID */
+                entry: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ConsolidationEntryResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationEntryResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "consolidation.entries.void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The entry ID */
+                entry: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `ConsolidationEntryResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationEntryResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "consolidation.entries.reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The entry ID */
+                entry: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description `ConsolidationEntryResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsolidationEntryResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "contacts.index": {
         parameters: {
             query?: {
@@ -16311,7 +17109,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ReasonRequest"];
+                "application/json": components["schemas"]["App.Http.Requests.Fiscal.ReasonRequest"];
             };
         };
         responses: {
@@ -22703,7 +23501,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ReasonRequest"];
+                "application/json": components["schemas"]["App.Http.Requests.Fiscal.ReasonRequest"];
             };
         };
         responses: {

@@ -53,7 +53,7 @@ final class ConsolidationPolicy
             return false;
         }
 
-        return ! in_array($principal->getAuthIdentifier(), [$subject->getAttribute('created_by'), $subject->getAttribute('submitted_by')], true);
+        return $principal->getAuthIdentifier() !== $subject->getAttribute('created_by');
     }
 
     private function in(Authenticatable $principal, Model $subject, string $permission): bool

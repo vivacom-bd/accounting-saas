@@ -13,6 +13,7 @@ use App\Models\Consolidation\ConsolidationGroup;
 use App\Models\Consolidation\ConsolidationGroupAccount;
 use App\Models\Consolidation\ConsolidationMember;
 use App\Models\Consolidation\ConsolidationOwnership;
+use App\Models\Consolidation\ConsolidationRateOverride;
 use App\Models\Ledger\Account;
 use App\Models\Organisation\Company;
 use App\Support\Actor;
@@ -122,7 +123,7 @@ final class ManageConsolidationGroup
             if ($effectiveOn < $member->acquisition_date?->format('Y-m-d')) {
                 throw DomainRuleViolation::single('ownership_before_acquisition', 'Ownership cannot change before the acquisition date.');
             }
-            $this->guard->assertNoRunAtOrAfter($member->group_id, $effectiveOn, 'Ownership dated within a period already consolidated is fixed; the change belongs to an ownership-change entry after that run.');
+            $this->guard->assertNoRunAfter($member->group_id, $effectiveOn, 'Ownership dated within a period already consolidated is fixed; the change belongs to an ownership-change entry after that run.');
             $row = $this->ownership($actor, $member, $effectiveOn, $percentBp, $note);
             $audit->add('consolidation_ownership.set', $row, after: $row);
 
@@ -192,6 +193,28 @@ final class ManageConsolidationGroup
             }
 
             return $out;
+        });
+    }
+
+    /** The average rate for a currency and run period where the default (the mean of the rate in force on each day) does not approximate the transaction rates (D16.4). It applies to a run of exactly that period. */
+    public function setRateOverride(Actor $actor, string $groupId, string $currency, string $periodFrom, string $periodTo, string $rate, string $reason): ConsolidationRateOverride
+    {
+        return $this->uow->run($actor, function (LockSet $locks, AuditBuffer $audit, Outbox $outbox) use ($actor, $groupId, $currency, $periodFrom, $periodTo, $rate, $reason) {
+            $this->access->require($actor, ConsolidationPermissions::MANAGE, $groupId);
+            $group = $locks->document(ConsolidationGroup::query()->findOrFail($groupId));
+            if ($currency === $group->presentation_currency) {
+                throw DomainRuleViolation::single('rate_override_invalid', 'The presentation currency needs no rate.');
+            }
+            $this->guard->assertNoRunAtOrAfter($groupId, $periodFrom, 'A rate cannot be set for a period already consolidated.');
+            $row = ConsolidationRateOverride::query()->where('group_id', $groupId)->where('currency', $currency)->where('period_from', $periodFrom)->where('period_to', $periodTo)->first() ?? new ConsolidationRateOverride;
+            $before = $row->exists ? $row->attributesToArray() : null;
+            $row->forceFill([
+                'id' => $row->exists ? $row->id : $this->ids->next(), 'tenant_id' => $actor->tenantId, 'group_id' => $groupId, 'currency' => $currency,
+                'period_from' => $periodFrom, 'period_to' => $periodTo, 'rate' => $rate, 'reason' => $reason, 'created_by' => $actor->id,
+            ])->save();
+            $audit->add('consolidation_rate.set', $row, before: $before, after: $row);
+
+            return $row;
         });
     }
 

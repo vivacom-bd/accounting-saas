@@ -9022,6 +9022,897 @@
                 }
             }
         },
+        "/v1/consolidation/groups/{group}/rates": {
+            "put": {
+                "operationId": "consolidation.groups.rates",
+                "summary": "Sets the average rate for a currency and run period where the default (the mean of the rate in force on each day) does not approximate the transaction rates (D16.4)",
+                "tags": [
+                    "ConsolidationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "description": "The group ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RateOverrideRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`ConsolidationRateResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ConsolidationRateResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/groups/{group}/runs": {
+            "get": {
+                "operationId": "consolidation.runs.index",
+                "tags": [
+                    "ConsolidationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "description": "The group ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Opaque, from `meta.next_cursor` or `meta.prev_cursor`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Page size, 1 to 200; default 50.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `ConsolidationRunResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ConsolidationRunResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "limit": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "next_cursor",
+                                                "prev_cursor",
+                                                "limit"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "consolidation.runs.store",
+                "summary": "Computes the period from the members' books and freezes the worksheet; nothing is posted until a second person approves",
+                "tags": [
+                    "ConsolidationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "description": "The group ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PeriodRangeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`ConsolidationRunResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ConsolidationRunResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/runs/{run}": {
+            "get": {
+                "operationId": "consolidation.runs.show",
+                "tags": [
+                    "ConsolidationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "run",
+                        "in": "path",
+                        "required": true,
+                        "description": "The run ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationRunResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ConsolidationRunResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/runs/{run}/worksheet": {
+            "get": {
+                "operationId": "consolidation.runs.worksheet",
+                "summary": "The frozen worksheet: each member in its own currency and translated, every adjustment, the consolidated total",
+                "tags": [
+                    "ConsolidationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "run",
+                        "in": "path",
+                        "required": true,
+                        "description": "The run ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationWorksheetResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ConsolidationWorksheetResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/runs/{run}/approve": {
+            "post": {
+                "operationId": "consolidation.runs.approve",
+                "tags": [
+                    "ConsolidationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "run",
+                        "in": "path",
+                        "required": true,
+                        "description": "The run ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationRunResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ConsolidationRunResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/runs/{run}/void": {
+            "post": {
+                "operationId": "consolidation.runs.void",
+                "tags": [
+                    "ConsolidationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "run",
+                        "in": "path",
+                        "required": true,
+                        "description": "The run ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReasonRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationRunResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ConsolidationRunResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/runs/{run}/reverse": {
+            "post": {
+                "operationId": "consolidation.runs.reverse",
+                "summary": "Reverses an approved run by reversing its entries; only the latest approved run of a group",
+                "tags": [
+                    "ConsolidationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "run",
+                        "in": "path",
+                        "required": true,
+                        "description": "The run ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReasonRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationRunResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ConsolidationRunResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/groups/{group}/entries": {
+            "get": {
+                "operationId": "consolidation.entries.index",
+                "tags": [
+                    "ConsolidationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "description": "The group ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Opaque, from `meta.next_cursor` or `meta.prev_cursor`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Page size, 1 to 200; default 50.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `ConsolidationEntryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ConsolidationEntryResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "limit": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "next_cursor",
+                                                "prev_cursor",
+                                                "limit"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "consolidation.entries.store",
+                "summary": "A manual group entry, for example unrealised profit in inventory (there is no inventory module to derive it). Posts when a second person approves",
+                "tags": [
+                    "ConsolidationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "description": "The group ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EntryRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`ConsolidationEntryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/ConsolidationEntryResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "lines"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/entries/{entry}": {
+            "get": {
+                "operationId": "consolidation.entries.show",
+                "tags": [
+                    "ConsolidationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "entry",
+                        "in": "path",
+                        "required": true,
+                        "description": "The entry ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationEntryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/ConsolidationEntryResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "lines"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/entries/{entry}/approve": {
+            "post": {
+                "operationId": "consolidation.entries.approve",
+                "tags": [
+                    "ConsolidationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "entry",
+                        "in": "path",
+                        "required": true,
+                        "description": "The entry ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationEntryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/ConsolidationEntryResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "lines"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/entries/{entry}/void": {
+            "post": {
+                "operationId": "consolidation.entries.void",
+                "tags": [
+                    "ConsolidationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "entry",
+                        "in": "path",
+                        "required": true,
+                        "description": "The entry ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationEntryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/ConsolidationEntryResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "lines"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/consolidation/entries/{entry}/reverse": {
+            "post": {
+                "operationId": "consolidation.entries.reverse",
+                "tags": [
+                    "ConsolidationRun"
+                ],
+                "parameters": [
+                    {
+                        "name": "entry",
+                        "in": "path",
+                        "required": true,
+                        "description": "The entry ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReasonRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ConsolidationEntryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/ConsolidationEntryResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "lines"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/companies/{company}/contacts": {
             "get": {
                 "operationId": "contacts.index",
@@ -13822,7 +14713,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/ReasonRequest"
+                                "$ref": "#/components/schemas/App.Http.Requests.Fiscal.ReasonRequest"
                             }
                         }
                     }
@@ -30027,7 +30918,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/ReasonRequest"
+                                "$ref": "#/components/schemas/App.Http.Requests.Fiscal.ReasonRequest"
                             }
                         }
                     }
@@ -42068,6 +42959,27 @@
                 ],
                 "title": "ApiClientResource"
             },
+            "App.Http.Requests.Fiscal.ReasonRequest": {
+                "type": "object",
+                "description": "A required free-text explanation: `reason` for a reopen request, `comment` for rejecting one.",
+                "properties": {
+                    "reason": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    },
+                    "comment": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    }
+                },
+                "title": "App.Http.Requests.Fiscal.ReasonRequest"
+            },
             "App.Http.Requests.Imports.MappingRequest": {
                 "type": "object",
                 "description": "Sets the mapping of an import: `columns` ({field: file header}), optional `defaults` ({field: constant} for empty cells), and\noptionally `options` (replaces the current ones: `number_locale`, `date_format`, and the kind's own, see the upload).\nCarries the `version` the client last read. Setting the mapping clears any earlier preview.",
@@ -46434,6 +47346,167 @@
                 ],
                 "title": "CompanySettingsResource"
             },
+            "ConsolidationEntryLineResource": {
+                "type": "object",
+                "properties": {
+                    "group_account_id": {
+                        "type": "string"
+                    },
+                    "member_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "debit": {
+                        "type": "integer"
+                    },
+                    "credit": {
+                        "type": "integer"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "group_account_id",
+                    "member_id",
+                    "debit",
+                    "credit",
+                    "description"
+                ],
+                "title": "ConsolidationEntryLineResource"
+            },
+            "ConsolidationEntryResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "group_id": {
+                        "type": "string"
+                    },
+                    "run_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "number": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "type": "string"
+                    },
+                    "entry_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "member_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "memo": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "total": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
+                    "reverses_entry_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "reversed_by_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "approved_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "posted_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "version": {
+                        "type": "integer"
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ConsolidationEntryLineResource"
+                        }
+                    },
+                    "can": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "group_id",
+                    "run_id",
+                    "number",
+                    "status",
+                    "kind",
+                    "entry_date",
+                    "member_id",
+                    "memo",
+                    "total",
+                    "reverses_entry_id",
+                    "reversed_by_id",
+                    "created_by",
+                    "approved_by",
+                    "posted_at",
+                    "version",
+                    "can"
+                ],
+                "title": "ConsolidationEntryResource"
+            },
             "ConsolidationGroupAccountResource": {
                 "type": "object",
                 "properties": {
@@ -46599,6 +47672,320 @@
                     "ownership"
                 ],
                 "title": "ConsolidationMemberResource"
+            },
+            "ConsolidationRateResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "period_from": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "period_to": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "rate": {
+                        "type": "string"
+                    },
+                    "reason": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "currency",
+                    "period_from",
+                    "period_to",
+                    "rate",
+                    "reason"
+                ],
+                "title": "ConsolidationRateResource"
+            },
+            "ConsolidationRunLineResource": {
+                "type": "object",
+                "properties": {
+                    "kind": {
+                        "type": "string",
+                        "description": "local | translated | adjustment | consolidated"
+                    },
+                    "member_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "group_account_id": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "source": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Where an adjustment came from, such as `entry` (a posted consolidation entry, see `entry_id`)."
+                    },
+                    "entry_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "amount": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    }
+                },
+                "required": [
+                    "kind",
+                    "member_id",
+                    "group_account_id",
+                    "code",
+                    "name",
+                    "source",
+                    "entry_id",
+                    "amount"
+                ],
+                "title": "ConsolidationRunLineResource"
+            },
+            "ConsolidationRunMemberResource": {
+                "type": "object",
+                "properties": {
+                    "member_id": {
+                        "type": "string"
+                    },
+                    "company_id": {
+                        "type": "string"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "window_from": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "ledger_version": {
+                        "type": "integer"
+                    },
+                    "closing_rate": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Presentation-currency units per 1 unit of `currency`; null for a member in the presentation currency."
+                    },
+                    "average_rate": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "rate_detail": {
+                        "type": "string",
+                        "description": "How each rate was found: the closing rate's date; the average's method (`daily_mean` or `override`, with the reason)."
+                    }
+                },
+                "required": [
+                    "member_id",
+                    "company_id",
+                    "currency",
+                    "window_from",
+                    "ledger_version",
+                    "closing_rate",
+                    "average_rate",
+                    "rate_detail"
+                ],
+                "title": "ConsolidationRunMemberResource"
+            },
+            "ConsolidationRunResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "group_id": {
+                        "type": "string"
+                    },
+                    "period_from": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "period_to": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "stale": {
+                        "type": "boolean"
+                    },
+                    "warnings": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "profit": {
+                        "type": "object",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
+                    "translation_difference": {
+                        "type": "object",
+                        "description": "The period's movement of the translation reserve (other comprehensive income); a credit is negative.",
+                        "properties": {
+                            "amount": {
+                                "type": "integer"
+                            },
+                            "currency": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "amount",
+                            "currency"
+                        ]
+                    },
+                    "created_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "approved_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "approved_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "reversed_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "reason": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "version": {
+                        "type": "integer"
+                    },
+                    "can": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "group_id",
+                    "period_from",
+                    "period_to",
+                    "currency",
+                    "status",
+                    "stale",
+                    "warnings",
+                    "profit",
+                    "translation_difference",
+                    "created_by",
+                    "approved_by",
+                    "approved_at",
+                    "reversed_at",
+                    "reason",
+                    "version",
+                    "can"
+                ],
+                "title": "ConsolidationRunResource"
+            },
+            "ConsolidationWorksheetResource": {
+                "type": "object",
+                "properties": {
+                    "run_id": {
+                        "type": "string"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "members": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ConsolidationRunMemberResource"
+                        }
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ConsolidationRunLineResource"
+                        }
+                    }
+                },
+                "required": [
+                    "run_id",
+                    "currency",
+                    "members",
+                    "lines"
+                ],
+                "title": "ConsolidationWorksheetResource"
             },
             "ContactRequest": {
                 "type": "object",
@@ -48223,6 +49610,73 @@
                     "enabled"
                 ],
                 "title": "EInvoicingRequest"
+            },
+            "EntryRequest": {
+                "type": "object",
+                "description": "A manual group entry: signed `net` per line (debit positive, credit negative) in the presentation currency.",
+                "properties": {
+                    "entry_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "kind": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "manual",
+                            "unrealised_profit",
+                            null
+                        ]
+                    },
+                    "memo": {
+                        "type": "string",
+                        "maxLength": 500
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "account_id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                "member_id": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "format": "uuid"
+                                },
+                                "net": {
+                                    "type": "integer",
+                                    "description": "Debit positive, credit negative, minor units of the presentation currency."
+                                },
+                                "description": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                }
+                            },
+                            "required": [
+                                "account_id",
+                                "net"
+                            ]
+                        },
+                        "minItems": 2,
+                        "maxItems": 200
+                    }
+                },
+                "required": [
+                    "entry_date",
+                    "memo",
+                    "lines"
+                ],
+                "title": "EntryRequest"
             },
             "ExchangeRateRequest": {
                 "type": "object",
@@ -52476,6 +53930,25 @@
                 ],
                 "title": "PaymentRunResource"
             },
+            "PeriodRangeRequest": {
+                "type": "object",
+                "description": "The period a check or a run covers: results from `from` to `to`, balances at `to`.",
+                "properties": {
+                    "from": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "to": {
+                        "type": "string",
+                        "format": "date"
+                    }
+                },
+                "required": [
+                    "from",
+                    "to"
+                ],
+                "title": "PeriodRangeRequest"
+            },
             "PostingPreviewResource": {
                 "type": "object",
                 "properties": {
@@ -54045,25 +55518,54 @@
                 ],
                 "title": "PurchaseRequisitionResource"
             },
-            "ReasonRequest": {
+            "RateOverrideRequest": {
                 "type": "object",
-                "description": "A required free-text explanation: `reason` for a reopen request, `comment` for rejecting one.",
+                "description": "An average rate for a currency over a period, with the reason the default does not fit.",
                 "properties": {
-                    "reason": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "maxLength": 2000
+                    "currency": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 3
                     },
-                    "comment": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "maxLength": 2000
+                    "period_from": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "period_to": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "rate": {
+                        "type": "string",
+                        "description": "Presentation-currency units per 1 unit of `currency`, an exact decimal with at most 8 decimals.",
+                        "pattern": "^\\d{1,10}(\\.\\d{1,8})?$"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "maxLength": 255
                     }
                 },
+                "required": [
+                    "currency",
+                    "period_from",
+                    "period_to",
+                    "rate",
+                    "reason"
+                ],
+                "title": "RateOverrideRequest"
+            },
+            "ReasonRequest": {
+                "type": "object",
+                "description": "Why a run or entry is reversed or voided.",
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "reason"
+                ],
                 "title": "ReasonRequest"
             },
             "ReceiveFundTransferRequest": {

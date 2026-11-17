@@ -34,6 +34,7 @@ final class LockSet
         'journals' => 10, 'payment_runs' => 15, 'settlements' => 20, 'write_off_recoveries' => 24, 'fund_transfers' => 25, 'write_offs' => 26, 'invoices' => 30,
         'purchase_requisitions' => 32, 'purchase_order_revisions' => 33, 'purchase_orders' => 34, 'goods_receipts' => 36,
         'bank_accounts' => 40, 'bank_reconciliations' => 42, 'bank_statement_lines' => 45, 'fx_revaluations' => 50, 'provision_runs' => 55, 'depreciation_runs' => 60, 'asset_transactions' => 62, 'asset_categories' => 68, 'fixed_assets' => 70,
+        'consolidation_groups' => 78, 'consolidation_runs' => 80, 'consolidation_entries' => 82,
     ];
 
     private int $level = 0;
@@ -134,6 +135,22 @@ final class LockSet
         $this->enter(self::SEQUENCES, $key);
 
         return $this->sequences->next($this->db, $this->tenantId, $companyId, $key, $prefix);
+    }
+
+    /**
+     * Level 3: the next gapless number of a group's consolidation ledger for a calendar year (13 §23 D16.3). The row is
+     * created on first use; one UPDATE … RETURNING takes the lock, so a rollback returns the number.
+     */
+    public function consolidationNumber(string $groupId, int $year): string
+    {
+        $this->enter(self::SEQUENCES, "consolidation:{$groupId}:{$year}");
+        $this->db->statement(
+            'INSERT INTO consolidation_sequences (group_id, tenant_id, year, next_value, created_at, updated_at) VALUES (?, ?, ?, 1, now(), now()) ON CONFLICT (group_id, year) DO NOTHING',
+            [$groupId, $this->tenantId, $year],
+        );
+        $row = $this->db->selectOne('UPDATE consolidation_sequences SET next_value = next_value + 1, updated_at = now() WHERE group_id = ? AND year = ? RETURNING next_value - 1 AS value', [$groupId, $year]);
+
+        return sprintf('CE-%d-%05d', $year, (int) ($row->value ?? 1));
     }
 
     /**

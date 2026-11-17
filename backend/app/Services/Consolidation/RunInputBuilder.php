@@ -1,0 +1,314 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Consolidation;
+
+use App\Domain\Consolidation\GroupRoles;
+use App\Domain\Consolidation\MemberInput;
+use App\Domain\Consolidation\Rounding;
+use App\Domain\Consolidation\RunInput;
+use App\Domain\Shared\DomainRuleViolation;
+use App\Domain\Shared\Violation;
+use App\Models\Consolidation\ConsolidationAccountMap;
+use App\Models\Consolidation\ConsolidationEntryLine;
+use App\Models\Consolidation\ConsolidationGroup;
+use App\Models\Consolidation\ConsolidationGroupAccount;
+use App\Models\Consolidation\ConsolidationMember;
+use App\Models\Consolidation\ConsolidationRateOverride;
+use App\Models\Consolidation\ConsolidationRun;
+use App\Models\Consolidation\ConsolidationRunMember;
+use App\Models\Fiscal\FiscalPeriod;
+use App\Models\Platform\Currency;
+use App\Queries\Consolidation\EquityMovements;
+use App\Queries\Consolidation\PeriodAverageRate;
+use App\Queries\Consolidation\UnmappedBalances;
+use App\Queries\Fx\FindExchangeRate;
+use App\Queries\Reports\LedgerBalances;
+use App\Support\Reports\Dates;
+use App\Support\Reports\LedgerVersion;
+use App\Support\Tenancy\TenantContext;
+
+/**
+ * Reads everything a run needs from the members' books and the consolidation ledger, read-only (D16.3). One member at a
+ * time on the report connection under the tenant context; nothing is written to any company. Rates come from the parent
+ * company's rate table, the group's rate source.
+ *
+ * Blocks, with the full list, on an unmapped account with a balance and on any missing rate (D16.2, D16.4). Refuses a gap
+ * or an overlap with the approved runs, and a subsidiary acquired in a period already consolidated. Warns, without
+ * refusing, for a member period that is not closed and for a closing rate struck before the run's end.
+ *
+ * Runs follow each other: a run starts the day after the previous approved run ended (the first run starts where the user
+ * says). A subsidiary acquired inside a run enters it the day after acquisition (D16.6). A foreign subsidiary starts from its
+ * equity at the acquisition date and rate; later runs start from the closing position the previous run stored. A foreign
+ * subsidiary acquired before the group's first run has no such history, so that first run must start the day after its
+ * acquisition.
+ */
+final class RunInputBuilder
+{
+    public function __construct(
+        private readonly LedgerBalances $balances,
+        private readonly FindExchangeRate $rates,
+        private readonly PeriodAverageRate $averages,
+        private readonly EquityMovements $equityMovements,
+        private readonly LedgerVersion $versions,
+        private readonly UnmappedBalances $unmapped,
+        private readonly TenantContext $tenant,
+    ) {}
+
+    public function prepare(string $groupId, string $from, string $to): PreparedRun
+    {
+        $group = ConsolidationGroup::query()->findOrFail($groupId);
+        $tenantId = $this->tenant->require();
+        $pres = $group->presentation_currency;
+        $rateSource = $group->parent_company_id;
+
+        $prior = ConsolidationRun::query()->where('group_id', $groupId)->where('status', 'approved')->orderByDesc('period_to')->first();
+        if ($prior !== null) {
+            $priorEnd = $prior->period_to->format('Y-m-d');
+            if ($priorEnd >= $from) {
+                throw DomainRuleViolation::single('period_already_consolidated', 'The period overlaps a run that is already approved; reverse that run first.');
+            }
+            if (Dates::after($priorEnd) !== $from) {
+                throw DomainRuleViolation::single('consolidation_gap', 'Runs follow each other: the next period starts on '.Dates::after($priorEnd).'.');
+            }
+        }
+
+        $scales = Currency::query()->pluck('minor_unit', 'code')->map(fn ($v): int => (int) $v)->all();
+        $groupScale = $scales[$pres] ?? 2;
+        $defs = [];
+        foreach (ConsolidationGroupAccount::query()->where('group_id', $groupId)->get() as $a) {
+            $defs[$a->id] = ['type' => $a->account_type, 'role' => $a->role];
+        }
+        $reAccount = null;
+        foreach ($defs as $id => $d) {
+            if ($d['role'] === GroupRoles::RETAINED_EARNINGS) {
+                $reAccount = (string) $id;
+            }
+        }
+
+        $blockers = [];
+        $missingRates = [];
+        $members = [];
+        $meta = [];
+        $warnings = [];
+        foreach (ConsolidationMember::query()->where('group_id', $groupId)->with('company')->orderByDesc('role')->orderBy('id')->get() as $member) {
+            $acquired = $member->acquisition_date?->format('Y-m-d');
+            if ($member->status === 'disposed' || ($acquired !== null && $acquired >= $to)) {
+                $warnings[] = ['code' => 'member_skipped', 'member_id' => $member->id, 'message' => 'The member is not part of the group in this period.'];
+
+                continue;
+            }
+            $company = $member->company ?? throw DomainRuleViolation::single('not_found', 'A member company does not exist.');
+            $entered = $prior !== null && ConsolidationRunMember::query()->where('member_id', $member->id)->where('run_id', $prior->id)->exists();
+            $isNew = ! $member->isParent() && ! $entered;
+            if ($isNew && $prior !== null && $acquired !== null && $acquired < $prior->period_to->format('Y-m-d')) {
+                throw DomainRuleViolation::single('acquisition_in_consolidated_period', "Company {$company->name} was acquired in a period that is already consolidated.");
+            }
+            $windowFrom = $isNew && $acquired !== null && $acquired >= $from ? Dates::after($acquired) : $from;
+
+            $currency = $company->base_currency;
+            $scale = $scales[$currency] ?? 2;
+            $foreign = $currency !== $pres;
+            $closing = null;
+            $average = null;
+            $detail = [];
+            if ($foreign) {
+                $missing = fn (string $day): Violation => new Violation('fx_rate_missing', "No {$currency}/{$pres} rate on or before {$day}.");
+                $quote = $this->rates->find($rateSource, $currency, $pres, $to);
+                if ($quote === null) {
+                    $missingRates["{$currency}@{$to}"] = $missing($to);
+                } else {
+                    $closing = $quote->rate;
+                    $detail['closing'] = ['rate' => $quote->rate, 'date' => $quote->date];
+                    if ($quote->date !== $to) {
+                        $warnings[] = ['code' => 'closing_rate_dated_earlier', 'member_id' => $member->id, 'message' => "The closing {$currency}/{$pres} rate is the one struck on {$quote->date}, before {$to}."];
+                    }
+                }
+                $override = ConsolidationRateOverride::query()->where('group_id', $groupId)->where('currency', $currency)
+                    ->where('period_from', $from)->where('period_to', $to)->first();
+                if ($override !== null) {
+                    $average = $override->rate;
+                    $detail['average'] = ['rate' => $override->rate, 'method' => 'override', 'reason' => $override->reason];
+                } else {
+                    $avg = ($this->averages)($rateSource, $currency, $pres, $windowFrom, $to);
+                    if ($avg === null) {
+                        $missingRates["{$currency}@{$windowFrom}"] = $missing($windowFrom);
+                    } else {
+                        $average = $avg['rate'];
+                        $detail['average'] = ['rate' => $avg['rate'], 'method' => 'daily_mean', 'segments' => $avg['segments']];
+                    }
+                }
+            }
+
+            $maps = ConsolidationAccountMap::query()->where('member_id', $member->id)->pluck('group_account_id', 'account_id')->all();
+            [$bs, $pl] = $this->figures($company->id, $maps, $defs, $reAccount, $windowFrom, $to);
+
+            // Equity movements of the window, each at the rate of its own day (historical, D16.4).
+            $equityAccounts = array_map('strval', array_keys(array_filter($maps, fn (string $g): bool => ($defs[$g]['type'] ?? '') === 'equity')));
+            $moves = [];
+            foreach (($this->equityMovements)($company->id, $equityAccounts, $windowFrom, $to) as $mv) {
+                $rate = null;
+                if ($foreign) {
+                    $q = $this->rates->find($rateSource, $currency, $pres, $mv['date']);
+                    if ($q === null) {
+                        $missingRates["{$currency}@{$mv['date']}"] = new Violation('fx_rate_missing', "No {$currency}/{$pres} rate on or before {$mv['date']}.");
+                    }
+                    $rate = $q?->rate;
+                }
+                $moves[] = ['account_id' => $maps[$mv['account_id']], 'date' => $mv['date'], 'net' => $mv['net'], 'rate' => $rate];
+            }
+
+            $opening = null;
+            if ($foreign) {
+                if ($isNew) {
+                    if ($acquired === null || $acquired < Dates::before($from)) {
+                        $blockers[] = new Violation('consolidation_opening_missing', "Company {$company->name} keeps its books in {$currency} and was acquired on {$acquired}, before this first run: its equity has no historical rates. Start the first run on ".($acquired === null ? 'its acquisition' : Dates::after($acquired)).'.');
+                    } else {
+                        $opening = $this->baseline($group, $member->id, $company->id, $maps, $defs, $reAccount, $acquired, $currency, $scale, $groupScale, $missingRates, $blockers);
+                    }
+                } else {
+                    $state = ConsolidationRunMember::query()->where('member_id', $member->id)->where('run_id', $prior?->id)->first()?->state;
+                    if (! is_array($state) || ! isset($state['translated'], $state['local'])) {
+                        throw DomainRuleViolation::single('consolidation_opening_missing', "Company {$company->name} has no closing position from the previous run.");
+                    }
+                    $opening = ['local' => $this->ints($state['local']), 'translated' => $this->ints($state['translated']), 'tr' => (int) ($state['tr'] ?? 0)];
+                }
+            }
+
+            $meta[$member->id] = [
+                'company_id' => $company->id, 'currency' => $currency, 'window_from' => $windowFrom,
+                'ledger_version' => $this->versions->current($tenantId, $company->id),
+                'closing_rate' => $closing, 'average_rate' => $average, 'rate_detail' => $detail,
+            ];
+            $members[] = new MemberInput($member->id, $member->isParent(), $currency, $scale, $closing, $average, $bs, $pl, $moves, $opening);
+
+            foreach (FiscalPeriod::query()->where('company_id', $company->id)->where('kind', 'regular')
+                ->where('ends_on', '>=', $windowFrom)->where('starts_on', '<=', $to)->where('status', '<>', 'closed')->orderBy('starts_on')->get() as $p) {
+                $warnings[] = ['code' => 'period_not_closed', 'member_id' => $member->id, 'company_id' => $company->id, 'period' => $p->name, 'status' => $p->status->value, 'message' => "{$company->name}: {$p->name} is {$p->status->value}, not closed."];
+            }
+        }
+
+        foreach (($this->unmapped)($groupId, $from, $to) as $u) {
+            if (isset($meta[$u->memberId])) {
+                $blockers[] = new Violation('unmapped_account', "Account {$u->code} {$u->name} of company {$u->companyId} has a balance and no group account.");
+            }
+        }
+        $blockers = [...$blockers, ...array_values($missingRates)];
+        if ($blockers !== []) {
+            throw new DomainRuleViolation('consolidation_blocked', 'The run cannot be computed: '.count($blockers).' problem(s) to fix first.', $blockers);
+        }
+
+        $lines = [];
+        $entryLines = ConsolidationEntryLine::query()->join('consolidation_entries as e', 'e.id', '=', 'consolidation_entry_lines.entry_id')
+            ->where('e.group_id', $groupId)->whereIn('e.status', ['posted', 'reversed'])->where('e.entry_date', '<=', $to)
+            ->orderBy('e.entry_date')->orderBy('e.number')->orderBy('consolidation_entry_lines.line_no')
+            ->get(['consolidation_entry_lines.*', 'e.entry_date as e_date', 'e.id as e_id']);
+        foreach ($entryLines as $l) {
+            $lines[] = [
+                'entry_id' => (string) $l->getAttribute('e_id'), 'date' => substr((string) $l->getAttribute('e_date'), 0, 10), 'member_id' => $l->member_id,
+                'account_id' => $l->group_account_id, 'net' => $l->debit - $l->credit,
+            ];
+        }
+
+        return new PreparedRun(new RunInput($pres, $groupScale, $from, $to, $defs, $members, $lines), $meta, $warnings);
+    }
+
+    /**
+     * Balance sheet balances at $to and profit and loss movement of the window, by group account (the member's own figures
+     * in its own currency), closing journals left out. The accounts mapped to retained earnings are not rows: the member's
+     * retained earnings is the balancing figure (see ConsolidationCalculator).
+     *
+     * @param  array<string, string>  $maps  member account id → group account id
+     * @param  array<string, array{type: string, role: string|null}>  $defs
+     * @return array{0: array<string, int>, 1: array<string, int>}
+     */
+    private function figures(string $companyId, array $maps, array $defs, ?string $reAccount, ?string $windowFrom, string $to): array
+    {
+        $net = [];
+        $total = 0;
+        foreach ($this->balances->totals($companyId, null, $to, true) as $row) {
+            $net[$row->accountId] = ($net[$row->accountId] ?? 0) + $row->debit - $row->credit;
+            $total += $row->debit - $row->credit;
+        }
+        if ($total !== 0) {
+            throw DomainRuleViolation::single('trial_balance_unbalanced', "Company {$companyId} has an unbalanced trial balance at {$to}; it cannot be consolidated.");
+        }
+        $movement = [];
+        if ($windowFrom !== null) {
+            foreach ($this->balances->totals($companyId, $windowFrom, $to, true) as $row) {
+                $movement[$row->accountId] = ($movement[$row->accountId] ?? 0) + $row->debit - $row->credit;
+            }
+        }
+        $bs = [];
+        $pl = [];
+        foreach ($maps as $accountId => $groupId) {
+            $def = $defs[$groupId] ?? null;
+            if ($def === null) {
+                continue;
+            }
+            if (GroupRoles::isProfitAndLoss($def['type'])) {
+                $pl[$groupId] = ($pl[$groupId] ?? 0) + ($movement[$accountId] ?? 0);
+            } elseif ($groupId !== $reAccount) {
+                $bs[$groupId] = ($bs[$groupId] ?? 0) + ($net[$accountId] ?? 0);
+            }
+        }
+
+        return [array_filter($bs, fn (int $v): bool => $v !== 0), array_filter($pl, fn (int $v): bool => $v !== 0)];
+    }
+
+    /**
+     * A foreign subsidiary's equity at the close of its acquisition day, local and at that day's rate: its historical
+     * starting point (D16.4). Retained earnings at acquisition is the balancing figure, pre-acquisition results included.
+     *
+     * @param  array<string, string>  $maps
+     * @param  array<string, array{type: string, role: string|null}>  $defs
+     * @param  array<string, Violation>  $missingRates
+     * @param  list<Violation>  $blockers
+     * @return array{local: array<string, int>, translated: array<string, int>, tr: int}|null
+     */
+    private function baseline(ConsolidationGroup $group, string $memberId, string $companyId, array $maps, array $defs, ?string $reAccount, string $date, string $currency, int $scale, int $groupScale, array &$missingRates, array &$blockers): ?array
+    {
+        $quote = $this->rates->find($group->parent_company_id, $currency, $group->presentation_currency, $date);
+        if ($quote === null) {
+            $missingRates["{$currency}@{$date}"] = new Violation('fx_rate_missing', "No {$currency}/{$group->presentation_currency} rate on or before {$date}.");
+
+            return null;
+        }
+        foreach (($this->unmapped)($group->id, null, $date) as $u) {
+            if ($u->memberId === $memberId) {
+                $blockers[] = new Violation('unmapped_account', "Account {$u->code} {$u->name} of company {$u->companyId} had a balance at acquisition and has no group account.");
+            }
+        }
+        [$bs] = $this->figures($companyId, $maps, $defs, $reAccount, null, $date);
+        $local = [];
+        $translated = [];
+        if ($reAccount !== null) {
+            $local[$reAccount] = -array_sum($bs);
+        }
+        foreach ($bs as $acc => $v) {
+            if (($defs[$acc]['type'] ?? '') === 'equity') {
+                $local[$acc] = $v;
+            }
+        }
+        foreach ($local as $acc => $v) {
+            $translated[$acc] = Rounding::translate($v, $quote->rate, $scale, $groupScale);
+        }
+
+        return ['local' => $local, 'translated' => $translated, 'tr' => 0];
+    }
+
+    /**
+     * @param  array<mixed>  $rows
+     * @return array<string, int>
+     */
+    private function ints(array $rows): array
+    {
+        $out = [];
+        foreach ($rows as $k => $v) {
+            $out[(string) $k] = is_numeric($v) ? (int) $v : 0;
+        }
+
+        return $out;
+    }
+}

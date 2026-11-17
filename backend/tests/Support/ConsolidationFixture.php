@@ -20,6 +20,7 @@ use App\Models\Consolidation\ConsolidationGroupAccount;
 use App\Models\Consolidation\ConsolidationMember;
 use App\Models\Ledger\Account;
 use App\Support\Actor;
+use App\Support\ActorType;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -164,6 +165,28 @@ final class ConsolidationFixture
             $pairs[] = ['account_id' => $accountId, 'group_account_id' => $this->groupAccounts[$code === '3100' ? 'G3000' : $code]];
         }
         app(ManageConsolidationGroup::class)->mapAccounts($this->actor(), $this->members[$key]->id, $pairs);
+    }
+
+    /** A second person in the organisation (default: an admin), for maker-checker. */
+    public function person(string $name = 'checker', string $orgRole = 'admin'): Actor
+    {
+        $id = app(IdGenerator::class)->next();
+        DB::table('users')->insert(['id' => $id, 'name' => $name, 'email' => "{$name}@{$this->f->tenantId}.test", 'password' => 'x']);
+        DB::table('tenant_users')->insert(['tenant_id' => $this->f->tenantId, 'user_id' => $id, 'role' => $orgRole]);
+
+        return new Actor(ActorType::User, $id, $this->f->tenantId, null, requestId: 'test');
+    }
+
+    /** Hash of everything a company's books hold, to prove consolidation changed none of it. */
+    public function booksFingerprint(): string
+    {
+        $parts = [];
+        foreach (['journals', 'journal_lines', 'account_period_balances', 'sequences', 'fiscal_periods', 'fiscal_years', 'accounts'] as $table) {
+            $rows = array_map(fn ($r) => $r->t, DB::select("SELECT t::text AS t FROM {$table} t WHERE tenant_id = ? ORDER BY 1", [$this->f->tenantId]));
+            $parts[$table] = $rows;
+        }
+
+        return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
     }
 
     public function account(string $key, string $code): Account
