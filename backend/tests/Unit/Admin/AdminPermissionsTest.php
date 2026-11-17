@@ -27,6 +27,7 @@ const ADMIN_ABILITY_ROLES = [
     'compliance.manage' => ['owner', 'support'],
     'growth.manage' => ['owner', 'sales'],
     'audit.view' => ['owner', 'readonly', 'engineer'],
+    'announcements.manage' => ['owner', 'sales', 'support', 'engineer'],
 ];
 
 dataset('ability_role', function (): Generator {

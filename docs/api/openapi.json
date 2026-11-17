@@ -787,6 +787,72 @@
                 }
             }
         },
+        "/v1/announcements": {
+            "get": {
+                "operationId": "announcements.index",
+                "summary": "Active announcements for this organisation",
+                "tags": [
+                    "Announcement"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "title": {
+                                                        "type": "string"
+                                                    },
+                                                    "body": {
+                                                        "type": "string"
+                                                    },
+                                                    "kind": {
+                                                        "type": "string"
+                                                    },
+                                                    "starts_at": {
+                                                        "type": "string"
+                                                    },
+                                                    "ends_at": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "title",
+                                                    "body",
+                                                    "kind",
+                                                    "starts_at",
+                                                    "ends_at"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/api-clients": {
             "get": {
                 "operationId": "api-clients.index",

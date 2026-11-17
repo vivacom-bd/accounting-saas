@@ -37,7 +37,8 @@ return [
 
         'database' => [
             'driver' => 'database',
-            'connection' => env('DB_QUEUE_CONNECTION'),
+            // Never the request's default connection: admin requests default to the platform role, which has no grant on `jobs`.
+            'connection' => env('DB_QUEUE_CONNECTION', env('DB_CONNECTION')),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
             'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),

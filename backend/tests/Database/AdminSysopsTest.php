@@ -15,10 +15,12 @@ use Tests\Support\LedgerFixture;
 
 const ADMIN_SYSOPS = [
     'admin_reset_two_factor' => 'uuid, uuid',
+    'admin_search_companies' => 'text, integer',
     'admin_set_member_status' => 'uuid, uuid, text',
     'admin_tenant_companies' => 'uuid',
     'admin_tenant_counts' => 'uuid[]',
     'admin_tenant_users' => 'uuid',
+    'admin_webhook_deliveries' => 'uuid, integer',
 ];
 
 function platformDb(): Connection

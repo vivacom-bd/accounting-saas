@@ -48,6 +48,8 @@ final class Rls
         'gdpr_requests',
         // Stripe webhook events, invoice and payout mirrors, dunning notices (plan Task 12); ledgerly_platform only
         'stripe_events', 'stripe_invoices', 'stripe_payouts', 'billing_notices_sent',
+        // support tools (plan Task 15): the mail log (written through sysops.record_mail_sent) and staff announcements
+        'mail_log', 'announcements',
     ];
 
     public static function enable(Connection $connection, string $table): void

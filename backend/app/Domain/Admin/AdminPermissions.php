@@ -34,6 +34,7 @@ final class AdminPermissions
         'compliance.manage' => ['owner', 'support'],
         'growth.manage' => ['owner', 'sales'],
         'audit.view' => ['owner', 'readonly', 'engineer'],
+        'announcements.manage' => ['owner', 'sales', 'support', 'engineer'],
     ];
 
     /** Unknown abilities are denied. */
