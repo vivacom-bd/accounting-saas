@@ -13,6 +13,9 @@ use App\Http\Controllers\Admin\Plans\CouponsController;
 use App\Http\Controllers\Admin\Plans\PlansController;
 use App\Http\Controllers\Admin\Staff\StaffController;
 use App\Http\Controllers\Admin\Tenants\ProvisionTenantController;
+use App\Http\Controllers\Admin\Tenants\TenantMembersController;
+use App\Http\Controllers\Admin\Tenants\TenantNotesController;
+use App\Http\Controllers\Admin\Tenants\TenantsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -67,5 +70,23 @@ Route::middleware('admin.auth')->group(function (): void {
     Route::middleware('admin.can:coupons.manage')->group(function (): void {
         Route::post('coupons', [CouponsController::class, 'store'])->name('coupons.store');
         Route::post('coupons/{coupon}/archive', [CouponsController::class, 'archive'])->name('coupons.archive');
+    });
+
+    // Tenants list and tenant page (Task 7)
+    Route::middleware('admin.can:tenants.view')->group(function (): void {
+        Route::get('tenants', [TenantsController::class, 'index'])->name('tenants.index');
+        Route::get('tenants/{tenant}', [TenantsController::class, 'show'])->name('tenants.show');
+        Route::get('tenants/{tenant}/users', [TenantsController::class, 'users'])->name('tenants.users');
+        Route::get('tenants/{tenant}/companies', [TenantsController::class, 'companies'])->name('tenants.companies');
+    });
+    Route::get('tenants/{tenant}/audit', [TenantsController::class, 'audit'])->middleware('admin.can:audit.view')->name('tenants.audit');
+    Route::middleware('admin.can:tenants.notes')->group(function (): void {
+        Route::post('tenants/{tenant}/notes', [TenantNotesController::class, 'store'])->name('tenants.notes.store');
+        Route::post('tenants/{tenant}/notes/{note}/pin', [TenantNotesController::class, 'pin'])->name('tenants.notes.pin');
+    });
+    Route::middleware('admin.can:tenants.lifecycle')->group(function (): void {
+        Route::post('tenants/{tenant}/lifecycle', [TenantsController::class, 'lifecycle'])->name('tenants.lifecycle');
+        Route::post('tenants/{tenant}/users/{user}/reset-two-factor', [TenantMembersController::class, 'resetTwoFactor'])->name('tenants.users.reset-two-factor');
+        Route::post('tenants/{tenant}/users/{user}/disable', [TenantMembersController::class, 'disable'])->name('tenants.users.disable');
     });
 });

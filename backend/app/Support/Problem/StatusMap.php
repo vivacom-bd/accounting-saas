@@ -78,6 +78,11 @@ final class StatusMap
         'plan_code_taken' => 409,
         'plan_archived' => 409,
         'coupon_code_taken' => 409,
+        // Admin tenant page (plan Task 7).
+        'use_deletion_flow' => 422,
+        'two_factor_not_enabled' => 422,
+        'last_org_owner' => 409,
+        'membership_pending' => 409,
     ];
 
     public static function status(string $code): int
