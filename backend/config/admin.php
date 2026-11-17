@@ -26,4 +26,9 @@ return [
 
     // The session handler behind the admin cookie; the same store as tenant sessions unless set.
     'session_driver' => env('ADMIN_SESSION_DRIVER', env('SESSION_DRIVER', 'database')),
+
+    // Platform operations (plan Task 17): the queues whose depth the health page reports.
+    'ops' => [
+        'queues' => ['default', 'mail', 'maintenance', 'exports', 'scans', 'webhooks', 'imports'],
+    ],
 ];

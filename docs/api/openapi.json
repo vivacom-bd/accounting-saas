@@ -53477,7 +53477,10 @@
                         }
                     },
                     "invited_by": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "expires_at": {
                         "type": "string"
@@ -59012,6 +59015,12 @@
                                 "can"
                             ]
                         }
+                    },
+                    "features": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "boolean"
+                        }
                     }
                 },
                 "required": [
@@ -59020,7 +59029,8 @@
                     "email",
                     "two_factor_enabled",
                     "signing_pin_set",
-                    "tenants"
+                    "tenants",
+                    "features"
                 ],
                 "title": "SessionResource"
             },

@@ -8850,7 +8850,7 @@ export interface components {
             role: string;
             company_role: string | null;
             company_ids: string[];
-            invited_by: string;
+            invited_by: string | null;
             expires_at: string;
             can: {
                 [key: string]: boolean;
@@ -10282,6 +10282,9 @@ export interface components {
                     create_companies: boolean;
                 };
             }[];
+            features: {
+                [key: string]: boolean;
+            };
         };
         /** SetSigningPinRequest */
         SetSigningPinRequest: {

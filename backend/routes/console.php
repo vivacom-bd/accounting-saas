@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 
 // 13 §15 scheduler. Per-tenant work fans out through sysops.tenants_due_for, never a tenant loop.
@@ -34,3 +35,5 @@ Schedule::command('reports:run-schedules')->hourly()->onOneServer();
 Schedule::command('admin-audit:verify')->dailyAt('03:30')->timezone('UTC')->onOneServer();
 // Tenant lifecycle clocks (plan Task 5, G5/G6): trials and overdue payments that ran out move on, each step dated when due.
 Schedule::command('lifecycle:advance')->dailyAt('00:15')->timezone('UTC')->withoutOverlapping()->onOneServer();
+// Scheduler heartbeat (plan Task 17): the admin health page reads it back; a gap of a few minutes means the scheduler stopped.
+Schedule::call(fn () => Cache::put('scheduler:heartbeat', now()->toIso8601String(), 86400))->name('scheduler-heartbeat')->everyMinute();

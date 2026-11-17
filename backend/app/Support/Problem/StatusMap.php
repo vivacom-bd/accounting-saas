@@ -74,6 +74,8 @@ final class StatusMap
         'invalid_token' => 422,
         // Tenant lifecycle (plan Task 5).
         'lifecycle_transition_invalid' => 422,
+        // Platform operations (plan Task 17).
+        'maintenance' => 503,
         'owner_already_active' => 409,
         'owner_invitation_missing' => 409,
         // Plan catalogue (plan Task 9).

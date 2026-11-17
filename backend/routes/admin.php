@@ -8,6 +8,8 @@ use App\Http\Controllers\Admin\Auth\AdminLoginController;
 use App\Http\Controllers\Admin\Auth\AdminPasswordSetController;
 use App\Http\Controllers\Admin\Auth\AdminSessionController;
 use App\Http\Controllers\Admin\Auth\AdminTwoFactorController;
+use App\Http\Controllers\Admin\Ops\FlagsController;
+use App\Http\Controllers\Admin\Ops\OpsController;
 use App\Http\Controllers\Admin\Plans\AddonsController;
 use App\Http\Controllers\Admin\Plans\CouponsController;
 use App\Http\Controllers\Admin\Plans\PlansController;
@@ -90,5 +92,22 @@ Route::middleware('admin.auth')->group(function (): void {
         Route::post('tenants/{tenant}/lifecycle', [TenantsController::class, 'lifecycle'])->name('tenants.lifecycle');
         Route::post('tenants/{tenant}/users/{user}/reset-two-factor', [TenantMembersController::class, 'resetTwoFactor'])->name('tenants.users.reset-two-factor');
         Route::post('tenants/{tenant}/users/{user}/disable', [TenantMembersController::class, 'disable'])->name('tenants.users.disable');
+    });
+
+    // Platform operations and feature flags (Task 17)
+    Route::middleware('admin.can:ops.view')->group(function (): void {
+        Route::get('ops/health', [OpsController::class, 'health'])->name('ops.health');
+        Route::get('ops/maintenance', [OpsController::class, 'maintenance'])->name('ops.maintenance');
+        Route::get('tenants/{tenant}/rate-limit', [OpsController::class, 'rateLimit'])->name('tenants.rate-limit.show');
+        Route::get('flags', [FlagsController::class, 'index'])->name('flags.index');
+    });
+    Route::middleware('admin.can:ops.manage')->group(function (): void {
+        Route::put('ops/maintenance', [OpsController::class, 'setMaintenance'])->name('ops.maintenance.set');
+        Route::put('tenants/{tenant}/rate-limit', [OpsController::class, 'setRateLimit'])->name('tenants.rate-limit.set');
+        Route::delete('tenants/{tenant}/rate-limit', [OpsController::class, 'clearRateLimit'])->name('tenants.rate-limit.clear');
+    });
+    Route::middleware('admin.can:flags.manage')->group(function (): void {
+        Route::put('flags/{name}', [FlagsController::class, 'setGlobally'])->name('flags.set');
+        Route::put('tenants/{tenant}/flags/{name}', [FlagsController::class, 'setForTenant'])->name('tenants.flags.set');
     });
 });

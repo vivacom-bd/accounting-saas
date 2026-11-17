@@ -135,6 +135,7 @@ use App\Services\Tenancy\SpatieRoleChecker;
 use App\Services\Tenancy\TenantAwarePermissionRegistrar;
 use App\Services\UuidV7Generator;
 use App\Support\Idempotency\IdempotencyStore;
+use App\Support\Ops\TenantRateLimits;
 use App\Support\Reports\LedgerVersion;
 use App\Support\Reports\Report;
 use App\Support\Tenancy\CompanyContext;
@@ -284,10 +285,12 @@ class AppServiceProvider extends ServiceProvider
         // 13 §16: API client 600/min, SPA user 300/min, each counted per principal.
         RateLimiter::for('company-api', function (Request $request): Limit {
             $principal = call_user_func($request->getUserResolver());
+            // An admin's per-tenant override (plan Task 17) replaces the default for both kinds of principal.
+            $override = $this->app->make(TenantRateLimits::class)->forCurrentTenant();
 
             return $principal instanceof ApiClient
-                ? Limit::perMinute(600)->by('client:'.$principal->id)
-                : Limit::perMinute(300)->by('user:'.(is_object($principal) && method_exists($principal, 'getAuthIdentifier') ? (string) $principal->getAuthIdentifier() : (string) $request->ip()));
+                ? Limit::perMinute($override ?? 600)->by('client:'.$principal->id)
+                : Limit::perMinute($override ?? 300)->by('user:'.(is_object($principal) && method_exists($principal, 'getAuthIdentifier') ? (string) $principal->getAuthIdentifier() : (string) $request->ip()));
         });
         // 13 §16: 10 report exports an hour per company, whoever asks.
         RateLimiter::for('report-exports', function (Request $request): Limit {

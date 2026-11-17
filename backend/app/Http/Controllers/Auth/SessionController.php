@@ -8,10 +8,12 @@ use App\Domain\Shared\DomainRuleViolation;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\ResolveTenant;
 use App\Http\Resources\SessionResource;
+use App\Models\Platform\Tenant;
 use App\Models\Platform\User;
 use App\Support\Tenancy\OrganisationRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Laravel\Pennant\Feature;
 
 /**
  * The signed-in user and their organisations (13 §7). Works before a tenant is chosen, so it reads
@@ -48,6 +50,7 @@ final class SessionController extends Controller
             'two_factor_enabled' => $user->two_factor_confirmed_at !== null,
             'signing_pin_set' => $user->signing_pin_hash !== null,
             'tenants' => $tenants,
+            'features' => $this->features(is_string($current) ? $current : null, $tenants),
         ]);
     }
 
@@ -72,6 +75,23 @@ final class SessionController extends Controller
         $request->session()->put(ResolveTenant::SESSION_KEY, $tenantId);
 
         return $this->me($request);
+    }
+
+    /**
+     * The feature flags of the current organisation (plan Task 17): name => on or off. Empty before one is chosen, and
+     * for an organisation the user is not an active member of.
+     *
+     * @param  array<int, array<string, mixed>>  $tenants  the organisations this user may use
+     * @return array<string, bool>
+     */
+    private function features(?string $current, array $tenants): array
+    {
+        if ($current === null || ! in_array($current, array_column($tenants, 'id'), true)) {
+            return [];
+        }
+        $tenant = Tenant::query()->find($current);
+
+        return $tenant === null ? [] : array_map(fn (mixed $on): bool => (bool) $on, Feature::for($tenant)->all());
     }
 
     private function user(Request $request): User

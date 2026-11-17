@@ -14,6 +14,7 @@ use Tests\Support\LedgerFixture;
  */
 
 const ADMIN_SYSOPS = [
+    'admin_outbox_backlog' => '',
     'admin_reset_two_factor' => 'uuid, uuid',
     'admin_set_member_status' => 'uuid, uuid, text',
     'admin_tenant_companies' => 'uuid',

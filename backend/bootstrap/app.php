@@ -10,6 +10,7 @@ use App\Http\Middleware\Admin\UsePlatformConnection;
 use App\Http\Middleware\Admin\ValidateAdminCsrfToken;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureTenantWritable;
+use App\Http\Middleware\PlatformMaintenance;
 use App\Http\Middleware\RequireConfirmedPassword;
 use App\Http\Middleware\RequireIdempotencyKey;
 use App\Http\Middleware\ResolveCompany;
@@ -53,6 +54,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // SPA requests from SANCTUM_STATEFUL_DOMAINS get session cookies and CSRF (13 §7).
         $middleware->statefulApi();
         $middleware->api(prepend: [AssignRequestId::class, SetTenantFromToken::class]);
+        // Platform maintenance mode (plan T8): 503 on the tenant API, except sign-in, session and public paths.
+        $middleware->api(append: [PlatformMaintenance::class]);
+        // Priority-sorted ahead of auth, so the 503 shows to signed-out and signed-in callers alike.
+        $middleware->prependToPriorityList(before: AuthenticatesRequests::class, prepend: PlatformMaintenance::class);
         $middleware->prependToPriorityList(before: AuthenticatesRequests::class, prepend: SetTenantFromToken::class);
         // Route-model binding reads RLS tables, so tenant and company resolve first; the idempotency
         // claim needs the tenant and must precede Authorize, which sorts after SubstituteBindings.
