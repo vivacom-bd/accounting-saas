@@ -24,6 +24,9 @@ it('exports the OpenAPI document without unknown types', function (): void {
         ->and($output)->not->toContain('UnknownType')
         ->and($document)->toHaveKey('paths');
 
+    // T9: the platform admin API is never part of the tenant document.
+    expect(array_filter(array_keys($document['paths']), fn (string $p) => str_starts_with($p, '/admin')))->toBe([]);
+
     // The two Fortify endpoints are documented by hand: login states both outcomes.
     expect($document['paths']['/v1/auth/login']['post']['responses']['200']['content']['application/json']['schema']['properties'])
         ->toHaveKey('two_factor');

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Admin\AdminUser;
 use App\Models\Platform\User;
 
 return [
@@ -42,6 +43,12 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Platform staff (plan T2): a session guard on the admin session store only (AdminServiceProvider).
+        'admin' => [
+            'driver' => 'admin-session',
+            'provider' => 'admin_users',
+        ],
     ],
 
     /*
@@ -65,6 +72,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
+        ],
+
+        'admin_users' => [
+            'driver' => 'eloquent',
+            'model' => AdminUser::class,
         ],
 
         // 'users' => [

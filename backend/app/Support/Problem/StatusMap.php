@@ -59,6 +59,11 @@ final class StatusMap
         'attachment_immutable' => 409,
         'attachment_mismatch' => 409,
         'attachment_not_uploaded' => 409,
+        // Platform admin (plan Task 3).
+        'admin_ip_blocked' => 403,
+        'admin_two_factor_required' => 401,
+        'two_factor_already_confirmed' => 409,
+        'two_factor_not_started' => 409,
     ];
 
     public static function status(string $code): int

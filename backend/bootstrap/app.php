@@ -1,6 +1,13 @@
 <?php
 
 use App\Domain\Shared\DomainRuleViolation;
+use App\Http\Middleware\Admin\AdminCan;
+use App\Http\Middleware\Admin\AdminIdleTimeout;
+use App\Http\Middleware\Admin\AdminIpAllowlist;
+use App\Http\Middleware\Admin\RequireAdminTwoFactor;
+use App\Http\Middleware\Admin\UseAdminSession;
+use App\Http\Middleware\Admin\UsePlatformConnection;
+use App\Http\Middleware\Admin\ValidateAdminCsrfToken;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureTenantWritable;
 use App\Http\Middleware\RequireConfirmedPassword;
@@ -11,11 +18,15 @@ use App\Http\Middleware\SetTenantFromToken;
 use App\Support\Problem\ProblemRenderer;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -26,6 +37,15 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api/v1',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        // Platform admin API (T1): its own middleware group, optionally host-locked.
+        then: function (): void {
+            $admin = Route::middleware('admin')->prefix('api/admin')->name('admin.');
+            $domain = config('admin.domain');
+            if (is_string($domain) && $domain !== '') {
+                $admin->domain($domain);
+            }
+            $admin->group(base_path('routes/admin.php'));
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // 13 §5. Every API request gets a request id; bearer tokens set the tenant before
@@ -42,7 +62,22 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: ResolveTenant::class);
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: ResolveCompany::class);
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: RequireIdempotencyKey::class);
+        // Platform admin (plan Task 3, T2/T3): own session cookie and CSRF cookie, IP allowlist, platform DB role.
+        // Protected routes add `admin.auth`; the 2FA check runs before auth:admin so a half-finished sign-in is told
+        // which step is missing.
+        $middleware->group('admin', [
+            UseAdminSession::class,
+            EncryptCookies::class,
+            AddQueuedCookiesToResponse::class,
+            StartSession::class,
+            ValidateAdminCsrfToken::class,
+            AssignRequestId::class,
+            AdminIpAllowlist::class,
+            UsePlatformConnection::class,
+        ]);
+        $middleware->group('admin.auth', [RequireAdminTwoFactor::class, 'auth:admin', AdminIdleTimeout::class]);
         $middleware->alias([
+            'admin.can' => AdminCan::class,
             'tenant' => ResolveTenant::class,
             'company' => ResolveCompany::class,
             'tenant.writable' => EnsureTenantWritable::class,

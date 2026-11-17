@@ -34,6 +34,49 @@ final class AdminAuditWriter
         ?array $after = null,
         ?string $reason = null,
     ): int {
+        return $this->append(
+            $actor->id, $action, $tenantId, $subjectType, $subjectId, $before, $after, $reason,
+            $actor->ip, $actor->userAgent, $actor->requestId,
+        );
+    }
+
+    /**
+     * An event with no signed-in staff member behind it (`admin_id` null): failed or blocked sign-ins. Same chain,
+     * same transaction rule.
+     *
+     * @param  array<array-key, mixed>|null  $after
+     */
+    public function recordAnonymous(
+        AdminRequestContext $context,
+        string $action,
+        string $subjectType,
+        ?string $subjectId,
+        ?array $after = null,
+        ?string $reason = null,
+    ): int {
+        return $this->append(
+            null, $action, null, $subjectType, $subjectId, null, $after, $reason,
+            $context->ip, $context->userAgent, $context->requestId,
+        );
+    }
+
+    /**
+     * @param  array<array-key, mixed>|null  $before
+     * @param  array<array-key, mixed>|null  $after
+     */
+    private function append(
+        ?string $adminId,
+        string $action,
+        ?string $tenantId,
+        string $subjectType,
+        ?string $subjectId,
+        ?array $before,
+        ?array $after,
+        ?string $reason,
+        ?string $ip,
+        ?string $userAgent,
+        ?string $requestId,
+    ): int {
         $db = DB::connection(AdminTransaction::CONNECTION);
         if ($db->transactionLevel() === 0) {
             throw new LogicException('Admin audit events must be recorded inside an AdminTransaction.');
@@ -48,7 +91,7 @@ final class AdminAuditWriter
         $occurredAt = $this->clock->now()->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s.u\Z');
 
         $fields = [
-            'admin_id' => $actor->id,
+            'admin_id' => $adminId,
             'action' => $action,
             'tenant_id' => $tenantId,
             'subject_type' => $subjectType,
@@ -56,9 +99,9 @@ final class AdminAuditWriter
             'before' => $before,
             'after' => $after,
             'reason' => $reason,
-            'ip' => $actor->ip,
-            'user_agent' => $actor->userAgent,
-            'request_id' => $actor->requestId,
+            'ip' => $ip,
+            'user_agent' => $userAgent,
+            'request_id' => $requestId,
             'occurred_at' => $occurredAt,
             'prev_hash' => $prevHash,
         ];
@@ -71,9 +114,9 @@ final class AdminAuditWriter
             .'user_agent, request_id, occurred_at, canonical, prev_hash, hash) '
             .'VALUES (?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
             [
-                $actor->id, $action, $tenantId, $subjectType, $subjectId,
+                $adminId, $action, $tenantId, $subjectType, $subjectId,
                 $before === null ? null : Jcs::encode($before), $after === null ? null : Jcs::encode($after),
-                $reason, $actor->ip, $actor->userAgent, $actor->requestId, $occurredAt, $canonical, $prevHash, $hash,
+                $reason, $ip, $userAgent, $requestId, $occurredAt, $canonical, $prevHash, $hash,
             ],
         );
 
