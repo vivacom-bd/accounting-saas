@@ -122,6 +122,24 @@ final class ChangeTenantLifecycle
         });
     }
 
+    /**
+     * The first lifecycle event of a new tenant: no previous state. Call inside the caller's AdminTransaction; the
+     * caller records its own admin audit event.
+     */
+    public function recordInitial(AdminActor $by, string $tenantId, LifecycleState $state, string $reason, DateTimeImmutable $at): void
+    {
+        AdminTransaction::connection()->table('tenant_lifecycle_events')->insert([
+            'id' => $this->ids->next(),
+            'tenant_id' => $tenantId,
+            'from_status' => null,
+            'to_status' => $state->value,
+            'reason' => $reason,
+            'actor_type' => ActorType::Admin->value,
+            'actor_id' => $by->id,
+            'occurred_at' => $at->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s.uP'),
+        ]);
+    }
+
     private static function invalid(string $message): DomainRuleViolation
     {
         return DomainRuleViolation::single('lifecycle_transition_invalid', $message);

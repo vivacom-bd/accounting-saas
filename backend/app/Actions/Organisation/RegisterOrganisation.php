@@ -11,11 +11,11 @@ use App\Models\Platform\Tenant;
 use App\Models\Platform\TenantUser;
 use App\Models\Platform\User;
 use App\Support\Actor;
+use App\Support\Tenancy\TenantSlug;
 use App\Support\UnitOfWork\AuditBuffer;
 use App\Support\UnitOfWork\LockSet;
 use App\Support\UnitOfWork\Outbox;
 use App\Support\UnitOfWork\UnitOfWork;
-use Illuminate\Support\Str;
 use LogicException;
 
 /**
@@ -42,7 +42,7 @@ final class RegisterOrganisation
             $tenant->forceFill([
                 'id' => $in->tenantId,
                 'name' => $in->organisationName,
-                'slug' => $this->uniqueSlug($in->organisationName),
+                'slug' => TenantSlug::unique($in->organisationName),
                 'lifecycle' => 'trial',
             ])->save();
 
@@ -68,16 +68,5 @@ final class RegisterOrganisation
 
             return $user;
         });
-    }
-
-    private function uniqueSlug(string $name): string
-    {
-        $base = Str::limit(Str::slug($name), 48, '') ?: 'organisation';
-        $slug = $base;
-        while (Tenant::query()->where('slug', $slug)->exists()) {
-            $slug = $base.'-'.Str::lower(Str::random(5));
-        }
-
-        return $slug;
     }
 }

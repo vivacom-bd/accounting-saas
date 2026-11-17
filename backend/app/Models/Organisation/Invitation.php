@@ -16,7 +16,7 @@ use Carbon\CarbonImmutable;
  * @property string $token_hash
  * @property string|null $company_role
  * @property list<string>|null $company_ids
- * @property string $invited_by
+ * @property string|null $invited_by
  * @property CarbonImmutable $expires_at
  * @property CarbonImmutable|null $accepted_at
  * @property CarbonImmutable|null $revoked_at
