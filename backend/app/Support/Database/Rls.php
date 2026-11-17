@@ -50,6 +50,8 @@ final class Rls
         'stripe_events', 'stripe_invoices', 'stripe_payouts', 'billing_notices_sent',
         // support tools (plan Task 15): the mail log (written through sysops.record_mail_sent) and staff announcements
         'mail_log', 'announcements',
+        // platform operations (plan Task 17): maintenance switch, per-tenant rate limits, Pennant flag storage; ledgerly_platform writes
+        'platform_settings', 'tenant_rate_limits', 'features',
     ];
 
     public static function enable(Connection $connection, string $table): void

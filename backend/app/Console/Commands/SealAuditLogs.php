@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 use App\Jobs\Audit\SealAuditLog;
 use App\Support\Tenancy\TenantsDueFor;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 
 /** Nightly: queue a seal of every live tenant's audit chain (13 §14). */
 final class SealAuditLogs extends Command
@@ -22,6 +23,8 @@ final class SealAuditLogs extends Command
             SealAuditLog::dispatch($tenantId);
             $count++;
         }
+        // The admin health page shows when the nightly run last fired (queued, not necessarily finished).
+        Cache::put('audit:seal:last_run', now()->toIso8601String(), 7 * 86400);
         $this->info("Queued {$count} seal(s).");
 
         return self::SUCCESS;

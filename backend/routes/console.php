@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 
 // 13 §15 scheduler. Per-tenant work fans out through sysops.tenants_due_for, never a tenant loop.
@@ -40,3 +41,5 @@ Schedule::command('subscriptions:advance')->dailyAt('00:30')->timezone('UTC')->w
 
 // SaaS dunning (plan Task 12): payment reminders on days 1, 4 and 7 after a failure, trial-ending notices 3 and 1 days before; once each.
 Schedule::command('saas-dunning:run')->dailyAt('07:00')->timezone('UTC')->onOneServer();
+// Scheduler heartbeat (plan Task 17): the admin health page reads it back; a gap of a few minutes means the scheduler stopped.
+Schedule::call(fn () => Cache::put('scheduler:heartbeat', now()->toIso8601String(), 86400))->name('scheduler-heartbeat')->everyMinute();

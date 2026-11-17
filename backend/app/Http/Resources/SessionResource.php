@@ -31,12 +31,13 @@ final class SessionResource extends JsonResource
      *         role: string,
      *         current: bool,
      *         can: array{manage_members: bool, create_companies: bool}
-     *     }>
+     *     }>,
+     *     features: array<string, bool>
      * }
      */
     public function toArray(Request $request): array
     {
-        /** @var array{id: string, name: string, email: string, two_factor_enabled: bool, signing_pin_set: bool, tenants: list<array{id: string, name: string, slug: string, lifecycle: string, role: string, current: bool, can: array{manage_members: bool, create_companies: bool}}>} $session */
+        /** @var array{id: string, name: string, email: string, two_factor_enabled: bool, signing_pin_set: bool, tenants: list<array{id: string, name: string, slug: string, lifecycle: string, role: string, current: bool, can: array{manage_members: bool, create_companies: bool}}>, features: array<string, bool>} $session */
         $session = $this->resource;
 
         return $session;

@@ -10327,6 +10327,9 @@ export interface components {
                     create_companies: boolean;
                 };
             }[];
+            features: {
+                [key: string]: boolean;
+            };
         };
         /** SetSigningPinRequest */
         SetSigningPinRequest: {

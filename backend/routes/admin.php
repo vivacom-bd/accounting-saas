@@ -12,6 +12,8 @@ use App\Http\Controllers\Admin\Billing\BillingStatusController;
 use App\Http\Controllers\Admin\Billing\EntitlementOverridesController;
 use App\Http\Controllers\Admin\Billing\SubscriptionsController;
 use App\Http\Controllers\Admin\Compliance\ComplianceController;
+use App\Http\Controllers\Admin\Ops\FlagsController;
+use App\Http\Controllers\Admin\Ops\OpsController;
 use App\Http\Controllers\Admin\Plans\AddonsController;
 use App\Http\Controllers\Admin\Plans\CouponsController;
 use App\Http\Controllers\Admin\Plans\PlansController;
@@ -147,5 +149,22 @@ Route::middleware('admin.auth')->group(function (): void {
         Route::post('announcements', [AnnouncementsController::class, 'store'])->name('announcements.store');
         Route::put('announcements/{id}', [AnnouncementsController::class, 'update'])->whereUuid('id')->name('announcements.update');
         Route::delete('announcements/{id}', [AnnouncementsController::class, 'destroy'])->whereUuid('id')->name('announcements.destroy');
+    });
+
+    // Platform operations and feature flags (Task 17)
+    Route::middleware('admin.can:ops.view')->group(function (): void {
+        Route::get('ops/health', [OpsController::class, 'health'])->name('ops.health');
+        Route::get('ops/maintenance', [OpsController::class, 'maintenance'])->name('ops.maintenance');
+        Route::get('tenants/{tenant}/rate-limit', [OpsController::class, 'rateLimit'])->name('tenants.rate-limit.show');
+        Route::get('flags', [FlagsController::class, 'index'])->name('flags.index');
+    });
+    Route::middleware('admin.can:ops.manage')->group(function (): void {
+        Route::put('ops/maintenance', [OpsController::class, 'setMaintenance'])->name('ops.maintenance.set');
+        Route::put('tenants/{tenant}/rate-limit', [OpsController::class, 'setRateLimit'])->name('tenants.rate-limit.set');
+        Route::delete('tenants/{tenant}/rate-limit', [OpsController::class, 'clearRateLimit'])->name('tenants.rate-limit.clear');
+    });
+    Route::middleware('admin.can:flags.manage')->group(function (): void {
+        Route::put('flags/{name}', [FlagsController::class, 'setGlobally'])->name('flags.set');
+        Route::put('tenants/{tenant}/flags/{name}', [FlagsController::class, 'setForTenant'])->name('tenants.flags.set');
     });
 });
