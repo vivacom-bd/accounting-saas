@@ -141,6 +141,8 @@ Route::middleware(['auth:sanctum', 'tenant', 'tenant.writable', 'idempotent'])->
 
     // Plan and usage meters of the organisation (plan Task 10): owners and admins, people only
     Route::get('org/billing/usage', [BillingUsageController::class, 'show'])->name('org.billing.usage');
+    // The organisation's own subscription and invoices (plan Task 24, 4b.8): owners and admins
+    Route::get('org/billing', [BillingUsageController::class, 'summary'])->name('org.billing.summary');
 
     // The organisation page: profile and the companies the person can open (plan 3c.26)
     Route::get('organisation', [OrganisationController::class, 'show'])->name('organisation.show');

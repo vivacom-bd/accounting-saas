@@ -7,15 +7,23 @@ namespace App\Http\Controllers\Organisation;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BillingUsageResource;
 use App\Models\Platform\Tenant;
+use App\Queries\Organisation\BillingSummary;
 use App\Queries\Organisation\BillingUsage;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
 
-/** The organisation's plan and usage meters (plan Task 10). */
+/** The organisation's plan and usage meters (plan Task 10), and its billing summary (plan Task 24). */
 final class BillingUsageController extends Controller
 {
     #[Authorize('viewBilling', Tenant::class)]
     public function show(BillingUsage $usage): BillingUsageResource
     {
         return new BillingUsageResource($usage());
+    }
+
+    #[Authorize('viewBilling', Tenant::class)]
+    public function summary(BillingSummary $summary): JsonResponse
+    {
+        return response()->json(['data' => $summary()]);
     }
 }

@@ -8,12 +8,15 @@ use App\Http\Controllers\Admin\Auth\AdminLoginController;
 use App\Http\Controllers\Admin\Auth\AdminPasswordSetController;
 use App\Http\Controllers\Admin\Auth\AdminSessionController;
 use App\Http\Controllers\Admin\Auth\AdminTwoFactorController;
+use App\Http\Controllers\Admin\Billing\BillingOpsController;
 use App\Http\Controllers\Admin\Billing\BillingStatusController;
 use App\Http\Controllers\Admin\Billing\EntitlementOverridesController;
 use App\Http\Controllers\Admin\Billing\SubscriptionsController;
 use App\Http\Controllers\Admin\Compliance\ComplianceController;
+use App\Http\Controllers\Admin\Growth\GrowthController;
 use App\Http\Controllers\Admin\Ops\FlagsController;
 use App\Http\Controllers\Admin\Ops\OpsController;
+use App\Http\Controllers\Admin\Overview\OverviewController;
 use App\Http\Controllers\Admin\Plans\AddonsController;
 use App\Http\Controllers\Admin\Plans\CouponsController;
 use App\Http\Controllers\Admin\Plans\PlansController;
@@ -128,11 +131,20 @@ Route::middleware('admin.auth')->group(function (): void {
 
     // Billing gateway and subscriptions (Task 11)
     Route::middleware('admin.can:billing.view')->group(function (): void {
+        Route::get('overview', OverviewController::class)->name('overview');
         Route::get('billing/status', BillingStatusController::class)->name('billing.status');
+        Route::get('billing/invoices', [BillingOpsController::class, 'invoices'])->name('billing.invoices.index');
+        Route::get('billing/tax-report', [BillingOpsController::class, 'taxReport'])->name('billing.tax-report');
+        Route::get('billing/revenue-recognition', [BillingOpsController::class, 'revenueRecognition'])->name('billing.revenue-recognition');
+        Route::get('billing/revenue-recognition.csv', [BillingOpsController::class, 'revenueRecognitionCsv'])->name('billing.revenue-recognition.csv');
+        Route::get('billing/payouts', [BillingOpsController::class, 'payouts'])->name('billing.payouts');
+        Route::get('billing/payouts.csv', [BillingOpsController::class, 'payoutsCsv'])->name('billing.payouts.csv');
         Route::get('tenants/{tenant}/subscription', [SubscriptionsController::class, 'show'])->name('tenants.subscription.show');
         Route::post('tenants/{tenant}/subscription/preview', [SubscriptionsController::class, 'preview'])->name('tenants.subscription.preview');
     });
     Route::middleware('admin.can:billing.manage')->group(function (): void {
+        Route::post('billing/invoices', [BillingOpsController::class, 'recordInvoice'])->name('billing.invoices.store');
+        Route::post('billing/invoices/{invoice}/mark-paid', [BillingOpsController::class, 'markPaid'])->name('billing.invoices.mark-paid');
         Route::post('tenants/{tenant}/subscription', [SubscriptionsController::class, 'store'])->name('tenants.subscription.store');
         Route::post('tenants/{tenant}/subscription/change-plan', [SubscriptionsController::class, 'changePlan'])->name('tenants.subscription.change-plan');
         Route::post('tenants/{tenant}/subscription/cancel', [SubscriptionsController::class, 'cancel'])->name('tenants.subscription.cancel');
@@ -141,6 +153,18 @@ Route::middleware('admin.auth')->group(function (): void {
         Route::post('tenants/{tenant}/subscription/extend-trial', [SubscriptionsController::class, 'extendTrial'])->name('tenants.subscription.extend-trial');
         Route::post('tenants/{tenant}/subscription/convert-trial', [SubscriptionsController::class, 'convertTrial'])->name('tenants.subscription.convert-trial');
         Route::post('tenants/{tenant}/subscription/apply-coupon', [SubscriptionsController::class, 'applyCoupon'])->name('tenants.subscription.apply-coupon');
+    });
+    // Refunds and credit notes need a second staff member (Task 13); the request is gated, the decision is on approvals.
+    Route::middleware('admin.can:billing.refund.request')->group(function (): void {
+        Route::post('billing/invoices/{invoice}/refund', [BillingOpsController::class, 'refund'])->name('billing.invoices.refund');
+        Route::post('billing/invoices/{invoice}/credit-note', [BillingOpsController::class, 'creditNote'])->name('billing.invoices.credit-note');
+    });
+    // Trials and growth (Task 16)
+    Route::middleware('admin.can:growth.manage')->group(function (): void {
+        Route::get('growth/funnel', [GrowthController::class, 'funnel'])->name('growth.funnel');
+        Route::get('growth/trials', [GrowthController::class, 'trials'])->name('growth.trials');
+        Route::put('growth/nudges', [GrowthController::class, 'setNudges'])->name('growth.nudges');
+        Route::post('tenants/{tenant}/convert-quote', [GrowthController::class, 'convert'])->name('tenants.convert-quote');
     });
     // Support tools (Task 15)
     Route::get('search', [SupportController::class, 'search'])->middleware('admin.can:tenants.view')->name('search');

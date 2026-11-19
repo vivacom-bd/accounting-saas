@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Actions\Admin\Billing\RefundExecutor;
 use App\Actions\Admin\Compliance\LegalHoldReleaseExecutor;
 use App\Actions\Admin\Compliance\TenantDeleteExecutor;
 use App\Http\Middleware\Admin\UseAdminSession;
@@ -28,8 +29,8 @@ final class AdminServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Approval executors (additive: each feature appends its own tag call). Compliance, plan Task 18.
-        $this->app->tag([TenantDeleteExecutor::class, LegalHoldReleaseExecutor::class], 'admin.approval_executors');
+        // Approval executors (additive: each feature appends its own tag call). Compliance (Task 18) and billing (Task 13).
+        $this->app->tag([TenantDeleteExecutor::class, LegalHoldReleaseExecutor::class, RefundExecutor::class], 'admin.approval_executors');
     }
 
     public function boot(): void
