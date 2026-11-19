@@ -1,6 +1,6 @@
 import { useFormShortcuts } from '@/lib/pageKeys';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Navigate, Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AlertTriangle, CheckCircle2, Eye, Plus, Save, Send, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/domain/PageHeader';
@@ -541,6 +541,9 @@ const InvoiceFormInner: React.FC<{ side: Side }> = ({ side }) => {
               <span>{m}</span>
             </div>
           ))}
+          {headerErrors.some((m) => /posting/i.test(m)) && (
+            <Link to={`/${coSlug}/settings/posting`} className="underline">Open Settings → Posting accounts</Link>
+          )}
         </div>
       )}
       {creditRefusal && creditRefusal.sig === contentSig && (
