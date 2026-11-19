@@ -7,6 +7,7 @@ namespace App\Queries\Trade;
 use App\Contracts\Clock;
 use App\Domain\Trade\InvoiceKind;
 use App\Domain\Trade\PaymentStatus;
+use App\Models\Trade\Contact;
 use App\Models\Trade\Invoice;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -52,7 +53,13 @@ final class ListInvoices
         }
         if ($f->search !== null && trim($f->search) !== '') {
             $like = '%'.addcslashes(trim($f->search), '\\%_').'%';
-            $query->where(fn (Builder $q) => $q->where('number', 'ilike', $like)->orWhere('reference', 'ilike', $like)->orWhere('memo', 'ilike', $like));
+            // Match the document and also the contact's name, so typing a customer or supplier finds their documents.
+            $query->where(function (Builder $q) use ($like, $companyId): void {
+                $q->where('number', 'ilike', $like)
+                    ->orWhere('reference', 'ilike', $like)
+                    ->orWhere('memo', 'ilike', $like)
+                    ->orWhereIn('contact_id', Contact::query()->where('company_id', $companyId)->where('name', 'ilike', $like)->select('id'));
+            });
         }
 
         return $query;

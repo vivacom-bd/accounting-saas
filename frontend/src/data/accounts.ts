@@ -49,6 +49,8 @@ export interface NewAccountInput {
   account_subtype: string;
   description: string;
   parent_id?: string | null;
+  /** Receivables/payables/tax/bank and so on; used by Settings → Posting to pick the control account. */
+  control_type?: Account['control_type'];
 }
 
 /**
@@ -83,7 +85,7 @@ export function useMockAccountActions(): AccountActions {
         account_type: input.account_type,
         account_subtype: input.account_subtype || 'General',
         normal_balance: input.normal_balance,
-        control_type: null as unknown as Account['control_type'],
+        control_type: input.control_type ?? 'none',
         currency_policy: 'base_only',
         is_postable: true,
         is_active: true,

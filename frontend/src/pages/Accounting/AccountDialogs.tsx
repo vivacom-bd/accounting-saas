@@ -25,6 +25,29 @@ const Row: React.FC<{ label: string; hint?: string; children: React.ReactNode }>
   </label>
 );
 
+type ControlOption = { value: Account['control_type']; label: string };
+
+/** Which control roles make sense for each account type. A control account is posted to by the system, not by hand. */
+const CONTROL_OPTIONS: Partial<Record<Account['account_type'], ControlOption[]>> = {
+  asset: [
+    { value: 'none', label: 'Normal account' },
+    { value: 'ar', label: 'Accounts receivable (control)' },
+    { value: 'bank', label: 'Bank (control)' },
+    { value: 'cash', label: 'Cash (control)' },
+    { value: 'tax', label: 'Tax (control)' },
+    { value: 'fixed_asset', label: 'Fixed asset' },
+    { value: 'accum_depr', label: 'Accumulated depreciation' },
+    { value: 'suspense', label: 'Suspense' },
+  ],
+  liability: [
+    { value: 'none', label: 'Normal account' },
+    { value: 'ap', label: 'Accounts payable (control)' },
+    { value: 'tax', label: 'Tax (control)' },
+    { value: 'retained_earnings', label: 'Retained earnings' },
+    { value: 'suspense', label: 'Suspense' },
+  ],
+};
+
 export type AccountDialogMode =
   | { kind: 'new' }
   | { kind: 'sub'; parent: Account }
@@ -44,6 +67,7 @@ export const AccountDialog: React.FC<{ mode: AccountDialogMode | null; onClose: 
   const [type, setType] = useState<Account['account_type']>('asset');
   const [subtype, setSubtype] = useState('');
   const [description, setDescription] = useState('');
+  const [control, setControl] = useState<Account['control_type']>('none');
 
   useEffect(() => {
     if (!mode) return;
@@ -53,14 +77,17 @@ export const AccountDialog: React.FC<{ mode: AccountDialogMode | null; onClose: 
     if (mode.kind === 'edit') {
       setCode(mode.account.code); setName(mode.account.name); setType(mode.account.account_type);
       setSubtype(mode.account.account_subtype); setDescription(mode.account.description ?? '');
+      setControl(mode.account.control_type ?? 'none');
     } else if (mode.kind === 'sub') {
       const siblings = accounts.filter((a) => a.account_type === mode.parent.account_type).map((a) => parseInt(a.code, 10)).filter(Number.isFinite);
       const base = parseInt(mode.parent.code, 10);
       let next = base + 1;
       while (siblings.includes(next)) next += 1;
       setCode(String(next)); setName(''); setType(mode.parent.account_type); setSubtype(mode.parent.account_subtype); setDescription('');
+      setControl('none');
     } else {
       setCode(''); setName(''); setType('asset'); setSubtype(''); setDescription('');
+      setControl('none');
     }
   }, [mode]);
 
@@ -80,7 +107,7 @@ export const AccountDialog: React.FC<{ mode: AccountDialogMode | null; onClose: 
       if (editing) {
         await actions.update(
           editing,
-          { code: code.trim(), name: name.trim(), account_subtype: subtype.trim() || editing.account_subtype, description: description.trim() || undefined },
+          { code: code.trim(), name: name.trim(), account_subtype: subtype.trim() || editing.account_subtype, description: description.trim() || undefined, control_type: control },
           intent.current,
         );
         toast.success(`Account ${code.trim()} updated`);
@@ -93,6 +120,7 @@ export const AccountDialog: React.FC<{ mode: AccountDialogMode | null; onClose: 
             normal_balance: normal,
             account_subtype: subtype.trim(),
             description: description.trim(),
+            control_type: control,
             parent_id: mode.kind === 'sub' ? mode.parent.id : null,
           },
           intent.current,
@@ -132,7 +160,7 @@ export const AccountDialog: React.FC<{ mode: AccountDialogMode | null; onClose: 
           )}
           <div className="grid grid-cols-2 gap-3">
             <Row label="Type">
-              <select value={type} onChange={(e) => setType(e.target.value as Account['account_type'])} disabled={mode.kind !== 'new'} className={inputCls}>
+              <select value={type} onChange={(e) => { setType(e.target.value as Account['account_type']); setControl('none'); }} disabled={mode.kind !== 'new'} className={inputCls}>
                 {CLASSIFICATIONS.map((c) => <option key={c.value} value={c.value}>{c.label.replace(/s$/, '')}</option>)}
               </select>
             </Row>
@@ -140,6 +168,13 @@ export const AccountDialog: React.FC<{ mode: AccountDialogMode | null; onClose: 
               <input value={subtype} onChange={(e) => setSubtype(e.target.value)} className={inputCls} placeholder="e.g. Current assets" />
             </Row>
           </div>
+          {CONTROL_OPTIONS[type] && (
+            <Row label="Control account" hint="Invoices and bills post to a receivables or payables control account, set in Settings → Posting accounts.">
+              <select value={control} onChange={(e) => setControl(e.target.value as Account['control_type'])} className={inputCls}>
+                {CONTROL_OPTIONS[type]!.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </Row>
+          )}
           <Row label="Description (optional)">
             <input value={description} onChange={(e) => setDescription(e.target.value)} className={inputCls} />
           </Row>

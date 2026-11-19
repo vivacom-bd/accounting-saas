@@ -237,6 +237,7 @@ it('lists by status, contact, dates and the derived payment status', function ()
         'partial' => $ids('payment_status=partially_paid'),
         'awaiting' => $ids('payment_status=awaiting_payment'),
         'search' => $ids('search='.rawurlencode($open['number'])),
+        'search by contact' => $ids('search='.rawurlencode('Contact C2')),
         'credit notes' => $ids('kind=credit_note'),
     ])->toBe([
         'draft' => [$draft['id']],
@@ -249,6 +250,7 @@ it('lists by status, contact, dates and the derived payment status', function ()
         'partial' => [$part['id']],
         'awaiting' => [$open['id']],
         'search' => [$open['id']],
+        'search by contact' => [$paid['id']],
         'credit notes' => [],
     ]);
     $page = $this->getJson($this->api('invoices?limit=2'))->assertJsonCount(2, 'data')->assertJsonPath('meta.limit', 2);

@@ -68,7 +68,7 @@ export function toAccountRequest(a: Account, changes: Partial<Account> = {}): Ap
 }
 
 export type AccountDraft = Pick<Account, 'code' | 'name' | 'account_type' | 'normal_balance'> &
-  Partial<Pick<Account, 'account_subtype' | 'description' | 'parent_id'>>;
+  Partial<Pick<Account, 'account_subtype' | 'description' | 'parent_id' | 'control_type'>>;
 
 /** A new account: the API defaults everything not named (base-only currency, postable, manual journals on). */
 export function toNewAccountRequest(d: AccountDraft): ApiAccountRequest {
@@ -78,6 +78,7 @@ export function toNewAccountRequest(d: AccountDraft): ApiAccountRequest {
     account_type: d.account_type,
     normal_balance: d.normal_balance,
     account_subtype: d.account_subtype || null,
+    control_type: d.control_type && d.control_type !== 'none' ? d.control_type : 'none',
     description: d.description || null,
     parent_id: d.parent_id ?? null,
   };

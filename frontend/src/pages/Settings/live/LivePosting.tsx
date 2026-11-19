@@ -1,5 +1,6 @@
 /** Settings → Posting accounts: the accounts the books post to by themselves. Empty ones are flagged. */
 import React, { useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { IntentSlot } from '@/api/intentSlot';
 import { ConflictDialog, type VersionConflict } from '@/components/domain/ConflictDialog';
@@ -91,6 +92,12 @@ export const LivePosting: React.FC = () => {
                   {!hasValue && <option value={value}>{r.accountLabel ?? 'Current account'} (no longer available)</option>}
                   {options.map((a) => <option key={a.id} value={a.id}>{a.code} {a.name}</option>)}
                 </select>
+                {options.length === 0 && (
+                  <p className="text-xs text-warning md:col-start-2">
+                    No account is marked as {r.needs === 'ar' ? 'receivables' : r.needs === 'ap' ? 'payables' : r.needs === 'tax' ? 'tax' : 'a matching'} control yet.{' '}
+                    <Link to={`/${company.slug}/accounts`} className="underline">Create or edit one in the chart of accounts</Link> and set its control type.
+                  </p>
+                )}
               </li>
             );
           })}

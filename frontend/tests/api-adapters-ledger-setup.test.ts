@@ -43,10 +43,11 @@ describe('account adapter (3.2)', () => {
     expect(body.fixed_currency).toBeNull();
     expect(body.control_type).toBe('none');
   });
-  it('a new account sends only what the form collects', () => {
+  it('a new account sends the fields the form collects, with the control type', () => {
     expect(toNewAccountRequest({ code: '6100', name: 'Rent', account_type: 'expense', normal_balance: 'debit', account_subtype: '', description: '' })).toEqual({
-      code: '6100', name: 'Rent', account_type: 'expense', normal_balance: 'debit', account_subtype: null, description: null, parent_id: null,
+      code: '6100', name: 'Rent', account_type: 'expense', normal_balance: 'debit', account_subtype: null, control_type: 'none', description: null, parent_id: null,
     });
+    expect(toNewAccountRequest({ code: '1200', name: 'Receivables', account_type: 'asset', normal_balance: 'debit', account_subtype: '', description: '', control_type: 'ar' }).control_type).toBe('ar');
   });
   it('carries the hidden flag and the IFRS element, and an edit never sends them', () => {
     const a = toAccount({ ...raw, is_hidden: true, ifrs_element: 'Goodwill' }, scope);

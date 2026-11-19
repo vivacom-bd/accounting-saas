@@ -122,7 +122,7 @@ export const InvoicesListLive: React.FC<{ initialTab?: string; side?: Side }> = 
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <input ref={searchRef} type="search" aria-label="Search documents" value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Search by number or reference" className={cn(inputClass, 'w-56')} />
+          <input ref={searchRef} type="search" name="document-search" autoComplete="off" aria-label="Search documents" value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Search number, reference or contact" className={cn(inputClass, 'w-56')} />
           <label className="flex items-center gap-1.5 text-xs text-text-muted">
             Issued from
             <input type="date" aria-label="Issued from" value={from} onChange={(e) => setFrom(e.target.value)} className={inputClass} />
