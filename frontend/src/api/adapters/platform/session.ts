@@ -62,7 +62,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
   {
     title: 'Platform',
     items: [
-      { label: 'Overview', to: '/admin', exact: true, mockOnly: true },
+      { label: 'Overview', to: '/admin', exact: true, ability: 'billing.view' },
       { label: 'Tenants', to: '/admin/tenants', ability: 'tenants.view' },
     ],
   },
@@ -71,17 +71,17 @@ export const ADMIN_NAV: AdminNavSection[] = [
     items: [
       { label: 'Plans and pricing', to: '/admin/plans', ability: 'plans.view' },
       { label: 'Coupons and discounts', to: '/admin/coupons', ability: 'plans.view' },
-      { label: 'Billing operations', to: '/admin/billing', ability: 'billing.view', mockOnly: true },
-      { label: 'Trials and growth', to: '/admin/growth', ability: 'growth.manage', mockOnly: true },
+      { label: 'Billing operations', to: '/admin/billing', ability: 'billing.view' },
+      { label: 'Trials and growth', to: '/admin/growth', ability: 'growth.manage' },
       { label: 'Partners and resellers', to: '/admin/partners', mockOnly: true },
     ],
   },
   {
     title: 'Operations',
     items: [
-      { label: 'Support and communications', to: '/admin/support', ability: 'tenants.view', mockOnly: true },
-      { label: 'Platform telemetry', to: '/admin/ops', ability: 'ops.view', mockOnly: true },
-      { label: 'Feature flags', to: '/admin/flags', ability: 'ops.view', mockOnly: true },
+      { label: 'Support and communications', to: '/admin/support', ability: 'tenants.view' },
+      { label: 'Platform telemetry', to: '/admin/ops', ability: 'ops.view' },
+      { label: 'Feature flags', to: '/admin/flags', ability: 'ops.view' },
     ],
   },
   {
@@ -89,7 +89,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
     items: [
       { label: 'Staff and security', to: '/admin/staff', ability: 'staff.manage' },
       { label: 'Audit log', to: '/admin/audit', ability: 'audit.view', liveOnly: true },
-      { label: 'Compliance and GDPR', to: '/admin/compliance', ability: 'compliance.manage', mockOnly: true },
+      { label: 'Compliance and GDPR', to: '/admin/compliance', ability: 'compliance.manage' },
     ],
   },
 ];

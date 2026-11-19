@@ -71,3 +71,13 @@ export async function createCompany(body: {
 }): Promise<ApiCompany> {
   return (await http.post('/v1/companies', { body })).data;
 }
+
+/** Exchange a one-time admin support ticket for a tenant session as the impersonated user (204). */
+export async function exchangeImpersonationTicket(ticket: string): Promise<void> {
+  await http.post('/v1/auth/impersonate', { body: { ticket } });
+}
+
+/** End the current support (impersonation) session and sign out of it (204). */
+export async function endImpersonationSession(): Promise<void> {
+  await http.post('/v1/auth/impersonation/end');
+}

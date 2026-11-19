@@ -11,7 +11,7 @@ import { useAdminStore } from './mock/store/adminStore';
 import { Login } from './pages/Auth/Login';
 import { TwoFactor } from './pages/Auth/TwoFactor';
 import { LiveLogin, LiveTwoFactor, LiveRegister, LiveNewCompany } from './pages/Auth/LiveAuthPages';
-import { LiveForgotPassword, LiveResetPassword, LiveAcceptInvitation } from './pages/Auth/LiveAccountPages';
+import { LiveForgotPassword, LiveResetPassword, LiveAcceptInvitation, LiveImpersonate } from './pages/Auth/LiveAccountPages';
 import { LiveOnboarding } from './pages/Onboarding/LiveOnboarding';
 import { LiveSettings } from './pages/Settings/live/LiveSettings';
 import { Dashboard } from './pages/Dashboard/Dashboard';
@@ -113,27 +113,42 @@ import { describeError } from './api/messages';
 
 // Platform Admin Modules (§3.1 to §3.12)
 import { AdminDashboard } from './pages/Admin/Overview/AdminDashboard';
+import { LiveOverview } from './pages/Admin/Overview/LiveOverview';
 import { TenantsList } from './pages/Admin/Tenants/TenantsList';
 import { TenantDetail } from './pages/Admin/Tenants/TenantDetail';
 import { OrgSettings } from './pages/Org/OrgSettings';
+import { LiveOrgBilling } from './pages/Org/Billing/LiveOrgBilling';
 import { MockPlansList } from './pages/Admin/Plans/PlansList';
 import { LivePlansList } from './pages/Admin/Plans/LivePlansList';
 import { MockCouponsList } from './pages/Admin/Coupons/CouponsList';
 import { LiveCouponsList } from './pages/Admin/Coupons/LiveCouponsList';
 import { BillingOps } from './pages/Admin/Billing/BillingOps';
+import { LiveBillingOps } from './pages/Admin/Billing/LiveBillingOps';
 import { GrowthTrials } from './pages/Admin/Growth/GrowthTrials';
+import { LiveGrowth } from './pages/Admin/Growth/LiveGrowth';
 import { PartnersList } from './pages/Admin/Partners/PartnersList';
 import { SupportCenter } from './pages/Admin/Support/SupportCenter';
+import { LiveSupport } from './pages/Admin/Support/LiveSupport';
 import { PlatformOps } from './pages/Admin/Ops/PlatformOps';
+import { LiveOps } from './pages/Admin/Ops/LiveOps';
 import { FeatureFlags } from './pages/Admin/Flags/FeatureFlags';
+import { LiveFlags } from './pages/Admin/Flags/LiveFlags';
 import { MockStaffSecurity } from './pages/Admin/Staff/StaffSecurity';
 import { LiveStaffSecurity } from './pages/Admin/Staff/LiveStaffSecurity';
 import { LiveAuditLog } from './pages/Admin/Staff/LiveAuditLog';
 import { ComplianceCenter } from './pages/Admin/Compliance/ComplianceCenter';
+import { LiveCompliance } from './pages/Admin/Compliance/LiveCompliance';
 
 const PlansList = selectByMode({ mock: MockPlansList, live: LivePlansList });
 const CouponsList = selectByMode({ mock: MockCouponsList, live: LiveCouponsList });
 const StaffSecurity = selectByMode({ mock: MockStaffSecurity, live: LiveStaffSecurity });
+const Overview = selectByMode({ mock: AdminDashboard, live: LiveOverview });
+const BillingOpsPage = selectByMode({ mock: BillingOps, live: LiveBillingOps });
+const GrowthPage = selectByMode({ mock: GrowthTrials, live: LiveGrowth });
+const SupportPage = selectByMode({ mock: SupportCenter, live: LiveSupport });
+const OpsPage = selectByMode({ mock: PlatformOps, live: LiveOps });
+const FlagsPage = selectByMode({ mock: FeatureFlags, live: LiveFlags });
+const CompliancePage = selectByMode({ mock: ComplianceCenter, live: LiveCompliance });
 
 const useGuardSync = selectByMode<(slug: string | undefined) => { unknownCompany: boolean }>({
   mock: () => ({ unknownCompany: false }),
@@ -163,6 +178,15 @@ function RequireOrgAuth() {
   if (status === 'loading') return null;
   if (status === 'anonymous') return <Navigate to="/login" state={{ from: location }} replace />;
   return <OrgSettings />;
+}
+
+/** The organisation's own billing page: same guard as the organisation page. */
+function RequireOrgBilling() {
+  const { status } = useAuthStatus();
+  const location = useLocation();
+  if (status === 'loading') return null;
+  if (status === 'anonymous') return <Navigate to="/login" state={{ from: location }} replace />;
+  return <LiveOrgBilling />;
 }
 
 function MockRequireAdminAuth() {
@@ -222,6 +246,7 @@ export default function App() {
         {IS_LIVE && <Route path="/forgot-password" element={<LiveForgotPassword />} />}
         {IS_LIVE && <Route path="/reset-password/:token" element={<LiveResetPassword />} />}
         {IS_LIVE && <Route path="/invitations/:token" element={<LiveAcceptInvitation />} />}
+        {IS_LIVE && <Route path="/impersonate" element={<LiveImpersonate />} />}
         {/* The online invoice a customer opens from an email (3c.7b): no sign-in, no company in the address. */}
         {IS_LIVE && <Route path="/i/:token" element={<PublicInvoicePage />} />}
 
@@ -233,26 +258,27 @@ export default function App() {
 
         {/* Platform Admin Back-Office Console (/admin/*) */}
         <Route path="/admin" element={<RequireAdminAuth />}>
-          {IS_LIVE ? <Route index element={<Navigate to="/admin/tenants" replace />} /> : <Route index element={<AdminDashboard />} />}
+          {IS_LIVE ? <Route index element={<Overview />} /> : <Route index element={<AdminDashboard />} />}
           <Route path="tenants" element={<TenantsList />} />
           <Route path="tenants/:id" element={<TenantDetail />} />
           <Route path="plans" element={<PlansList />} />
           <Route path="coupons" element={<CouponsList />} />
-          {!IS_LIVE && <Route path="billing" element={<BillingOps />} />}
-          {!IS_LIVE && <Route path="growth" element={<GrowthTrials />} />}
+          <Route path="billing" element={<BillingOpsPage />} />
+          <Route path="growth" element={<GrowthPage />} />
           {!IS_LIVE && <Route path="partners" element={<PartnersList />} />}
-          {!IS_LIVE && <Route path="support" element={<SupportCenter />} />}
-          {!IS_LIVE && <Route path="ops" element={<PlatformOps />} />}
-          {!IS_LIVE && <Route path="flags" element={<FeatureFlags />} />}
+          <Route path="support" element={<SupportPage />} />
+          <Route path="ops" element={<OpsPage />} />
+          <Route path="flags" element={<FlagsPage />} />
           <Route path="staff" element={<StaffSecurity />} />
           {IS_LIVE && <Route path="audit" element={<LiveAuditLog />} />}
-          {!IS_LIVE && <Route path="compliance" element={<ComplianceCenter />} />}
+          <Route path="compliance" element={<CompliancePage />} />
           {IS_LIVE && <Route path="*" element={<Navigate to="/admin/tenants" replace />} />}
         </Route>
 
         {/* Main Tenant Application */}
         <Route path="/" element={<RootRedirect />} />
         {IS_LIVE && <Route path="/org/settings" element={<RequireOrgAuth />} />}
+        {IS_LIVE && <Route path="/org/billing" element={<RequireOrgBilling />} />}
         <Route path="/:co" element={<RequireTenantAuth />}>
           <Route path="dashboard" element={<Dashboard />} />
 

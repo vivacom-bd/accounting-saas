@@ -196,7 +196,6 @@ export const TopBar: React.FC<TopBarProps> = (p) => {
           onSwitchUser={p.switchUser}
           onProfile={() => navigate(`/${coSlug}/settings`)}
           onShortcuts={p.onShortcuts}
-          onAdmin={() => navigate('/admin')}
           onOrganisation={() => navigate('/org/settings')}
           onSignOut={p.onSignOut}
         />

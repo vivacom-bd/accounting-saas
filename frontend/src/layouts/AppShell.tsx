@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useLedgerStore } from '@/mock/store';
 import { useAdminStore } from '@/mock/store/adminStore';
 import { CommandPalette } from '@/components/domain/CommandPalette';
@@ -19,8 +20,12 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { IS_LIVE } from '@/api/config';
 import { TopBar } from './shell/TopBar';
 import { LiveRouteGate } from './shell/LiveRouteGate';
-import { useSignOut } from '@/data/session';
+import { forgetSession, meKey, useSignOut } from '@/data/session';
+import { fetchMe, endImpersonationSession } from '@/api/live/session';
+import { queryClient } from '@/api/queryClient';
 import { Sidebar } from './shell/Sidebar';
+import { AnnouncementBanner } from './shell/AnnouncementBanner';
+import { LifecycleBanner } from './shell/LifecycleBanner';
 import { buildNavSections, navSectionsFromMenu } from './shell/nav';
 import { useCompanyMenu } from '@/data/menu';
 import { useTheme } from './shell/useTheme';
@@ -47,7 +52,9 @@ export const AppShell: React.FC = () => {
   } = useLedgerStore();
   const signOut = useSignOut();
 
-  const activeImpersonation = useAdminStore((s) => s.activeImpersonation);
+  const mockImpersonation = useAdminStore((s) => s.activeImpersonation);
+  const me = useQuery({ queryKey: meKey, queryFn: fetchMe, staleTime: Infinity, retry: false, enabled: IS_LIVE });
+  const serverImpersonation = IS_LIVE ? (me.data?.impersonation ?? null) : null;
   const coSlug = currentCompany.slug;
   const { currentTheme, applyTheme, toggleTheme, isDark } = useTheme();
 
@@ -130,30 +137,57 @@ export const AppShell: React.FC = () => {
   return (
     <TooltipProvider delayDuration={200}>
       <div className="h-screen max-h-screen overflow-hidden flex flex-col antialiased bg-canvas text-text-primary select-none font-sans">
-        {/* Operator Impersonation Banner */}
-        {activeImpersonation && (
+        {/* Impersonation banner: server session (live) or mock operator mode. */}
+        {(IS_LIVE ? serverImpersonation : mockImpersonation) && (
           <div className="h-8 bg-warning-soft border-b border-warning/30 px-3 flex items-center justify-between text-xs text-warning font-medium z-40 select-none shrink-0">
             <div className="flex items-center gap-2">
               <span className="flex h-2 w-2 rounded-full bg-warning shrink-0" />
               <span>
-                <strong>OPERATOR IMPERSONATION:</strong> Viewing as staff <span className="font-mono">{activeImpersonation.adminName}</span>.
-                Mode: <span className="uppercase font-semibold">{activeImpersonation.mode}-only</span>. All tenant writes are blocked.
+                {IS_LIVE && serverImpersonation ? (
+                  <>
+                    <strong>SUPPORT SESSION:</strong> Viewing as staff <span className="font-mono">{serverImpersonation.admin_name}</span>.
+                    Mode: <span className="uppercase font-semibold">{serverImpersonation.mode}-only</span>.
+                  </>
+                ) : (
+                  <>
+                    <strong>OPERATOR IMPERSONATION:</strong> Viewing as staff <span className="font-mono">{mockImpersonation!.adminName}</span>.
+                    Mode: <span className="uppercase font-semibold">{mockImpersonation!.mode}-only</span>. All tenant writes are blocked.
+                  </>
+                )}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  useAdminStore.getState().endImpersonation();
-                  navigate(`/admin/tenants/${activeImpersonation.tenantId}`);
+                onClick={async () => {
+                  if (IS_LIVE && serverImpersonation) {
+                    try {
+                      await endImpersonationSession();
+                    } catch {
+                      // session may already be gone; clear locally regardless
+                    } finally {
+                      forgetSession(queryClient);
+                      useLedgerStore.setState({ isAuthenticated: false });
+                    }
+                    toast.info('Support session ended');
+                    navigate('/login', { replace: true });
+                    return;
+                  }
+                  if (mockImpersonation) {
+                    useAdminStore.getState().endImpersonation();
+                    navigate(`/admin/tenants/${mockImpersonation.tenantId}`);
+                  }
                 }}
                 className="px-2 py-0.5 rounded bg-warning text-white font-medium hover:opacity-90 transition text-[11px] cursor-pointer"
               >
-                Exit Impersonation
+                {IS_LIVE && serverImpersonation ? 'End support session' : 'Exit Impersonation'}
               </button>
             </div>
           </div>
         )}
+
+        <AnnouncementBanner />
+        <LifecycleBanner />
 
         <TopBar
           coSlug={coSlug}

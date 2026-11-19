@@ -29,7 +29,7 @@ describe('navigation by ability', () => {
   it('maps each console area to its ability', () => {
     const byTo = Object.fromEntries(ADMIN_NAV.flatMap((s) => s.items).map((i) => [i.to, i.ability]));
     expect(byTo).toMatchObject({
-      '/admin': undefined,
+      '/admin': 'billing.view',
       '/admin/tenants': 'tenants.view',
       '/admin/plans': 'plans.view',
       '/admin/coupons': 'plans.view',
@@ -59,11 +59,13 @@ describe('navigation by ability', () => {
 
   it('in live mode shows only the live sections, filtered by ability', () => {
     const all = ['tenants.view', 'plans.view', 'billing.view', 'growth.manage', 'ops.view', 'staff.manage', 'compliance.manage', 'audit.view'];
-    expect(labels(all)).toEqual(['Tenants', 'Plans and pricing', 'Coupons and discounts', 'Staff and security', 'Audit log']);
-    expect(labels(['tenants.view', 'plans.view'])).toEqual(['Tenants', 'Plans and pricing', 'Coupons and discounts']);
-    for (const hidden of ['Overview', 'Billing operations', 'Trials and growth', 'Partners and resellers', 'Support and communications', 'Platform telemetry', 'Feature flags', 'Compliance and GDPR']) {
-      expect(labels(all)).not.toContain(hidden);
-    }
+    expect(labels(all)).toEqual([
+      'Overview', 'Tenants', 'Plans and pricing', 'Coupons and discounts', 'Billing operations', 'Trials and growth',
+      'Support and communications', 'Platform telemetry', 'Feature flags', 'Staff and security', 'Audit log', 'Compliance and GDPR',
+    ]);
+    expect(labels(['tenants.view', 'plans.view'])).toEqual(['Tenants', 'Plans and pricing', 'Coupons and discounts', 'Support and communications']);
+    // Partners stays mock-only (R2).
+    expect(labels(all)).not.toContain('Partners and resellers');
   });
 });
 

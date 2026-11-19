@@ -38,7 +38,8 @@ export const OrgSettings: React.FC = () => {
       <header className="flex h-14 items-center gap-2 border-b border-border bg-sidebar px-5">
         <BrandMark />
         <span className="text-[15px] font-semibold text-text-primary">Ledgerly</span>
-        {home && <Link to={home} className="ml-auto text-[13px] text-accent hover:underline">Back to your books</Link>}
+        <Link to="/org/billing" className="ml-auto text-[13px] text-accent hover:underline">Billing and usage</Link>
+        {home && <Link to={home} className="text-[13px] text-accent hover:underline">Back to your books</Link>}
       </header>
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-6">
         <h1 className="text-xl font-semibold text-text-primary">Organisation</h1>

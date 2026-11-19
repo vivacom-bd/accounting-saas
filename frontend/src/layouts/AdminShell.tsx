@@ -411,6 +411,7 @@ export const AdminShell: React.FC = () => {
 
         {/* 2. Admin document tab strip */}
         <div className="h-8 bg-surface-subtle border-b border-border flex items-center px-2 gap-1 overflow-x-auto no-scrollbar flex-nowrap shrink-0 select-none text-xs">
+          {may('billing.view') && (
           <NavLink
             to="/admin"
             end
@@ -426,7 +427,7 @@ export const AdminShell: React.FC = () => {
             <LayoutDashboard className="w-3.5 h-3.5 text-text-muted shrink-0" />
             <span>Overview</span>
           </NavLink>
-
+          )}
           {may('tenants.view') && (
           <NavLink
             to="/admin/tenants"

@@ -2,12 +2,12 @@
  * Live-mode account screens reached from an email link or the sign-in page: forgot password, reset password,
  * accept an invitation. Same layout and field styling as the sign-in screens.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AuthLayout } from './AuthLayout';
 import { requestPasswordReset, resetPassword } from '@/api/live/account';
-import { logout } from '@/api/live/session';
+import { exchangeImpersonationTicket, logout } from '@/api/live/session';
 import { acceptInvitation, previewInvitation } from '@/api/live/team';
 import { ApiError } from '@/api/errors';
 import { describeError, fieldError } from '@/api/messages';
@@ -139,6 +139,52 @@ export const LiveResetPassword: React.FC = () => {
       <p className="mt-4 text-[13px] text-text-muted"><Link to="/login" className="text-accent hover:underline">Back to sign in</Link></p>
     </AuthLayout>
   );
+};
+
+/* ------------------------------------------------------------------ impersonation */
+
+export const LiveImpersonate: React.FC = () => {
+  const [params] = useSearchParams();
+  const ticket = params.get('ticket') ?? '';
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [error, setError] = useState<unknown>(null);
+
+  useEffect(() => {
+    if (!ticket) {
+      setError(new ApiError({ status: 422, code: 'validation_failed', detail: 'No support link was provided.', requestId: null }));
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        await exchangeImpersonationTicket(ticket);
+        if (cancelled) return;
+        qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'me' });
+        qc.setQueryData(meKey, null);
+        await qc.invalidateQueries({ queryKey: meKey });
+        navigate('/', { replace: true });
+      } catch (err) {
+        if (!cancelled) setError(err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [ticket, navigate, qc]);
+
+  if (error) {
+    const expired = error instanceof ApiError && error.code === 'impersonation_ticket_invalid';
+    return (
+      <AuthLayout>
+        <h1 className="text-[22px] font-semibold text-text-primary">{expired ? 'This support link has expired' : 'Could not open support session'}</h1>
+        <p role="alert" className="mt-2 text-[14px] text-text-secondary">{describeError(error)}</p>
+        <Link to="/login" className={`${primary} mt-6 inline-flex items-center justify-center`}>Go to sign in</Link>
+      </AuthLayout>
+    );
+  }
+
+  return <AuthLayout><Loading what="Opening the support session" /></AuthLayout>;
 };
 
 /* ------------------------------------------------------------------ invitation */

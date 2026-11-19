@@ -1,5 +1,5 @@
 import React from 'react';
-import { Building2, ChevronDown, User, Users, Keyboard, Moon, Sun, LogOut, ShieldCheck, Check, CloudOff, Cloud } from 'lucide-react';
+import { Building2, ChevronDown, User, Users, Keyboard, Moon, Sun, LogOut, Check, CloudOff, Cloud } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IS_LIVE } from '@/api/config';
 import { Avatar } from '@/components/ui/avatar';
@@ -32,13 +32,12 @@ interface Props {
   onSwitchUser: (id: string) => void;
   onProfile: () => void;
   onShortcuts: () => void;
-  onAdmin: () => void;
   /** Live mode: the organisation page. */
   onOrganisation?: () => void;
   onSignOut: () => void;
 }
 
-export const UserMenu: React.FC<Props> = ({ user, isDark, isOffline, onToggleTheme, onToggleOffline, onSwitchUser, onProfile, onShortcuts, onAdmin, onOrganisation, onSignOut }) => (
+export const UserMenu: React.FC<Props> = ({ user, isDark, isOffline, onToggleTheme, onToggleOffline, onSwitchUser, onProfile, onShortcuts, onOrganisation, onSignOut }) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
       <button type="button" aria-label="User menu" className="flex items-center gap-2 h-10 pl-1 pr-2 rounded-lg hover:bg-surface-neutral transition outline-none focus-visible:ring-2 focus-visible:ring-accent/50 cursor-pointer">
@@ -82,7 +81,6 @@ export const UserMenu: React.FC<Props> = ({ user, isDark, isOffline, onToggleThe
         {isOffline ? <CloudOff className="size-4 text-warning" /> : <Cloud className="size-4 text-text-muted" />}
         Simulate offline<DropdownMenuShortcut>{isOffline ? 'On' : 'Off'}</DropdownMenuShortcut>
       </DropdownMenuItem>
-      <DropdownMenuItem onSelect={onAdmin}><ShieldCheck className="size-4 text-violet" />Platform admin</DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuItem onSelect={onSignOut} className="text-danger focus:text-danger focus:bg-danger-soft"><LogOut className="size-4" />Sign out</DropdownMenuItem>
     </DropdownMenuContent>
